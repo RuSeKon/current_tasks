@@ -3,7 +3,6 @@
 #include <stdio.h>
 
 #define MAXSTR 9
-\\its a test
 
 int any(int src[],int from[])
 {
