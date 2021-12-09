@@ -1,7 +1,7 @@
 /* this programm can sort input massive of
  * \n separated strings */
+
 #include <stdio.h>
-#include <string.h>
 
 #define MAXLNS 50
 #define MAXCHR 500
@@ -17,7 +17,7 @@ int main()
 {
 	int nlines;
 	if((nlines = input(matrix, MAXLNS)) > 0) {
-		qsrt(matrix, 0, nlines-1);
+		qsrt(matrix, 0, nlines - 1);
 		output(matrix);
 		return 0;
 	}
@@ -47,6 +47,7 @@ int input(char *arr[], int max)
 }
 
 void swap(char *[], int l, int r);
+int strcmpr(char *s1, char *s2);
 
 void qsrt(char *arr[], int left, int right)
 {
@@ -55,9 +56,10 @@ void qsrt(char *arr[], int left, int right)
 		return;
 	swap(arr, left, (left+right)/2);
 	last = left;
-	for(int i=left+1; i <= right; i++)
-		if(strcmp(arr[i], arr[left]) < 0)
+	for(int i=left+1; i <= right; i++) {
+		if(strcmpr(arr[i], arr[left]) < 0)
 			swap(arr, ++last, i);
+	}
 	swap(arr, left, last);
 	qsrt(arr, left, last - 1);
 	qsrt(arr, last + 1, right);
@@ -99,8 +101,18 @@ void output(char *arr[])
 	while(*arr)
 		printf("%s\n", *arr++);
 }
-			
-	
+
+int strcmpr(char *s1, char *s2)
+{
+	for(; *s1; s1++) {
+		if(*s2++)
+			;
+		else
+			return 1;
+	}
+	return *s2 ? -1 : 0;
+}	
+
 
 
 				
