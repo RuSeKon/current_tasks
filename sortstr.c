@@ -2,6 +2,7 @@
  * \n separated strings */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #define MAXLNS 50
 #define MAXCHR 500
@@ -10,14 +11,21 @@
 char *matrix[MAXLNS];
 
 int input(char *[],  int max);
-void qsrt(char *[], int left, int right);
+void qsrt(void *[], int left, int right, 
+		int (*comp)(void *, void *));
 void output(char *[]);
+int numcmp(char *, char *);
+int strcmpr(char *, char *);
 
-int main()
+int main(int argc, char **argv)
 {
 	int nlines;
+	int numeric = 0;
+	if(argc > 1 && strcmpr(argv[1], "-n") == 0)
+		numeric = 1;
 	if((nlines = input(matrix, MAXLNS)) > 0) {
-		qsrt(matrix, 0, nlines - 1);
+		qsrt((void**) matrix, 0, nlines - 1, (int (*)(void *, void*))
+					(numeric ? numcmp : strcmpr));
 		output(matrix);
 		return 0;
 	}
@@ -46,10 +54,9 @@ int input(char *arr[], int max)
 	return i;
 }
 
-void swap(char *[], int l, int r);
-int strcmpr(char *s1, char *s2);
+void swap(void *[], int l, int r);
 
-void qsrt(char *arr[], int left, int right)
+void qsrt(void *arr[], int left, int right, int (*comp)(void *, void*))
 {
 	int last;
 	if(left >= right)
@@ -57,17 +64,17 @@ void qsrt(char *arr[], int left, int right)
 	swap(arr, left, (left+right)/2);
 	last = left;
 	for(int i=left+1; i <= right; i++) {
-		if(strcmpr(arr[i], arr[left]) < 0)
+		if((*comp)(arr[i], arr[left]) < 0)
 			swap(arr, ++last, i);
 	}
 	swap(arr, left, last);
-	qsrt(arr, left, last - 1);
-	qsrt(arr, last + 1, right);
+	qsrt(arr, left, last - 1, comp);
+	qsrt(arr, last + 1, right, comp);
 }
 
-void swap(char *arr[], int l, int r)
+void swap(void *arr[], int l, int r)
 {
-	char *tmp;
+	void *tmp;
 	tmp = arr[l];
 	arr[l] = arr[r];
 	arr[r] = tmp;
@@ -102,21 +109,23 @@ void output(char *arr[])
 		printf("%s\n", *arr++);
 }
 
-int strcmpr(char *s1, char *s2)
+int numcmp(char *s1, char *s2)
 {
-	for(; *s1; s1++) {
-		if(*s2++)
-			;
-		else
-			return 1;
-	}
-	return *s2 ? -1 : 0;
+	double floats1 = atof(s1);
+	double floats2 = atof(s2);
+	if(floats1 == floats2)
+		return 0;
+	else
+		return floats1 - floats2;
 }	
 
+int strcmpr(char *s1, char *s2)
+{
+	int i;
+	for(i = 0; s1[i] == s2[i]; i++) {
+		if(s1[i] == '\0')
+			return 0;
+	}
+	return s1[i] - s2[i];
 
-
-				
-	
-	
-
-
+}
