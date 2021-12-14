@@ -22,11 +22,11 @@ int strcmpr(char *, char *, char *);
 
 int main(int argc, char **argv)
 {
-	int nlines, i, s;
+	int nlines, i, s, p;
 	int numeric = DISABLE;
 	char opt[OPTSZE];
 	for(s = 0, i = 1; i < argc; i++) {		//CREATE AN OPTION STR
-		for(int p = 0; argv[i][p]; p++) {
+		for(p = 0; argv[i][p]; p++) {
 			if(argv[i][p] == '-')
 				continue;
 			else if(argv[i][p] == 'n')  //for numeric compare 
