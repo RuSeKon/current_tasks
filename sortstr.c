@@ -7,9 +7,12 @@
 
 #define MAXLNS 50
 #define MAXCHR 500
-#define OPTSZE 4
+#define OPTSZE 5
 #define ENABLE 1
 #define DISABLE 0
+#define FLDSZE 4
+#define SEPRTR '.'
+#define EMPTY "0"
 
 char *matrix[MAXLNS];
 
@@ -22,24 +25,42 @@ int strcmpr(char *, char *, char *);
 
 int main(int argc, char **argv)
 {
-	int nlines, i, s, p;
+	int nlines, i, s, p, f, d;
 	int numeric = DISABLE;
 	char opt[OPTSZE];
-	for(s = 0, i = 1; i < argc; i++) {		//CREATE AN OPTION STR
-		for(p = 0; argv[i][p]; p++) {
-			if(argv[i][p] == '-')
-				continue;
-			else if(argv[i][p] == 'n')  //for numeric compare 
+	char fld[FLDSZE];
+	for(s = 0, i = 1; i < argc; i++) {	//CREATE AN OPTION STR
+		for(p = 0; argv[i][p]; p++) {	//run on oneself argument
+			if(s >= OPTSZE) {
+				printf("Too many arguments\n");
+				return 0; }
+
+			if(argv[i][p] == '-') {
+			    if(argv[i][p + 1] == '-') {   //Write field name to fld[]
+			        for(f=0, d=p+2; f < FLDSZE && argv[i][d]; f++, d++) {
+				    fld[f] = argv[i][d]; }
+			    	fld[FLDSZE-1] = '\0';
+				if(strcmpr(fld, "txt", EMPTY) && strcmpr(fld, "num", EMPTY)){
+					printf("Wrong field name %s\n", fld);	
+					return -1; }
+				break;
+			    }
+			    else
+			        continue;
+		        }	    
+			else if(argv[i][p] == 'n')	//for numeric compare  
 				numeric = ENABLE;
-			else if(argv[i][p] == 'r') // reversive compare
+			else if(argv[i][p] == 'r')	//reversive compare
 				opt[s++] = 'r';
-			else if(argv[i][p] == 'f')
-				opt[s++] = 'f'; //for register of letter doesn't matter
-			else if(argv[i][p] == 'd')
-				opt[s++] = 'd'; //only letters, digits and spaces
+			else if(argv[i][p] == 'l') 	//for register of letter doesn't matter
+				opt[s++] = 'l';
+			else if(argv[i][p] == 'd') 	//only letters, digits and spaces
+				opt[s++] = 'd';
+			else if(argv[i][p] == 'f') 	//sort by fields of strings
+				opt[s++] = 'f';
 			else {
 				printf("Unknown argument (%s)\n", argv[i]);
-				return 0;
+				return -2;
 			}
 		}
 	}
@@ -77,6 +98,30 @@ int input(char *arr[], int max)
 	return i;
 }
 
+char line[MAXCHR];
+char *ptr = line;
+
+char *getln(int max)
+{	
+	int i;
+	char c;
+	for(i = 0; i < max && (c = getchar()) != EOF && c !=  '\n'; i++) { 
+		*ptr++ = c;
+		i++;
+	}
+	if(*ptr == EOF)
+		return ptr;
+	else if(i <= 0) {
+		printf("Line is empty\n");
+		return NULL;
+	}
+	else if(*ptr == '\n') {
+		*ptr++ = '\0';
+		c++;
+	}
+	return ptr - i;
+}
+
 void swap(void *[], int l, int r);
 
 void qsrt(void *arr[], int left, int right, char *optn, 
@@ -104,29 +149,6 @@ void swap(void *arr[], int l, int r)
 	arr[r] = tmp;
 }
 
-char line[MAXCHR];
-char *ptr = line;
-
-char *getln(int max)
-{	
-	int c = 0;
-	while(c < max && (*ptr = getchar()) != EOF && *ptr !=  '\n') {
-		ptr++;
-		c++;
-	}
-	if(*ptr == EOF)
-		return ptr;
-	else if(c <= 0) {
-		printf("Line is empty\n");
-		return NULL;
-	}
-	else if(*ptr == '\n') {
-		*ptr++ = '\0';
-		c++;
-	}
-	return ptr - c;
-}
-
 void output(char *arr[])
 {
 	while(*arr)
@@ -138,8 +160,8 @@ int reparce(char pat, char *src);
 
 int numcmp(char *s1, char *s2, char *optn)
 {
-	double val1  = reparce('f', optn) ? counter(s1, 1) : counter(s1, 0);
-	double val2 = reparce('f', optn) ? counter(s2, 1) : counter(s2, 0);
+	double val1  = reparce('l', optn) ? counter(s1, 1) : counter(s1, 0);
+	double val2 = reparce('l', optn) ? counter(s2, 1) : counter(s2, 0);
 	double res;
 	if(val1 == val2)
 		return 0;
@@ -156,7 +178,7 @@ int strcmpr(char *s1, char *s2, char *optn)
 		if(s1[i] == '\0')
 			return 0;
 	}
-	if(reparce('f', optn))
+	if(reparce('l', optn))
 		res =  tolower(s1[i]) - tolower(s2[i]);
 	else
 		res = s1[i] - s2[i];
