@@ -60,17 +60,16 @@ int gettoken(void) /* возвращает следующую лексему */
 		return tokentype = c;
 }
 
+void pointer(); 	//NEEDED IMPLEMENTATION!!!!!!!!!!!!!!
+
 /* dcl: разбор объявителя */
 void dcl(void)
 {
-	int ns, c;
-	for (ns = 0; gettoken() == '*'; ) /* подсчет звездочек */
-		ns++;
+	pointer(); //pointer check
 	dirdcl();
-	while (ns-- > 0)
-		strcat(out, " указ. на");
 }
 
+void parametr_type_list() //NEEDED IMPLEMENTATION!!!!!!!!!!!!!!!!
 /* dirdcl: разбор собственно объявителя */
 void dirdcl(void)
 {
@@ -90,6 +89,7 @@ void dirdcl(void)
 		printf("ошибка: должно быть name или (dcl)\n");
 	while ((type = gettoken()) == PARENS || type == BRACKETS)
 		if (type == PARENS)
+			parametr-type-list();	//NEEDED IMPLEMENTATION!!!!!!!!!!!!
 			strcat(out, " функц. возвр.");
 		else {
 			strcat(out, " массив");
@@ -97,6 +97,17 @@ void dirdcl(void)
 			strcat(out, " из");
 		}
 }
+
+void type_qualifer_list();
+
+void pointer()
+{
+	int star;
+	for(star = 0; (gettoke()) = '*';)
+		star++;
+	type_qualifer_list();
+	if()
+void type_qualifier(); 		//NEEDED IMPLEMENTATION!!!!!!!!!!!!!!
 
 char buf[MAXCHR];
 int bufp = 0;
