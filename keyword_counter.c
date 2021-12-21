@@ -5,12 +5,11 @@
 #include <string.h>
 
 #define MAXWORD 100
-#define NKEYS 13
 
 struct key{
 	char *word;
 	int count;
-} keytab[NKEYS] = {
+} keytab[] = {
 	{"auto", 0},
 	{"break", 0},
 	{"case", 0},
@@ -25,6 +24,8 @@ struct key{
 	{"volatile", 0},
 	{"while", 0}
 };
+
+#define NKEYS (sizeof(keytab)/sizeof(struct key))
 
 int getword(char *, int);
 int binsearch(char *, struct key *, int);
