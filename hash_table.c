@@ -11,8 +11,15 @@ struct nlist {
 
 static struct nlist *hashtab[HASHSIZE];
 
+
+
 main()
 {}
+
+
+
+
+
 
 
 
@@ -25,17 +32,22 @@ unsigned hash(char *s)
 	return hashval % HASHSIZE;
 }
 
-struct nlist *lookup(char *s)
+struct nlist *lookup(char *s, int del)
 {
 	struct nlist *np;
-	for(np = hashtab[hash(s)]; np != NULL; np = np->next)
-		if(strcmp(s, np->name) == 0)
-			return np;
+	for(np = hashtab[hash(s)]; np != NULL; np = np->next) {
+		if(strcmp(s, np->name) == 0) {
+			if(del)
+				del_node(s); //lookup may not check del_node
+			else		     //return value (look impl of del_node)
+				return np;
+		}
+	}
 	return NULL;
 }
 
 
-struct nlist *install(char *name, char *defn)
+struct nlist *install(char *name, char *defn, int del)
 {
 	struct nlist *np;
 	unsigned hashval;
@@ -54,4 +66,22 @@ struct nlist *install(char *name, char *defn)
 	return np;
 }
 
+int del_node(char *nm)		
+{
+	struct nlist *np, *tmp;
 
+	/* search node with field.name = nm in hashtable */
+	for(np = hashtable[hash(nm)]; np != NULL; np = np->next) { 
+		if(np->next == NULL && (strcmp(np->name, nm) == 0)){ //if np is ones or last 
+			free((void*)np);			    //in list, and .name = nm
+			return 0;
+		} else if(strcmp(np->next->name, nm) == 0) { 	    //if .name = nm,
+			tmp = np->next;				    //and np not last or ones
+			np->next = tmp->next ? tmp->next : NULL;
+			return 0;
+		} else 
+			return 1;	//nm is missing in hashtable	
+	}
+}
+			
+			

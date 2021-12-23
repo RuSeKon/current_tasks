@@ -59,10 +59,10 @@ void sort(struct str arr[], int high)
   last = 0;
   for(i = 1; i < high; i++) {
       if(arr[i].win_num > arr[last].win_num)
-              swap(arr, last, i);
+              swap(arr, ++last, i);
       else if(arr[i].win_num == arr[last].win_num)
               if(*(arr[i].name) > *(arr[last].name))
-                        swap(arr, last, i);
+                        swap(arr, ++last, i);
   }
   swap(arr, 0, last);
   sort(arr, last - 1);

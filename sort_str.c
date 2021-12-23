@@ -29,6 +29,7 @@ int main(int argc, char **argv)
 	int numeric = DISABLE;
 	char opt[OPTSZE];
 	char fld[FLDSZE];
+
 	for(s = 0, i = 1; i < argc; i++) {	//CREATE AN OPTION STR
 		for(p = 0; argv[i][p]; p++) {	//run on oneself argument
 			if(s >= OPTSZE) {
