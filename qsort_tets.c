@@ -20,7 +20,7 @@ main(int argc, char **argv)
 {
 	double time_spent = 0.0;
 	double *arr;
-	int max, i;
+	int max, i, p = 0;
 	clock_t cl_beg, cl_end;
 	char init_data[MESSAGE];
 	char opt[OPTSZE];
@@ -28,11 +28,11 @@ main(int argc, char **argv)
 	//parce command line and form initial data
 	if(argv[1][0] == '-') {
 		if(strchr(argv[1], 'o')) //form in direct order 
-			strcat(opt, "o");
+			opt[p++] = 'o';
 		if(strchr(argv[1], 'O')) //form in reverse order
-			strcat(opt, "O");
+			opt[p++] = 'O';
 		if(strchr(argv[1], 'r')) //form by random
-			strcat(opt, "r");
+			opt[p++] = 'r';
 	}
 	opt[3] = '\0';		
 
@@ -86,34 +86,34 @@ void swap(double *arr, int a1, int a2)
 	arr[a2] = tmp;
 }
 
-double *form_arr(char *param, int max, char *message)
+double *form_arr(char *param, int m, char *message)
 {
 	int i;
-	double *tmp = (double *)malloc(sizeof(double) * max);
+	double *tmp = (double *)malloc(sizeof(double) * m);
 
 	if(strchr(param, 'o') && strchr(param, 'O') && strchr(param, 'r')) {
 		int n, p;
-		for(i = 0; i < max/3; i++)
+		for(i = 0; i < m/3; i++)
 			tmp[i] = i;
-		for(n = i; n < 2*(max/3); n++)
-			tmp[n] = rand()/max;
-		for(p = n; p < max; p++)
-			tmp[p] = max - p;
+		for(n = i; n < 2*(m/3); n++)
+			tmp[n] = rand()/m;
+		for(p = n; p < m; p++)
+			tmp[p] = m - p;
 		strcat(message, "combine data\0");	
 		return tmp;
 	}
 
 	if(strchr(param, 'o')) {
-		for(i = 0; i < max; i++)
+		for(i = 0; i < m; i++)
 			tmp[i] = i;
 		strcat(message, "direct order data\0");
 	} else if(strchr(param, 'O')) {
-		for(i = 0; i < max; i++)
-			tmp[i] = max - i;
+		for(i = 0; i < m; i++)
+			tmp[i] = m - i;
 		strcat(message, "reverse order data\0");
 	} else if(strchr(param, 'r')) {
-		for(i = 0; i < max; i++) 
-			tmp[i] = rand()/max;
+		for(i = 0; i < m; i++) 
+			tmp[i] = rand()/m;
 		strcat(message, "random init data\0");
 	}
 	tmp[i] = '\0';
