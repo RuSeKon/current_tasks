@@ -18,23 +18,30 @@ double *form_arr(char *, int, char *);
 
 main(int argc, char **argv)
 {
-	double time_spent = 0.0;
+	double time_spent, max_time, middle;
+	time_spent = max_time = middle = 0;
+	double accuracy = 0.0000000001;
 	double *arr;
 	int max, i, p = 0;
 	clock_t cl_beg, cl_end;
 	char init_data[MESSAGE];
 	char opt[OPTSZE];
+
+	srand(time(0));
 	
 	//parce command line and form initial data
-	if(argv[1][0] == '-') {
+	if(argc < 2) {
+		strcpy(init_data, "direct order ");
+		opt[0] = '\0';
+	} else if(argv[1][0] == '-') {
 		if(strchr(argv[1], 'o')) //form in direct order 
 			opt[p++] = 'o';
 		if(strchr(argv[1], 'O')) //form in reverse order
 			opt[p++] = 'O';
 		if(strchr(argv[1], 'r')) //form by random
 			opt[p++] = 'r';
+		opt[3] = '\0';		
 	}
-	opt[3] = '\0';		
 
 	if(argc > 2 && isdigit(argv[2][0]))	//size of sorted array
 		max = atoi(argv[2]);
@@ -54,9 +61,15 @@ main(int argc, char **argv)
 
 		/*calculate result of implementation*/
 		time_spent = (double)(cl_end - cl_beg) / CLOCKS_PER_SEC;
-		printf("For %d elem of %s elapsed time is (%f)\n", 
-				max, init_data, time_spent);
+		if((time_spent - max_time) > accuracy)
+			max_time = time_spent;
+		middle += time_spent;
+		
 	}
+	middle /= (double)NUMOFITER;
+	printf("For %d elem of %selapsed time:\n"
+		       	"Max = %.8f, Mid = %.8f\n", 
+				max, init_data, max_time, middle);
 	return 0;
 }
 
@@ -74,7 +87,7 @@ void qusort(double *arr, int peak)
 			swap(arr, ++last, i);
 	}
 	swap(arr, 0, last);
-	qusort(arr, last-1);
+	qusort(arr, last);
 	qusort(arr+last+1, peak-last-1);
 }
 
@@ -99,22 +112,22 @@ double *form_arr(char *param, int m, char *message)
 			tmp[n] = rand()/m;
 		for(p = n; p < m; p++)
 			tmp[p] = m - p;
-		strcat(message, "combine data\0");	
+		strcat(message, "combine data ");
 		return tmp;
 	}
 
 	if(strchr(param, 'o')) {
 		for(i = 0; i < m; i++)
 			tmp[i] = i;
-		strcat(message, "direct order data\0");
+		strcat(message, "direct order data ");
 	} else if(strchr(param, 'O')) {
 		for(i = 0; i < m; i++)
 			tmp[i] = m - i;
-		strcat(message, "reverse order data\0");
+		strcat(message, "reverse order data ");
 	} else if(strchr(param, 'r')) {
 		for(i = 0; i < m; i++) 
 			tmp[i] = rand()/m;
-		strcat(message, "random init data\0");
+		strcat(message, "random init data ");
 	}
 	tmp[i] = '\0';
 	return tmp;
