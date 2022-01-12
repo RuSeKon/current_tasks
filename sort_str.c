@@ -4,9 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <string.h>
 
 #define MAXLNS 50
 #define MAXCHR 500
+#define MAXNAME 30
+#define MAXLEN 100
 #define OPTSZE 5
 #define ENABLE 1
 #define DISABLE 0
@@ -29,42 +32,41 @@ int main(int argc, char **argv)
 	int numeric = DISABLE;
 	char opt[OPTSZE];
 	char fld[FLDSZE];
+	char f_name[MAXNAME];
 
 	for(s = 0, i = 1; i < argc; i++) {	//CREATE AN OPTION STR
-		for(p = 0; argv[i][p]; p++) {	//run on oneself argument
-			if(s >= OPTSZE) {
-				printf("Too many arguments\n");
-				return 0; }
-
-			if(argv[i][p] == '-') {
-			    if(argv[i][p + 1] == '-') {   //Write field name to fld[]
-			        for(f=0, d=p+2; f < FLDSZE && argv[i][d]; f++, d++) {
-				    fld[f] = argv[i][d]; }
-			    	fld[FLDSZE-1] = '\0';
-				if(strcmpr(fld, "txt", EMPTY) && strcmpr(fld, "num", EMPTY)){
-					printf("Wrong field name %s\n", fld);	
-					return -1; }
-				break;
-			    }
-			    else
-			        continue;
-		        }	    
-			else if(argv[i][p] == 'n')	//for numeric compare  
-				numeric = ENABLE;
-			else if(argv[i][p] == 'r')	//reversive compare
-				opt[s++] = 'r';
-			else if(argv[i][p] == 'l') 	//for register of letter doesn't matter
-				opt[s++] = 'l';
-			else if(argv[i][p] == 'd') 	//only letters, digits and spaces
-				opt[s++] = 'd';
-			else if(argv[i][p] == 'f') 	//sort by fields of strings
-				opt[s++] = 'f';
-			else {
-				printf("Unknown argument (%s)\n", argv[i]);
-				return -2;
-			}
-		}
+			if(argv[i][0] == '-') {
+			    for(p = 1; argv[i][p]; p++) {	//run on oneself argument
+			        if(argv[i][p] == '-') {   //Write field name to fld[]
+			            for(f=0, d=p+1; f < FLDSZE && argv[i][d]; f++, d++) {
+				        fld[f] = argv[i][d]; }
+			    	    fld[FLDSZE-1] = '\0';
+				    if(strcmpr(fld, "txt", EMPTY) && strcmpr(fld, "num", EMPTY)){
+					    printf("Wrong field name %s\n", fld);	
+					    return -1; }
+				    break;
+			        } else if(s >= OPTSZE) {
+				     printf("Too many arguments\n");
+				     return 0;
+				} else if(argv[i][p] == 'n') //for numeric compare  
+				     numeric = ENABLE;
+			        else if(argv[i][p] == 'r')	//reversive compare
+				    opt[s++] = 'r';
+			        else if(argv[i][p] == 'l') 	//for register of letter doesn't matter
+				    opt[s++] = 'l';
+			        else if(argv[i][p] == 'd') 	//only letters, digits and spaces
+				    opt[s++] = 'd';
+		   	        else if(argv[i][p] == 'f') 	//sort by fields of strings
+				    opt[s++] = 'f';
+			        else {
+				    printf("Unknown argument (%c)\n", argv[i][p]);
+				    return -2;
+			        }
+			   }
+		      } else
+			 strcpy(f_name, argv[i]); 
 	}
+
 	opt[s] = '\0';
 	if((nlines = input(matrix, MAXLNS)) > 0) {
 		qsrt((void**) matrix, 0, nlines - 1, opt,
@@ -80,47 +82,40 @@ int main(int argc, char **argv)
 	}
 }
 
-char *getln(int);
-
-int input(char *arr[], int max)
-{
-	char *p;
-	int i;
-	for(i=0; i < max; i++) {
-		if((p = getln(MAXCHR/MAXLNS))) {
-			if(*p == EOF)
-				break;
-			matrix[i] = p;
-		}
-		else {
-			i--; //Needed to change
-		}
-	}
-	return i;
-}
-
 char line[MAXCHR];
 char *ptr = line;
 
-char *getln(int max)
-{	
+int getln(char *, int);
+char getchr();
+void ungetchr(char);
+char *alloc(int);
+
+int input(char *lineptr[], int maxlines)
+{
+	int len, nlines;
+	char *p, line[MAXLEN];
+	nlines = 0;
+	while((len = getln(line, MAXLEN)) > 0)
+		if(nlines >= maxlines || (p = alloc(len)) == NULL)
+			return -1;
+		else {
+			strcpy(p, line);
+			lineptr[nlines++] = p;
+		}
+	return nlines;
+}
+
+int getln(char *src, int max)
+{
 	int i;
 	char c;
-	for(i = 0; i < max && (c = getchar()) != EOF && c !=  '\n'; i++) { 
-		*ptr++ = c;
-		i++;
-	}
-	if(*ptr == EOF)
-		return ptr;
-	else if(i <= 0) {
-		printf("Line is empty\n");
-		return NULL;
-	}
-	else if(*ptr == '\n') {
-		*ptr++ = '\0';
-		c++;
-	}
-	return ptr - i;
+	for(i = 0; i < max && (c = getchr()) != EOF && c != '\n'; i++)
+		src[i] = c;
+	if(c == '\n')
+		src[i] = '\0';
+	if(c == EOF)
+		return c;
+	return i;
 }
 
 void swap(void *[], int l, int r);
@@ -197,7 +192,7 @@ double counter(char *s, int lower)		//for calculating float equ of string
 	}
 	else {
 		while(*s) {
-			res += *s;}
+			res += *s++;}
 	}
 	return res;
 }
@@ -210,4 +205,34 @@ int reparce(char pat, char *src)	//for reparcing option string
 		else
 			src++;
 	return 0;
+}
+
+#define MAXBUF 50
+
+char buffer[MAXBUF];
+int cnt = 0;
+
+
+char getchr()
+{
+	if(cnt > 0)
+		return buffer[--cnt];
+	else
+		return getchar();
+}
+
+void ungetchr(char c)
+{
+	if(cnt >= MAXBUF) {
+		printf("Buffer is full\n");
+		return;
+	}
+	else
+		buffer[cnt++] = c;
+}
+
+char *alloc(int cnt)
+{
+	char *p;
+	return p = malloc(cnt);
 }
