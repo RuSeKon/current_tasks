@@ -2,6 +2,7 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Box.H>
+#include <FL/Fl_Button.H>
 
 struct controls {
     Fl_Radio_Round_Button *rb[3];
@@ -45,7 +46,7 @@ enum {
     letter_size = 90
 };
 
-main(int argc, char **argv)
+int main()
 {
     int win_w = button_w * 2 + spacing * 3;
     int win_h = option_h * 4 + spacing * 7;
