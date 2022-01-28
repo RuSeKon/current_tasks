@@ -4,7 +4,7 @@ template <class T>
 class SparseArrayInt {
 	struct Item {
 	int index;
-	int value;
+	T value;
 	Item *next;
 	}
 	Item *first;
