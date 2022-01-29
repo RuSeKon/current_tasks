@@ -3,6 +3,8 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Button.H>
+#include <FL/Fl_Radio_Round_Button.H>
+#include <FL/Fl_Check_Button.H>
 
 struct controls {
     Fl_Radio_Round_Button *rb[3];
@@ -11,7 +13,7 @@ struct controls {
 };
 
 static const int colors[] = { FL_RED, FL_GREEN, FL_BLUE };
-static const char *const colnames[] = { "red", "green", "blue" };
+static const char *const colnames[] = { "Red", "Green", "Blue" };
 
 static void set_callback(Fl_Widget *w, void *user)
 {
@@ -49,8 +51,8 @@ enum {
 int main()
 {
     int win_w = button_w * 2 + spacing * 3;
-    int win_h = option_h * 4 + spacing * 7;
-    Fl_Window *win = new Fl_Window(win_w, win_h, "buttons demo");
+    int win_h = option_h * 4 + button_h + spacing * 7;
+    Fl_Window *win = new Fl_Window(win_w, win_h, "Buttons demo");
     controls *ctrl = new controls;
 
     int i;
@@ -61,7 +63,7 @@ int main()
     }
     ctrl->cb = 
         new Fl_Check_Button(spacing, 5*spacing + 3*option_h,
-                                        option_w, option_h, "show letter");
+                                        option_w, option_h, "Show letter");
     int box_x = 2 * spacing + option_w;
     int box_w = 2 * button_w + spacing - option_w - spacing;
     int box_h = 4 * option_h + 4 * spacing;
@@ -71,7 +73,6 @@ int main()
     ctrl->box->box(FL_FLAT_BOX);
     
     int buttons_y = 6 * spacing + 4 * option_h;
-    
     Fl_Button *set_b = 
         new Fl_Button(spacing, buttons_y, button_w, button_h, "Set!");
     set_b->callback(set_callback, (void*)ctrl);
