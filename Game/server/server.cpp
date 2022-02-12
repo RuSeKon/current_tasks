@@ -2,13 +2,29 @@
 
 #include <list>
 #include <sys/socket.h>
-#include "server.hpp"
+#include "socket.hpp"
+
+#ifndef MAXGAMERNUMBER
+#define MAXGAMERNUMBER 10
+#endif 
+
 
 class GameSession;
 
+enum constants_to_server { no = 0, yes = 1, 
+    max_gamer_number = MAXGAMERNUMBER };
+
+///section for constant message initialization
+static const char already_playing_msg[] = {"Sorry, game is already started." 
+                        " You can play next round\n"}
+static const char welcome[] = {"Welcome to the game, you play-number: "};
+static const char player_joined[] = 
+
 class GameServer : public FdHandler {
     EventSelector *the_selector;
-    std::list<GameSession*> item;
+    std::list<GameSession*, int num> item;
+    int ready_to_game;
+    int state;
 
     GameServer(EventSelector *sel, int fd);
 public:
@@ -16,10 +32,13 @@ public:
     static GameServer *Start(EventSelector *sel, int port);
 
     RemoveSession(GameSession *s);
-    SendAll(); /////////////////////////
+    void SendAll(char *message, ChatSession* except);
+    void FormMessage(int templ, 
 private:
-    virtual void Handle(bool r, bool w);
+    virtual void Process(bool r, bool w);
 };
+
+
 GameServer::GameServer(EventSelector *sel, int fd)
         : FdHandler(fd), the_selector(sel)
 {
@@ -60,10 +79,15 @@ GameServer *GameServer::Start(EventSelector *sel, int port)
 void GameServer::RemoveSession(GameSession *s)
 {
     the_selector->Remove(s);
-    item.erase(s);
+    item.remove(s);
 }
 
-//void GameServer::SendAll//////////////
+void GameServer::SendAll(char *message, GameSession* except)
+{
+    for(const auto& a : item)
+        if(*a != except)
+        a->Send(message);
+}
 
 void GameServer::Process(bool r, bool w)
 {
@@ -75,32 +99,42 @@ void GameServer::Process(bool r, bool w)
     sd = accept(GetFd(), (struct sockaddr*) &addr, &len);
     if(sd == -1)
         return;
-    GameSession *p = new GameSession(this, sd);
-    item.push_back(p);
-
-    the_selector->Add(p);
+    if(item.size() >= max_gamer_number) {
+        write(sd, already_playing_msg, sizeof(already_playing_msg));
+        shutdown(sd, SHUT_RDWR);
+        close(sd);
+    } else {
+        GameSession *p = new GameSession(this, sd);
+        item.push_back(p);
+        the_selector->Add(p);
+        std::string mes = player_joined + 
+        SendAll(mes, p);
+        p->Send(form();
+    bool ignoring;
+    }
 }
 
 
-///////////////////////////////////////////////////////////////////////
+////////////////////////////SESSIONS///////////////////////////////////////////
 class GameSession : FdHandler {
     friend class GameServer;
 
-    char buffer[max_line_length+1]; //for messages
-    /* int buf_used;
-    bool ignoring;
+    std::string buffer; //for accumulate user sended data
+    int play_nmbr;
 
-    char *name; ///////// part for send data variabels*/
+    std::string name;  /* gamer name */
 
     GameServer *the_master;
 
     GameSession(GameServer *a_master, int fd);
     ~GameSession();
 
+    void Send(std::string message);
+
     /*in this part will be function for process session*/
 }; 
 
 GameSession::GameSession(GameServer *a_master, int fd)
-        : FdHandler(fd), ..... ////////
+        : FdHandler(fd), play_number(fd),  ..... ////////
 {}
 
