@@ -7,59 +7,16 @@ and other variables (after cast to *str) implicity on body of Send.
 */
 
 #include <sys/socket.h>
-#include "socket.hpp"
+#include "server.hpp"
 
 #ifndef MAXGAMERNUMBER
 #define MAXGAMERNUMBER 10
 #endif 
 
 
-class GameSession;
-
-enum int_constants_for_server { 
-    max_gamer_number = MAXGAMERNUMBER,
-    welcome_key = ,
-    player_joined_key =
-    //another key for send
-};
-
-
-//section for constant message initialization
-static const char alrdy_playing_msg[] = {"Sorry, game is already started." 
-                        " You can play next round\n"};
-static const char game_n_beg_msg[] = {"The game haven't started yet. Please wait\n"};
-static const char welcome[] = {"Welcome to the game, you play-number: "};
-//static const char player_joined[] = 
- 
-
-class GameServer : public FdHandler {
-    EventSelector *the_selector;
-    std::list<GameSession*, int num> item;  //maybe native C list?
-    struct item {
-        GameSession *s;
-        int number;
-        item* next;
-    }
-    item *first;
-    bool game_begun;
-
-    GameServer(EventSelector *sel, int fd);
-public:
-    ~GameServer();
-    static GameServer *Start(EventSelector *sel, int port);
-
-    RemoveSession(GameSession *s);
-    void SendAll(int key, ChatSession* except);
-    void SendAll(char *message);
-    void FormMessage(int templ, 
-private:
-    virtual void Process(bool r, bool w);
-};
-
-
 GameServer::GameServer(EventSelector *sel, int fd)
         : FdHandler(fd), the_selector(sel), game_begun(false),
-        first(0),
+        first(0), gamer_count(0)
 {
     the_selector->Add(this);
 }
@@ -111,6 +68,8 @@ void GameServer::RemoveSession(GameSession *s)
             *p = tmp->next;
             delete tmp->s;
             delete tmp;
+            gamer_counter--;
+
         }
     }
 }
@@ -122,7 +81,7 @@ void GameServer::SendAll(int key, GameSession* except)
         a->Send(key);
 }
 
-void GameServer::SendAll(char *message)
+void GameServer::SendAll(char *message, GameSession* except)
 {
     for(const auto& a : item)
         if(*a != except)
@@ -139,72 +98,74 @@ void GameServer::Process(bool r, bool w)
     sd = accept(GetFd(), (struct sockaddr*) &addr, &len);
     if(sd == -1)
         return;
-    if(item.size() >= max_gamer_number) {
+    if(++gamer_counter >= max_gamer_number) {//session in this case not creating
         write(sd, already_playing_msg, sizeof(already_playing_msg));
         shutdown(sd, SHUT_RDWR);
         close(sd);
     } else {
-        GameSession *p = new GameSession(this, sd);
-        item.push_back(p);
-        the_selector->Add(p);
-        /* SendAll(mes, p);
-        p->Send(form();////need change///// */
-    bool ignoring;
+        item *tmp = new item;
+        item->s = new GameSession(this, sd, gamer_counter);
+        item->next = first;
+        first = item;
+        the_selector->Add(tmp->s);
+        SendAll(player_joined_key);
+        //p->Send();////need change///// */
     }
+    if(game_begun == false)
+        if(gamer_counter >= max_gamer_number)
+            GameStart();    //Needed implementation!!!!!
 }
 
-
 ////////////////////////////SESSIONS///////////////////////////////////////////
-class GameSession : FdHandler {
-    friend class GameServer;
-
-    std::string buffer; //for accumulate user sended data
-    int play_nmbr;
-    std::string name;  /* gamer name */
-    GameServer *the_master;
-
-    GameSession(GameServer *a_master, int fd);
-    ~GameSession();
-
-    void Process(bool r, bool w);
-    void Send(int key);
-    void Send(char *message);
-
-    /*in this part will be function for process session*/
-}; 
-
-GameSession::GameSession(GameServer *a_master, int fd)
-        : FdHandler(fd), play_number(fd),  ..... ////////
-{}
+GameSession::GameSession(GameServer *a_master, int fd, int pl_nmbr)
+        : FdHandler(fd), the_master(a_master), play_nmbr(pl_nmbr),
+        name(nullptr)
+{
+    Send("Your welcome! Enter you name...");
+}
 
 
 void GameSession::Process(bool r, bool w)
 {
     if(!r)
         return;
+    /*
     if(the_master->game_begun == false) {
         write(GetFd(), game_n_beg_msg, sizeof(game_n_beg_msg));
         return;
     }
+    */
+    
 }
 
-void FormStr(char *src)
-{}
 
-void GameSession::Send(int key)
+char *GameSession::FormStr(int key)
 {
+    char *res;
     switch(key) {
         welcome_key:
-            break; 
+            if((res = (char *)malloc(sizeof(welcome)+max_name+3)) == NULL) 
+                return NULL;
+            sprintf(res, welcome, name, play_nmbr);
+            return res;
         player_joined_key:
-            break;
+            if((res = (char *)malloc(sizeof(welcome_all)+max_name+3)) == NULL)
+                return NULL;
+            sprintf(res, welcome_all, name, play_nmbr);
+            return res;
         default:
-            the_master->SendAll("Unexpected behavior from server: 
-                                        unexpected key for Send\n");
+            the_master->SendAll("Unexpected behavior from server: "
+                                        "unexpected key for Send\n");
     }
 }        
 
-void Send(char *message)
+void GameSession::Send(int key)
+{
+    char *mes = FormStr(key);
+    write(GetFd(), mes, sizeof(mes));
+}
+
+void GameSession::Send(char *message)
 {
     write(GetFd(), message, sizeof(message));
 }
