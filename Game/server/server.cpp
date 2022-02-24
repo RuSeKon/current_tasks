@@ -1,18 +1,17 @@
 /* 
 ----In this part of server defined work with client sessions----
 
-    In this implementation I use a key parametr for method "Send". In this case
-it provide me opportunity to form output string consist from string, int values,
-and other variables (after cast to *str) implicity on body of Send.
+    In this implementation I use a key parametr for method "Send". It provide
+me opportunity to form output string consist from string, int values,and other
+variables (after cast to *str) implicity on body of Send.
 */
 
 #include <sys/socket.h>
 #include "server.hpp"
 
-#ifndef MAXGAMERNUMBER
-#define MAXGAMERNUMBER 10
-#endif 
+ 
 
+/////////////////////////////////////////SERVER//////////////////////////////////////
 
 GameServer::GameServer(EventSelector *sel, int fd)
         : FdHandler(fd), the_selector(sel), game_begun(false),
@@ -98,7 +97,7 @@ void GameServer::Process(bool r, bool w)
     sd = accept(GetFd(), (struct sockaddr*) &addr, &len);
     if(sd == -1)
         return;
-    if(++gamer_counter >= max_gamer_number) {//session in this case not creating
+    if(++gamer_counter >= max_gamer_number) {       //session not creating
         write(sd, already_playing_msg, sizeof(already_playing_msg));
         shutdown(sd, SHUT_RDWR);
         close(sd);
@@ -108,18 +107,20 @@ void GameServer::Process(bool r, bool w)
         item->next = first;
         first = item;
         the_selector->Add(tmp->s);
+
         SendAll(player_joined_key);
-        //p->Send();////need change///// */
+        p->Send(welcome_key);
     }
     if(game_begun == false)
         if(gamer_counter >= max_gamer_number)
-            GameStart();    //Needed implementation!!!!!
+            GameLaunch();    //Needed implementation!!!!!
 }
 
 ////////////////////////////SESSIONS///////////////////////////////////////////
+
 GameSession::GameSession(GameServer *a_master, int fd, int pl_nmbr)
-        : FdHandler(fd), the_master(a_master), play_nmbr(pl_nmbr),
-        name(nullptr)
+        : FdHandler(fd), buffer(nullptr), buf_used(0), play_nmbr(pl_nmbr), 
+        name(nullptr), the_master(a_master) 
 {
     Send("Your welcome! Enter you name...");
 }
@@ -134,6 +135,7 @@ void GameSession::Process(bool r, bool w)
         write(GetFd(), game_n_beg_msg, sizeof(game_n_beg_msg));
         return;
     }
+    ///Here data from player came, and we need to processe them and send to Game class///
     */
     
 }
@@ -144,13 +146,11 @@ char *GameSession::FormStr(int key)
     char *res;
     switch(key) {
         welcome_key:
-            if((res = (char *)malloc(sizeof(welcome)+max_name+3)) == NULL) 
-                return NULL;
+            res = new char[sizeof(welcome)+max_name+3]; 
             sprintf(res, welcome, name, play_nmbr);
             return res;
         player_joined_key:
-            if((res = (char *)malloc(sizeof(welcome_all)+max_name+3)) == NULL)
-                return NULL;
+            res = new char[sizeof(welcome_all)+max_name+3];
             sprintf(res, welcome_all, name, play_nmbr);
             return res;
         default:
@@ -163,6 +163,7 @@ void GameSession::Send(int key)
 {
     char *mes = FormStr(key);
     write(GetFd(), mes, sizeof(mes));
+    delete mes[];
 }
 
 void GameSession::Send(char *message)
