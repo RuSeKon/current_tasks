@@ -109,7 +109,8 @@ void GameServer::Process(bool r, bool w)
         SendAll(player_joined_key, tmp->session);
         tmp->session->Send(welcome_key);
     }
-   ////ABOUT GAME LAUNCH/////////
+    if(gamer_counter == max_gamer_number)
+        game_begun = true;
 }
 
 ////////////////////////////SESSIONS///////////////////////////////////////////
@@ -137,7 +138,7 @@ void GameSession::Process(bool r, bool w)
 }
 
 
-char *GameSession::FormStr(int key)
+char *GameSession::FormStr(int key) ///Need attantion
 {
     char *res;
     switch(key) {
