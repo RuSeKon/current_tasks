@@ -1,32 +1,27 @@
 /* 
 ----In this part of server defined work with client sessions----
-
-    In this implementation I use a key parametr for method "Send". It provide
-me opportunity to form output string consist from string, int values,and other
-variables (after cast to *str) implicity on body of Send.
 */
+
 
 #include <sys/socket.h>
 #include "server.hpp"
-
  
 
 /////////////////////////////////////////SERVER//////////////////////////////////////
 
 GameServer::GameServer(EventSelector *sel, int fd)
-        : FdHandler(fd), the_selector(sel), game_begun(false),
-        first(0), gamer_count(0)
+        : FdHandler(fd), the_selector(sel), itemHandler(nullptr), 
+        gamer_counter(0), game_begun(false) 
 {
     the_selector->Add(this);
 }
 
 GameServer::~GameServer()
 {
-    while(first) {
-        item *tmp = first;
-        first = first->next;
-        the_selector->Remove(tmp->s);
-        delete tmp->s;
+    while(itemHandler) {
+        item *tmp = itemHandler;
+        itemHandler = itemHandler->next;
+        the_selector->Remove(tmp->session);
         delete tmp;
     }
     the_selector->Remove(this);
@@ -34,86 +29,87 @@ GameServer::~GameServer()
 
 GameServer *GameServer::Start(EventSelector *sel, int port)
 {
-    int ls, opt, res;
     struct sockaddr_in addr;
 
-    ls = socket(AF_INET, SOCK_STREAM, 0);
+    int ls = socket(AF_INET, SOCK_STREAM, 0);
     if(ls == -1)
-        return 0;
+        return nullptr;
 
-    opt = 1;
+    int opt = 1;
     setsockopt(ls, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
     addr.sin_port = htons(port);
-    res = bind(ls, (struct sockaddr*) &addr, sizeof(addr));
+
+    int res = bind(ls, (struct sockaddr*) &addr, sizeof(addr));
     if(res == -1)
-        return 0;
+        return nullptr;
 
     res = listen(ls, 16);
     if(res == -1)
-        return 0;
+        return nullptr;
     return new GameServer(sel, ls);
 }
 
 void GameServer::RemoveSession(GameSession *s)
 {
     the_selector->Remove(s);
-    item **p;
-    for(p = &first; *p; p = &((*p)->next)) {
-        if((*p)->s == s) {
-            item *tmp = *p;
-            *p = tmp->next;
-            delete tmp->s;
-            delete tmp;
+    for(item **tmp = &first; *tmp; tmp = &((*tmp)->next)) {
+        if((*tmp)->session == s) {
+            item *p = *tmp;
+            *tmp = p->next;
+            delete p->session;
+            delete p;
             gamer_counter--;
-
+            return;
         }
     }
 }
 
+/*
+In this implementation I use a key parametr for methods like Send. It provide
+me opportunity to form output string consist from string, int values,and other
+variables (after cast to *str) implicity on body of Send. */
 void GameServer::SendAll(int key, GameSession* except)
 {
-    for(const auto& a : item)
-        if(*a != except)
-        a->Send(key);
+    for(item tmp = itemHandler; tmp != nullptr; tmp = tmp->next)
+        if(tmp->session != except)
+            tmp->session->Send(key);
 }
 
 void GameServer::SendAll(char *message, GameSession* except)
 {
-    for(const auto& a : item)
-        if(*a != except)
-        a->Send(message);
+    for(item tmp = itemHandler; tmp != nullptr; tmp = tmp->next)
+        if(tmp->session != except)
+            tmp->session->Send(message);
 }
 
 void GameServer::Process(bool r, bool w)
 {
-    if(!r)
+    if(!r)  //Explantation on README
         return;
-    int sd;
+    int session_descriptor;
     struct sockaddr_in addr;
     socklen_t len = sizeof(addr);
-    sd = accept(GetFd(), (struct sockaddr*) &addr, &len);
-    if(sd == -1)
+    session_descriptor = accept(GetFd(), (struct sockaddr*) &addr, &len);
+    if(session_descriptor == -1)
         return;
     if(++gamer_counter >= max_gamer_number) {       //session not creating
-        write(sd, already_playing_msg, sizeof(already_playing_msg));
-        shutdown(sd, SHUT_RDWR);
-        close(sd);
+        write(session_descriptor, already_playing_msg, sizeof(already_playing_msg));
+        shutdown(session_descriptor, SHUT_RDWR);
+        close(session_descriptor);
     } else {
-        item *tmp = new item;
-        item->s = new GameSession(this, sd, gamer_counter);
-        item->next = first;
-        first = item;
-        the_selector->Add(tmp->s);
+        item *tmp = new item(gamer_counter);
+        tmp->session = new GameSession(this, sd, gamer_counter);
+        tmp->next = itemHandler;
+        itemHandler = tmp;
+        the_selector->Add(tmp->session);
 
-        SendAll(player_joined_key);
-        p->Send(welcome_key);
+        SendAll(player_joined_key, tmp->session);
+        tmp->session->Send(welcome_key);
     }
-    if(game_begun == false)
-        if(gamer_counter >= max_gamer_number)
-            GameLaunch();    //Needed implementation!!!!!
+   ////ABOUT GAME LAUNCH/////////
 }
 
 ////////////////////////////SESSIONS///////////////////////////////////////////

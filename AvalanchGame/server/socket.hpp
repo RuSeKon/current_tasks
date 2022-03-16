@@ -20,7 +20,7 @@ class EventSelector {
     int max_fd;
     bool quit_flag;
 public:
-    EventSelector() : fd_array(0), quit_flag(false) {}
+    EventSelector() : fd_array(nullptr), quit_flag(false) {}
     ~EventSelector();
 
     void Add(FdHandler *h);

@@ -1,5 +1,5 @@
-#ifndef SERVERHPPINCLUDE
-#define SERVERHPPINCLUDE
+#ifndef SERVERHPPSENTRY
+#define SERVERHPPSENTRY
 
 #include <socket.hpp>
 
@@ -7,14 +7,7 @@
 #define MAXGAMERNUMBER 10
 #endif
 
-enum int_constants_for_server { 
-    max_gamer_number = MAXGAMERNUMBER,
-    max_name = 10,
-    welcome_key = 0,
-    player_joined_key = 1,
 
-   //another key for send
-};
 
 /* Section for constant message initialization!!! */
 
@@ -27,39 +20,52 @@ static const char welcome_all[] = {"%s number %d joined to the game!\n"};
 
 class GameSession;
 
+enum ConstantsForServer { 
+    max_gamer_number = MAXGAMERNUMBER,
+    max_name = 10,
+};
+struct item {
+        GameSession *session;
+        const int number; //Gamer number should not be changed
+        item* next;
 
-/*  In 
-*/ 
+        item(int fd) : session(nullptr), number(fd), next(nullptr) {}
+        item() = delete; //Because number must be initialized
+        ~item() noexcept {if(session) delete session;}
+}
 class GameServer : public FdHandler {
     EventSelector *the_selector;
-    struct item {
-        GameSession *s;
-        int number;
-        item* next;
-    }
-    item *first;
-
-    int gamer_count;
     
+    item *itemHandler;
+
+    int gamer_counter;
     bool game_begun;
 
-    GameServer(EventSelector *sel, int fd);
+    /*Private constructor will use on method Start. For prevent unexpected GameServer construction, 
+    because Sever should be one*/
+    GameServer(EventSelector *sel, int fd); 
 public:
+    GameServer() = delete;
     ~GameServer();
     static GameServer *Start(EventSelector *sel, int port);
 
     RemoveSession(GameSession *s);
-    void SendAll(int key, ChatSession* except);
-    void SendAll(char *message);
-    void GameLaunch(); ///////Needed parametrs//////
+    void SendAll(int key, GameSession* except);
+    void SendAll(char *message, GameSession* except);
+  ///  void GameLaunch(); ///////Needed parameters//////
 private:
     virtual void Process(bool r, bool w);
 };
 
 
-/* SERVERS IMPLEMENTATIONS OF USER SESSION 
-*/ 
+//Keys for Send methods
+enum keys { 
+    welcome_key = 0,
+    player_joined_key = 1,
+   //another key for send
+}
 
+/* SERVERS IMPLEMENTATIONS OF USER SESSION */
 class GameSession : FdHandler {
     friend class GameServer;
 

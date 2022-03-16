@@ -7,7 +7,6 @@ sockets and file descriptors directly */
 
 #include "socket.hpp"
 
-
 FdHandler::~FdHandler()
 {
     close(fd);
