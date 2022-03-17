@@ -1,7 +1,10 @@
+/* 
+----In this part of server defined work with client sessions----
+*/
 #ifndef SERVERHPPSENTRY
 #define SERVERHPPSENTRY
 
-#include <socket.hpp>
+#include <application.hpp>
 
 #ifndef MAXGAMERNUMBER
 #define MAXGAMERNUMBER 10
@@ -10,28 +13,35 @@
 
 
 /* Section for constant message initialization!!! */
-
-static const char alrdy_playing_msg[] = {"Sorry, game is already started." 
-                        " You can play next round\n"};
-static const char game_n_beg_msg[] = {"The game haven't started yet. Please wait:)\n"};
+//GameServer strings//
+static const char already_playing_msg[] = {"Sorry, game is already started." 
+                        " You can play next one\n"};
 static const char welcome[] = {"Welcome to the game %s, you play-number: %d\n"};
 static const char welcome_all[] = {"%s number %d joined to the game!\n"};
 
+//GameSession strings//
+static const char game_n_beg_msg[] = {"The game haven't started yet. Please wait:)\n"};
 
+
+//////////////////////////////////////////////////////////////////////////////////////
 class GameSession;
 
 enum ConstantsForServer { 
     max_gamer_number = MAXGAMERNUMBER,
     max_name = 10,
 };
+
 struct item {
         GameSession *session;
-        const int number; //Gamer number should not be changed
+        
         item* next;
 
         item(int fd) : session(nullptr), number(fd), next(nullptr) {}
         item() = delete; //Because number must be initialized
         ~item() noexcept {if(session) delete session;}
+        int GetNumber() const {return number;}
+private:
+        const int number; //Gamer number should not be changed
 }
 class GameServer : public FdHandler {
     EventSelector *the_selector;
@@ -40,6 +50,7 @@ class GameServer : public FdHandler {
 
     int gamer_counter;
     bool game_begun;
+    static bool serverRun{false};
 
     /*Private constructor will use on method Start. For prevent unexpected GameServer construction, 
     because Sever should be one*/
@@ -47,7 +58,7 @@ class GameServer : public FdHandler {
 public:
     GameServer() = delete;
     ~GameServer();
-    static GameServer *Start(EventSelector *sel, int port);
+    static GameServer *ServerStart(EventSelector *sel, int port);
 
     RemoveSession(GameSession *s);
     void SendAll(int key, GameSession* except);
@@ -58,24 +69,30 @@ private:
 };
 
 
-//Keys for Send methods
-enum keys { 
+//Keys for form Send massages
+enum serverKeys { 
     welcome_key = 0,
     player_joined_key = 1,
-   //another key for send
 }
 
 /* SERVERS IMPLEMENTATIONS OF USER SESSION */
+
 class GameSession : FdHandler {
     friend class GameServer;
+    GameServer *the_master;
 
     char *buffer;
     int buf_used;
     
     int play_nmbr;
+
+    //Game resources
+    int factories;
+    int rawMaterial;
+    int product;
+    int money;
     
     char *name;
-    GameServer *the_master;
 
     GameSession(GameServer *a_master, int fd, int pl_nmbr);
     ~GameSession();
@@ -83,10 +100,7 @@ class GameSession : FdHandler {
     void Process(bool r, bool w);
     void Send(int key);
     void Send(char *message);
-    char *FormStr(char *);
+    char* FormStr(char*);
 };
-
-/* Game is the implementation of high level protocol
-for organization logic of the Game */
 
 #endif

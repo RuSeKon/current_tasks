@@ -5,7 +5,7 @@ sockets and file descriptors directly */
 #include <cerrno>
 #include <unistd.h>
 
-#include "socket.hpp"
+#include <application.hpp>
 
 FdHandler::~FdHandler()
 {
@@ -85,6 +85,11 @@ void EventSelector::Run()
                 if(r || w)
                     fd_array[i]->Process(r, w);
             }
+            ///////////////////////////////////
+            //////////////////////////////////
+            //////GAME LOGIC HERE/////////////
+            /////////////////////////////////
+            /////////////////////////////////
         }
     } while(!quit_flag);
 }
