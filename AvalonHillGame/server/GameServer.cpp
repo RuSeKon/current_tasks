@@ -1,7 +1,9 @@
-
 #include <sys/socket.h>
-#include "server.hpp"
-#include "application.hpp"
+#include <cstdio>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include "server.h"
+#include "application.h"
  
 
 /////////////////////////////////////////SERVER//////////////////////////////////////
@@ -57,7 +59,7 @@ GameServer *GameServer::ServerStart(EventSelector *sel, int port)
 void GameServer::RemoveSession(GameSession *s)
 {
     the_selector->Remove(s);
-    for(item **tmp = &first; *tmp; tmp = &((*tmp)->next)) {
+    for(item **tmp = &itemHandler; *tmp; tmp = &((*tmp)->next)) {
         if((*tmp)->session == s) {
             item *p = *tmp;
             *tmp = p->next;
@@ -81,14 +83,14 @@ void GameServer::SendAll(int key, GameSession* except)
         SendAll(res, except);
     }
 
-    for(item tmp = itemHandler; tmp != nullptr; tmp = tmp->next)
+    for(item *tmp = itemHandler; tmp != nullptr; tmp = tmp->next)
         if(tmp->session != except)
             tmp->session->Send(key);
 }
 
 void GameServer::SendAll(char *message, GameSession* except)
 {
-    for(item tmp = itemHandler; tmp != nullptr; tmp = tmp->next)
+    for(item *tmp = itemHandler; tmp != nullptr; tmp = tmp->next)
         if(tmp->session != except)
             tmp->session->Send(message);
 }
@@ -109,7 +111,7 @@ void GameServer::Process(bool r, bool w)
         close(session_descriptor);
     } else {
         item *tmp = new item(gamer_counter);
-        tmp->session = new GameSession(this, sd, gamer_counter);
+        tmp->session = new GameSession(this, session_descriptor, gamer_counter);
         tmp->next = itemHandler;
         itemHandler = tmp;
         ++gamer_counter;

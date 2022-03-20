@@ -1,6 +1,10 @@
 #include <sys/socket.h>
+#include <cstdio>
+#include <unistd.h>
+#include <arpa/inet.h>
 #include "server.hpp"
-#icnlude <cstdio>
+#include <application.h>
+
 
 
 ////////////////////////////SESSIONS/////////////////////////////////////////////////////
