@@ -1,8 +1,6 @@
 #include "markov.h"
 #include <iostream>
 
-
-
 std::string NONWORD{"\0"};
 
 Tab statetab;
