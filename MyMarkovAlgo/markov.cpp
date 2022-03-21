@@ -1,63 +1,102 @@
-#include "markov.hpp"
+/* Implementation */
+#include "markov.h"
+#include <string>
 
-using std::string;
-
-/////////////////////////////////////////////////
-Prefix::Prefix(Prefix const& src)
-        : size(src.size)
+/////////////////////////////  Prefix  //////////////////////////////
+Prefix::Prefix(std::string& src)
 {
-    arr = new string[size];
-    for(int i = 0; i < size; i++)
-        arr[i] = src.arr[i];
+    for(int i=0; i < NPREF; i++)
+        container[i] = src;
 }
 
-Prefix& operator=(Prefix& src)
+Prefix::Prefix(const Prefix& src)
 {
-    for(int i = 0; i < size; i++) {
-        if(i < src.size) {
-            arr[i] = src.arr[i];
-        } else
-            delete arr[i];
+    for(int i=0; i < NPREF; i++)
+        container[i] = src.container[i];
+}
+
+bool Prefix::operator==(const Prefix& src) const
+{
+    for(int i=0; i < NPREF; i++)
+        if(container[i] != src.container[i])
+            return false;
+    return true;
+}
+
+const std::string& Prefix::operator[](int indx) const
+{
+    if(indx >= NPREF || indx < 0)
+        throw std::out_of_range("Prefix"); /////NEED ATENTION
+    return container[indx];
+}
+
+void Prefix::push_back(const std::string& src)
+{
+    for(int i=0; i < NPREF-1; i++)
+        container[i] = std::move(container[i+1]);
+    container[NPREF-1] = src;
+}
+
+/////////////////////////////  Point  ///////////////////////////////
+
+Point::~Point()
+{
+    Suffix* tmp;
+    while(suf)
+    {
+        tmp = suf;
+        suf = suf->next;
+        delete tmp;
     }
-    return this;
+}
+        
+void Point::add_suffix(const std::string& src)
+{
+    Suffix *s = new Suffix;
+    s->word = src;
+    s->next = suf;
+    suf = s;
+    sufCount++;
 }
 
-string& Prefix::operator[](int index)
+const std::string& Point::getSuf(int indx) const
 {
-    if(index >= size)
-        return arr+(size-1); //return last element
-    return arr+index; 
+    if(indx > sufCount || indx < 0)
+        throw std::out_of_range("GetSuf"); //NEED ATENTION
+    
+    Suffix* tmp = suf;
+    for(int i=1; i < indx; i++)
+       tmp = tmp->next;
+    return tmp->word;
 }
 
-void Prefix::push_back(string suf)
-{
-    delete arr[0];
+/////////////////////////////  Tab  /////////////////////////////////
 
-    for(int i=0; i < size-1; i++)
-        arr[i] = std::move(arr[i+1]);
-    arr[size-1] = suf;
+unsigned Tab::hash(const Prefix& src)
+{
+    unsigned res{0};
+
+    for(int i=0; i < NPREF; i++)
+        for(auto x : src[i])
+            res = MULTIPLIER * res + x; //MULTIPLIER from Kernighan's book    
+    return res % TABSIZE;               // for hashing string key
 }
 
-
-/////////////////////////////////////////////////
-
-Suffix::~Suffix()
+Point* Tab::lookup(const Prefix& src)
 {
+    Point* tmp;
 
-
-
-
-/////////////////////////////////////////////
-
-
-
-void HashTable::add(Prefix& pref, string suf)
-{
-    State *p;
-
-    p = lookup(pref, 1);
-    p->addsuffix(suf);
-    pref.push_back(suf);
+    unsigned h = hash(src);
+    for(tmp = table[h]; tmp; tmp = tmp->next)
+        if(tmp->getPref() == src)
+            return tmp;
+    tmp = new Point(src);
+    tmp->next = table[h];
+    table[h] = tmp;
+    return tmp;
 }
 
-
+Point& Tab::operator[](const Prefix& indx)
+{
+    return *(lookup(indx));
+}

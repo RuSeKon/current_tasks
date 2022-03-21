@@ -4,7 +4,7 @@
 #ifndef SERVERHPPSENTRY
 #define SERVERHPPSENTRY
 
-#include <application.hpp>
+#include "application.h"
 
 #ifndef MAXGAMERNUMBER
 #define MAXGAMERNUMBER 10
@@ -36,13 +36,14 @@ struct item {
         
         item* next;
 
-        item(int fd) : session(nullptr), number(fd), next(nullptr) {}
+        item(int fd) : session(nullptr), next(nullptr), number(fd) {}
         item() = delete; //Because number must be initialized
         ~item() noexcept {if(session) delete session;}
         int GetNumber() const {return number;}
 private:
-        const int number; //Gamer number should not be changed
-}
+        const int number;
+};
+
 class GameServer : public FdHandler {
     EventSelector *the_selector;
     
@@ -50,7 +51,7 @@ class GameServer : public FdHandler {
 
     int gamer_counter;
     bool game_begun;
-    static bool serverRun{false};
+    static bool serverRun;
 
     /*Private constructor will use on method Start. For prevent unexpected GameServer construction, 
     because Sever should be one*/
@@ -60,7 +61,7 @@ public:
     ~GameServer();
     static GameServer *ServerStart(EventSelector *sel, int port);
 
-    RemoveSession(GameSession *s);
+    void RemoveSession(GameSession *s);
     void SendAll(int key, GameSession* except);
     void SendAll(char *message, GameSession* except);
   ///  void GameLaunch(); ///////Needed parameters//////
@@ -73,7 +74,7 @@ private:
 enum serverKeys { 
     welcome_key = 0,
     player_joined_key = 1,
-}
+};
 
 /* SERVERS IMPLEMENTATIONS OF USER SESSION */
 
