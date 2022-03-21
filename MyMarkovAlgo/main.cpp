@@ -7,7 +7,7 @@ std::string NONWORD{"\0"};
 
 Tab statetab;
 
-#ifdef PRINTPOINT 
+#if DEBUG==2 
 void print_point(const Prefix& src)
 {
     std::cout << "///////POINT///////" << std::endl;
@@ -29,7 +29,7 @@ int main()
 
     build(initPrefix, std::cin);
     add(initPrefix, NONWORD);
-#ifdef DEBUG
+#if DEBUG
     std::cout<<"Creation complete!\n";
 #endif
     generate(MAXGEN);
@@ -50,7 +50,7 @@ void build(Prefix& pref, std::istream& is)
 void add(Prefix& pref, std::string& suf)
 {
     statetab[pref].add_suffix(suf);
-#ifdef PRINTPOINT 
+#if DEBUG==2 
     print_point(statetab[pref].getPref());
 #endif
     pref.push_back(suf);
@@ -66,8 +66,8 @@ void generate(int maxgen)
 
         const std::string& s = tmp.getSuf(h);
         if(s == NONWORD) {
-#ifdef DEBUG
-            std::cout << std::endl << "I: " << i << std::endl;
+#if DEBUG
+            std::cout << std::endl << "--- i ---: " << i << std::endl;
 #endif
             return;
         }
@@ -75,6 +75,6 @@ void generate(int maxgen)
         pref.push_back(s);
     }
 #ifdef DEBUG
-    std::cout << "IIIIIIIIIIIIIIII: " << i << std::endl;
+    std::cout << std::endl << "--- i ---: " << i << std::endl;
 #endif 
 }
