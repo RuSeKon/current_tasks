@@ -26,14 +26,18 @@ int main()
 {
 
     Prefix initPrefix{NONWORD};
-
+    try {
     build(initPrefix, std::cin);
     add(initPrefix, NONWORD);
 #if DEBUG
     std::cout<<"Creation complete!\n";
 #endif
     generate(MAXGEN);
-    std::cout << std::endl;
+    }
+    catch(const std::out_of_range& a)
+    {
+        std::cerr << "OUT_OF_RANGE: " << a.what() << std::endl;
+    }
     return 0;
 }
 
@@ -69,11 +73,13 @@ void generate(int maxgen)
 #if DEBUG
             std::cout << std::endl << "--- i ---: " << i << std::endl;
 #endif
+            std::cout << std::endl;
             return;
         }
         std::cout << s << " "; //NEED ATENTION
         pref.push_back(s);
     }
+    std::cout << std::endl;
 #ifdef DEBUG
     std::cout << std::endl << "--- i ---: " << i << std::endl;
 #endif 
