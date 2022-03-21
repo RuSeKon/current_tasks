@@ -11,8 +11,8 @@
 #TABSIZE - size of table for store letters combinations (the size of the table determines 
 #the performance on large input data) / default 4096;
 #
-#DEBUG - define during compilation for turn on debug print. If turn value to 2 or more also 
-# turning on print of each point during creation table elements;
+#DEBUG - define during compilation for turn on debug print. If you change the value to 2 or more, also 
+# enable printing of each Point during creation table elements;
 
 
 
