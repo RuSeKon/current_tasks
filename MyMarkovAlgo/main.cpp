@@ -5,7 +5,7 @@ std::string NONWORD{"\0"};
 
 Tab statetab;
 
-#if DEBUG==2 
+#if DEBUG >= 2 
 void print_point(const Prefix& src)
 {
     std::cout << "///////POINT///////" << std::endl;
@@ -52,7 +52,7 @@ void build(Prefix& pref, std::istream& is)
 void add(Prefix& pref, std::string& suf)
 {
     statetab[pref].add_suffix(suf);
-#if DEBUG==2 
+#if DEBUG >= 2 
     print_point(statetab[pref].getPref());
 #endif
     pref.push_back(suf);
