@@ -1,13 +1,11 @@
 #include "markov.h"
 #include <iostream>
 
-
-
 std::string NONWORD{"\0"};
 
 Tab statetab;
 
-#ifdef PRINTPOINT 
+#if DEBUG >= 2 
 void print_point(const Prefix& src)
 {
     std::cout << "///////POINT///////" << std::endl;
@@ -26,14 +24,18 @@ int main()
 {
 
     Prefix initPrefix{NONWORD};
-
+    try {
     build(initPrefix, std::cin);
     add(initPrefix, NONWORD);
-#ifdef DEBUG
+#if DEBUG
     std::cout<<"Creation complete!\n";
 #endif
     generate(MAXGEN);
-    std::cout << std::endl;
+    }
+    catch(const std::out_of_range& a)
+    {
+        std::cerr << "OUT_OF_RANGE: " << a.what() << std::endl;
+    }
     return 0;
 }
 
@@ -50,7 +52,7 @@ void build(Prefix& pref, std::istream& is)
 void add(Prefix& pref, std::string& suf)
 {
     statetab[pref].add_suffix(suf);
-#ifdef PRINTPOINT 
+#if DEBUG >= 2 
     print_point(statetab[pref].getPref());
 #endif
     pref.push_back(suf);
@@ -66,15 +68,17 @@ void generate(int maxgen)
 
         const std::string& s = tmp.getSuf(h);
         if(s == NONWORD) {
-#ifdef DEBUG
-            std::cout << std::endl << "I: " << i << std::endl;
+#if DEBUG
+            std::cout << std::endl << "--- i ---: " << i << std::endl;
 #endif
+            std::cout << std::endl;
             return;
         }
         std::cout << s << " "; //NEED ATENTION
         pref.push_back(s);
     }
+    std::cout << std::endl;
 #ifdef DEBUG
-    std::cout << "IIIIIIIIIIIIIIII: " << i << std::endl;
+    std::cout << std::endl << "--- i ---: " << i << std::endl;
 #endif 
 }

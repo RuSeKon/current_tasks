@@ -26,7 +26,7 @@ bool Prefix::operator==(const Prefix& src) const
 const std::string& Prefix::operator[](int indx) const
 {
     if(indx >= NPREF || indx < 0)
-        throw std::out_of_range("Prefix"); /////NEED ATENTION
+        throw std::out_of_range("Invalid index in Prefix");
     return container[indx];
 }
 
@@ -62,7 +62,7 @@ void Point::add_suffix(const std::string& src)
 const std::string& Point::getSuf(int indx) const
 {
     if(indx > sufCount || indx < 0)
-        throw std::out_of_range("GetSuf"); //NEED ATENTION
+        throw std::out_of_range("Invalid index in Suffix");
     
     Suffix* tmp = suf;
     for(int i=1; i < indx; i++)
