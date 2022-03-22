@@ -66,7 +66,7 @@ public:
     void SendAll(char *message, GameSession* except);
   ///  void GameLaunch(); ///////Needed parameters//////
 private:
-    virtual void Process(bool r, bool w);
+    void Process(bool r, bool w);
 };
 
 
