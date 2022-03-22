@@ -13,7 +13,7 @@ GameSession::GameSession(GameServer *a_master, int fd, int pl_nmbr)
         : FdHandler(fd), the_master(a_master), buffer(nullptr), buf_used(0),
           play_nmbr(pl_nmbr), factories(2), rawMaterial(4), money(10000)
 {
-    Send("Your welcome! Enter you name...");
+    Send("Your welcome! Enter you name...\n");
 }
 
 
