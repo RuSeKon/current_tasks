@@ -13,39 +13,20 @@
 int main(int argc, char **argv)
 {
     int port;
-    char *serv_ip;
+    char *server_ip;
 
+    std::cout << "            ----Welcome to the Manager game from Avalon Hill!!!!----"
     //Here i must to process input hostname and port
-    if(argc < 3) {
-        std::cout << "Please enter server ip and port to connection!\n";
-        if(argc < 2) {
-            std::cout << "Enter server ip (example: 192.168.0.1): ";
-            std::cin >> tmp;
-            Memove(serv_ip, tmp.c_str(), tmp(size));
-            std::cout << "Enter server port: ";
-            std::cin >> port;
-        } else {
-            if(is_addres(argv[1])) {
-                Memove(serv_ip, argv[1], strlen(argv[1]));
-                std::cout << "Enter server port: ";
-                std::cin >> port;
-            } else {
-                port = atoi(argv[1]);
-                std::cout << "Enter server ip (example: 192.168.0.1): ";
-                std::cin >> tmp;
-                Memove(serv_ip, tmp.c_str(), tmp(size));
-            }
-        }
+    while(!is_addres(server_ip)) {
+        std::tuple<int, char*> tmp = Parse(argc, argv));
+        port = std::get<0>(tmp);
+        Memove(server_ip, std::get<1>(tmp), strlen(std::get<1>(tmp)));
+        if(is_addres(server_ip)) break; 
+        std::cout << "Invalid ip adress for server! Try again\n";
     }
-
-    if(!is_addres(serv_ip)) {
-        std::cout << "Invalid ip adress for server!\n";
-        return 1;
-    }
-
+ 
     ServerForClient* serv = ServerForClient::Start(serv_ip, port);
-    Console* console = Console::Start(stdin);
-
+    Console* console = Console::Start(serv, stdin);
     
     //main loop
     do {
