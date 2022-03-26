@@ -13,7 +13,3 @@
 #
 #DEBUG - define during compilation for turn on debug print. If you change the value to 2 or more, also 
 # enable printing of each Point during creation table elements;
-
-
-
-
