@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <iostream>
+#include <tuple>
 #include "client.h"
 
 
@@ -14,20 +15,30 @@
 int main(int argc, char **argv)
 {
     int port;
-    char *server_ip;
+    std::string server_ip;
 
-    std::cout << "            ----Welcome to the Manager game from Avalon Hill!!!!----"
+    bool quit{false};
+    bool end{false};
+
+    std::cout << "\n\n            ----Welcome to the Manager game from Avalon Hill!!!!----\n\n";
     //Here i must to process input hostname and port
-    while(!is_addres(server_ip)) {
-        std::tuple<int, char*> tmp = Parse(argc, argv);
-        port = std::get<0>(tmp);
-        Memove(server_ip, std::get<1>(tmp), strlen(std::get<1>(tmp)));
-        if(is_addres(server_ip)) break; 
-        std::cout << "Invalid ip adress for server! Try again\n";
+    while(!end) {
+        std::tuple<std::string, std::string> tmp = Parse(argc, argv);
+        port = std::stoi(std::get<0>(tmp));
+	    server_ip = std::get<1>(tmp);
+        if(!is_addres(server_ip.c_str()))
+	    {
+            std::cout << "\nInvalid ip adress for server! Try again!\n\n";
+            continue;
+        } else if(port < valid_port) {
+            std::cout << "\nInvalid port! Try again!\n\n";
+            continue;
+        }
+        end = true;
     }
  
     ServerForClient* serv = ServerForClient::Start(server_ip, port);
-    Console* console = Console::Start(serv, stdin);
+    Console* console = Console::Start(serv, 0);
     
     //main loop
     do {
@@ -35,12 +46,12 @@ int main(int argc, char **argv)
         FD_ZERO(&rds);
         FD_ZERO(&wrs);
 
-        FD_SET(serv.GetFd(), &rds);
-        FD_SET(serv.GetFd(), &wrs);
-        FD_SET(console.GetFd(), &rds);
-        FD_SET(console.GetFd(), &wrs);
+        FD_SET(serv->GetFd(), &rds);
+        FD_SET(serv->GetFd(), &wrs);
+        FD_SET(console->GetFd(), &rds);
+        FD_SET(console->GetFd(), &wrs);
 
-        int res = select(serv.GetFd()+1, &rds, &wrs, 0, 0);
+        int res = select(serv->GetFd()+1, &rds, &wrs, 0, 0);
         if(res < 0) {
             if(errno == EINTR) //If we need to process input signals
                 continue;
@@ -49,19 +60,18 @@ int main(int argc, char **argv)
         }
         
         //read_from_buffer
-        if(FD_ISSET(serv.GetFd(), &rds))
+        if(FD_ISSET(serv->GetFd(), &rds))
         {
-            serv.Process(1, 0);
+            serv->VProcessing(1, 0);
         }
 
         //write_to_buffer  
-        if(FD_ISSET(console.GetFd(), &rds) && FD_ISSET(serv.GetFd(), &wds)
+        if(FD_ISSET(console->GetFd(), &rds) && FD_ISSET(serv->GetFd(), &wrs))
         {
-            console.Process(1, 0);
+            console->VProcessing(1, 0);
         }
             
-    }
-    while(!quit);
+    } while(!quit);
 
     return 0;
 }

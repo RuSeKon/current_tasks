@@ -21,7 +21,7 @@ GameServer::~GameServer()
     while(m_pItemHandler) {
         item *tmp = m_pItemHandler;
         m_pItemHandler = m_pItemHandler->next;
-        m_pSelector->Remove(tmp->session);
+        m_pSelector->Remove(tmp->Session);
         delete tmp;
     }
     m_pSelector->Remove(this);
@@ -56,10 +56,10 @@ void GameServer::RemoveSession(GameSession *s)
 {
     m_pSelector->Remove(s);
     for(item **tmp = &m_pItemHandler; *tmp; tmp = &((*tmp)->next)) {
-        if((*tmp)->session == s) {
+        if((*tmp)->Session == s) {
             item *p = *tmp;
             *tmp = p->next;
-            delete p->session;
+            delete p->Session;
             delete p;
             m_GamerCounter--;
             return;
@@ -70,8 +70,8 @@ void GameServer::RemoveSession(GameSession *s)
 void GameServer::SendAll(char *message, GameSession* except)
 {
     for(item *tmp = m_pItemHandler; tmp != nullptr; tmp = tmp->next)
-        if(tmp->session != except)
-            tmp->session->Send(message);
+        if(tmp->Session != except)
+            tmp->Session->Send(message);
 }
 
 void GameServer::VProcessing(bool r, bool w)
@@ -94,7 +94,7 @@ void GameServer::VProcessing(bool r, bool w)
         tmp->next = m_pItemHandler;
         m_pItemHandler = tmp;
         ++m_GamerCounter;
-        m_pSelector->Add(tmp->session);
+        m_pSelector->Add(tmp->Session);
         
         ///Send message about joined new player
         /*std::auto_ptr<char> res(new char[sizeof(g_WelcomeAllMsg)+g_MaxName+3]);

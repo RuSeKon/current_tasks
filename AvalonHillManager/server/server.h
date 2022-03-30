@@ -4,8 +4,7 @@
 #ifndef SERVERHPPSENTRY
 #define SERVERHPPSENTRY
 
-#include "application.h"
-
+#include "application.h" 
 #ifndef MAXGAMERNUMBER
 #define MAXGAMERNUMBER 10
 #endif
@@ -38,9 +37,8 @@ struct item {
         
         item* next;
 
-        item(int fd) : session(nullptr), next(nullptr) {}
+        item(int fd) : Session(nullptr), next(nullptr) {}
         item() = delete; //Because number must be initialized
-        ~item() noexcept {if(session) delete session;}
 };
 
 //Keys for form Send massages
@@ -96,7 +94,7 @@ class GameSession : public IFdHandler {
 
     void VProcessing(bool r, bool w);
     //void Send(int key);
-    void Send(char *message);
+    void Send(const char *message);
     int GetNumber() const { return play_nmbr; }
     const char* GetName() const { return name; }
     char* FormStr(char*);
