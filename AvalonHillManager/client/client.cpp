@@ -1,5 +1,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #include <iostream>
 #include <tuple>
@@ -10,11 +11,12 @@
 
 /* Client Object-oriented design implementation */
 
-bool is_addres(char *src)
+bool is_addres(const char* src)
 {
+    if(!src) return false;
     int res{0};
-    for(int i=0; src[i]; i++)
-        if(src[i] == '.') res++;
+    for(size_t x=0; x < strlen(src); x++)
+        if(src[x] == '.') res++;
     return res == 3;
 };
 
@@ -50,7 +52,7 @@ void Memove(void *dst, const void* src, int size)
     }
 };
 
-void Write(int fd, const void *buf, size_t count)
+int Write(int fd, const void *buf, size_t count)
 {
     int res = write(fd, buf, count);
     if(res == -1)
@@ -58,6 +60,7 @@ void Write(int fd, const void *buf, size_t count)
         std::cerr << "Error write to socket\n";
         exit(8);
     }
+    return res;
 };
 
 int Send(int sockfd, const void *buf, size_t len, int flags)
@@ -71,7 +74,7 @@ int Send(int sockfd, const void *buf, size_t len, int flags)
     return res;
 };
 
-int Recv(int sockfd, void *buf, size_t len, int flags);
+int Recv(int sockfd, void *buf, size_t len, int flags)
 {
     int res = send(sockfd, buf, len, flags);
     if(res == -1)
@@ -82,62 +85,58 @@ int Recv(int sockfd, void *buf, size_t len, int flags);
     return res;
 };
 
-std::tuple<int, char*> Parse(int cnt, char **src)
+std::tuple<std::string, std::string> Parse(int cnt, char **src)
 {
-    int port;
-    char *serv_ip;
-    std::string tmp;
+    std::string tmp, port;
 
     if(cnt < 3) {
-        std::cout << "Please enter server ip and port to connection!\n";
+        std::cout << "                 Please enter server ip and port for connection!" << std::endl << std::endl;
         if(cnt < 2) {
             std::cout << "Enter server ip (example: 192.168.0.1): ";
-            std::cin >> tmp;
-            Memove(serv_ip, tmp.c_str(), tmp.size());
-            std::cout << "\nEnter server port: ";
-            std::cin >> port;
+	    std::getline(std::cin, tmp);
+	    std::cout << std::endl;
+	    std::cout << "Enter server port: ";
+            std::getline(std::cin, port);
+	    std::cout << std::endl;
         } else {
             if(is_addres(src[1])) {
-                Memove(serv_ip, src[1], strlen(src[1]));
+                tmp = src[1];
                 std::cout << "\nEnter server port: ";
-                std::cin >> port;
+                std::getline(std::cin, port);
             } else {
-                port = std::stoi(src[1]);
+                port = src[1];
                 std::cout << "\nEnter server ip (example: 192.168.0.1): ";
-                std::cin >> tmp;
-                Memove(serv_ip, tmp.c_str(), tmp.size());
+                std::getline(std::cin, tmp);
             }
         }
     } else {
         if(is_addres(src[2])) {
-            port = std::stoi(src[1]);
-            Memove(serv_ip, src[21], strlen(src[2]));
+            port = src[1];
         }
     }
-    return std::make_tuple(port, serv_ip);
+    return std::make_tuple(port, tmp);
 
-}
+};
 
-ServerForClient::ServerForClient
 
-ServerForClient* ServerForClient::Start(char *adress, int port)
+ServerForClient* ServerForClient::Start(std::string& adress, int port)
 {
     int sock_fd = Socket(AF_INET, SOCK_STREAM, 0);
     
     struct sockaddr_in serv_addr;
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htonl(port);
-    if(!inet_aton(adress, &(serv_addr.sin_addr.s_addr))) {
+    if(!inet_aton(adress.c_str(), &(serv_addr.sin_addr))) {
        std::cerr << "Error ip convertion by inet_aton\n";
        exit(3);
     }   
     
     Connect(sock_fd, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
 
-    return new ServerForClient(fd);
+    return new ServerForClient(sock_fd);
 };
 
-void ServerForClient::Process(bool r, bool w)
+void ServerForClient::VProcessing(bool r, bool w)
 {
     if(r) {
         buf_used = Recv(GetFd(), buffer, buf_size, 0);
@@ -172,7 +171,7 @@ Console* Console::Start(ServerForClient* master, int fd)
     return new Console(master, fd);
 };
 
-void Console::Process(bool r, bool w)
+void Console::VProcessing(bool r, bool w)
 {
     if(r) {
         buf_used = Send(the_master->GetFd(), buffer, buf_size, 0);
@@ -186,6 +185,8 @@ void Console::Process(bool r, bool w)
             std::cerr << "Error buffer overflow\n";
             exit(6);
         } else { buffer[buf_used] = '\0';}
+	if(strstr(buffer, "quit"))
+		exit(0);
 
         Write(1, "FROM ME: ", 9);
         Write(1, buffer, buf_used);

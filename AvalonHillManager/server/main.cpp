@@ -35,5 +35,4 @@ int main(int argc, char **argv)
    //for(;;) {
    //   if(Server->game_begun == true) {
           
-    }
 }
