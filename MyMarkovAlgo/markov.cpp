@@ -6,19 +6,19 @@
 Prefix::Prefix(std::string& src)
 {
     for(int i=0; i < NPREF; i++)
-        container[i] = src;
+        m_Container[i] = src;
 }
 
 Prefix::Prefix(const Prefix& src)
 {
     for(int i=0; i < NPREF; i++)
-        container[i] = src.container[i];
+        m_Container[i] = src.m_Container[i];
 }
 
 bool Prefix::operator==(const Prefix& src) const
 {
     for(int i=0; i < NPREF; i++)
-        if(container[i] != src.container[i])
+        if(m_Container[i] != src.m_Container[i])
             return false;
     return true;
 }
@@ -27,14 +27,14 @@ const std::string& Prefix::operator[](int indx) const
 {
     if(indx >= NPREF || indx < 0)
         throw std::out_of_range("Invalid index in Prefix");
-    return container[indx];
+    return m_Container[indx];
 }
 
 void Prefix::push_back(const std::string& src)
 {
     for(int i=0; i < NPREF-1; i++)
-        container[i] = std::move(container[i+1]);
-    container[NPREF-1] = src;
+        m_Container[i] = std::move(m_Container[i+1]);
+    m_Container[NPREF-1] = src;
 }
 
 /////////////////////////////  Point  ///////////////////////////////
@@ -42,37 +42,37 @@ void Prefix::push_back(const std::string& src)
 Point::~Point()
 {
     Suffix* tmp;
-    while(suf)
+    while(m_pSuffix)
     {
-        tmp = suf;
-        suf = suf->next;
+        tmp = m_pSuffix;
+        m_pSuffix = m_pSuffix->next;
         delete tmp;
     }
 }
         
-void Point::add_suffix(const std::string& src)
+void Point::AddSuffix(const std::string& src)
 {
-    Suffix *s = new Suffix;
-    s->word = src;
-    s->next = suf;
-    suf = s;
-    sufCount++;
+    Suffix *tmp = new Suffix;
+    tmp->m_Word = src;
+    tmp->next = m_pSuffix;
+    m_pSuffix = tmp;
+    m_SufCounter++;
 }
 
-const std::string& Point::getSuf(int indx) const
+const std::string& Point::GetSuf(int indx) const
 {
-    if(indx > sufCount || indx < 0)
+    if(indx > m_SufCounter || indx < 0)
         throw std::out_of_range("Invalid index in Suffix");
     
-    Suffix* tmp = suf;
+    Suffix* tmp = m_pSuffix; 
     for(int i=1; i < indx; i++)
        tmp = tmp->next;
-    return tmp->word;
+    return tmp->m_Word;
 }
 
 /////////////////////////////  Tab  /////////////////////////////////
 
-unsigned Tab::hash(const Prefix& src)
+unsigned Tab::Hash(const Prefix& src)
 {
     unsigned res{0};
 
@@ -82,21 +82,21 @@ unsigned Tab::hash(const Prefix& src)
     return res % TABSIZE;               // for hashing string key
 }
 
-Point* Tab::lookup(const Prefix& src)
+Point* Tab::Lookup(const Prefix& src)
 {
     Point* tmp;
 
-    unsigned h = hash(src);
-    for(tmp = table[h]; tmp; tmp = tmp->next)
-        if(tmp->getPref() == src)
+    unsigned h = Hash(src);
+    for(tmp = m_Table[h]; tmp; tmp = tmp->next)
+        if(tmp->GetPref() == src)
             return tmp;
     tmp = new Point(src);
-    tmp->next = table[h];
-    table[h] = tmp;
+    tmp->next = m_Table[h];
+    m_Table[h] = tmp;
     return tmp;
 }
 
 Point& Tab::operator[](const Prefix& indx)
 {
-    return *(lookup(indx));
+    return *(Lookup(indx));
 }

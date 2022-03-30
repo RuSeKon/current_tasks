@@ -2,6 +2,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <iostream>
+#include <tuple>
+#include <cstring>
 #include "client.h"
 #include "application.h"
 
@@ -54,11 +56,11 @@ void Write(int fd, const void *buf, size_t count)
     if(res == -1)
     {
         std::cerr << "Error write to socket\n";
-        exit(8)
+        exit(8);
     }
 };
 
-void Send(int sockfd, const void *buf, size_t len, int flags)
+int Send(int sockfd, const void *buf, size_t len, int flags)
 {
     int res = send(sockfd, buf, len, flags);
     if(res == -1)
@@ -66,9 +68,10 @@ void Send(int sockfd, const void *buf, size_t len, int flags)
         std::cerr << "Error send\n";
         exit(9);
     }
+    return res;
 };
 
-void Recv(int sockfd, void *buf, size_t len, int flags);
+int Recv(int sockfd, void *buf, size_t len, int flags);
 {
     int res = send(sockfd, buf, len, flags);
     if(res == -1)
@@ -76,6 +79,7 @@ void Recv(int sockfd, void *buf, size_t len, int flags);
         std::cerr << "Error recv\n";
         exit(10);
     }
+    return res;
 };
 
 std::tuple<int, char*> Parse(int cnt, char **src)
@@ -105,7 +109,7 @@ std::tuple<int, char*> Parse(int cnt, char **src)
             }
         }
     } else {
-        if(isadress(src[2])) {
+        if(is_addres(src[2])) {
             port = std::stoi(src[1]);
             Memove(serv_ip, src[21], strlen(src[2]));
         }
@@ -151,8 +155,8 @@ void ServerForClient::Process(bool r, bool w)
         for(int b=0; buffer[i]; i++)
         {
             if(buffer[i] == '\n') {
-                Write(stdout, "FROM SERVER: ", 13);
-                Write(stdout, buffer+b, i+1-b);
+                Write(1, "FROM SERVER: ", 13);
+                Write(1, buffer+b, i+1-b);
                 b += i+1;
             }
             buf_used -= i+1;
@@ -171,7 +175,7 @@ Console* Console::Start(ServerForClient* master, int fd)
 void Console::Process(bool r, bool w)
 {
     if(r) {
-        buf_used = Send(the_master.GetFd(), buffer, buf_size, 0);
+        buf_used = Send(the_master->GetFd(), buffer, buf_size, 0);
         if(buf_used == -1)
         {
             std::cerr << "Error sending to server\n";
@@ -183,8 +187,8 @@ void Console::Process(bool r, bool w)
             exit(6);
         } else { buffer[buf_used] = '\0';}
 
-        Write(stdout, "FROM ME: ", 9);
-        Write(stdout, buffer, buf_used)
+        Write(1, "FROM ME: ", 9);
+        Write(1, buffer, buf_used);
 
         Memove(buffer, buffer+buf_used, buf_used);
     

@@ -7,69 +7,69 @@ sockets and file descriptors directly */
 
 #include "application.h"
 
-FdHandler::~FdHandler()
+IFdHandler::~IFdHandler()
 {
-    close(fd);
+    close(m_Fd);
 }
 
 EventSelector::~EventSelector()
 {
-    if(fd_array)
-        delete[] fd_array;
+    if(m_pFdArray)
+        delete[] m_pFdArray;
 }
 
-void EventSelector::Add(FdHandler *h)
+void EventSelector::Add(IFdHandler *h)
 {
     int i;
     int fd = h->GetFd();
-    if(!fd_array) {
-        fd_array_len = fd > 15 ? fd + 1 : 16;
-        fd_array = new FdHandler*[fd_array_len];
-        for(i = 0; i < fd_array_len; i++)
-            fd_array[i] = 0;
-        max_fd = -1;
+    if(!m_pFdArray) {
+        m_ArrayLength = fd > 15 ? fd + 1 : 16;
+        m_pFdArray = new IFdHandler*[m_ArrayLength];
+        for(i = 0; i < m_ArrayLength; i++)
+            m_pFdArray[i] = 0;
+        m_MaxFd = -1;
     }
-    if(fd_array_len <= fd) {
-        FdHandler **tmp = new FdHandler*[fd+1];
+    if(m_ArrayLength <= fd) {
+        IFdHandler **tmp = new IFdHandler*[fd+1];
         for(i = 0; i< fd; i++)
-            tmp[i] = i < fd_array_len ? fd_array[i] : 0;
-        fd_array_len = fd+1;
-        delete[] fd_array;
-        fd_array = tmp;
+            tmp[i] =i < m_ArrayLength ? m_pFdArray[i] : 0;
+        m_ArrayLength = fd+1;
+        delete[] m_pFdArray;
+        m_pFdArray = tmp;
     }
-    if(fd > max_fd)
-        max_fd = fd;
-    fd_array[fd] = h;
+    if(fd > m_MaxFd)
+        m_MaxFd = fd;
+    m_pFdArray[fd] = h;
 }
 
-bool EventSelector::Remove(FdHandler *h)
+bool EventSelector::Remove(IFdHandler *h)
 {
     int fd = h->GetFd();
-    if(fd >= fd_array_len || fd_array[fd] != h)
+    if(fd >= m_ArrayLength || m_pFdArray[fd] != h)
         return false;
-    fd_array[fd] = 0;
-    if(fd == max_fd) {
-        while(max_fd >= 0 && !fd_array[max_fd])
-            max_fd--;
+    m_pFdArray[fd] = 0;
+    if(fd == m_MaxFd) {
+        while(m_MaxFd >= 0 && !m_pFdArray[m_MaxFd])
+            m_MaxFd--;
     }
     return true;
 }
 
 void EventSelector::Run()
 {
-    quit_flag = false;
+    m_QuitFlag = false;
     do {
         int i;
         fd_set rds, wrs;
         FD_ZERO(&rds);
         FD_ZERO(&wrs);
-        for(i=0; i < fd_array_len; i++){
-            if(fd_array[i]->WantRead())
+        for(i=0; i < m_ArrayLength; i++){
+            if(m_pFdArray[i]->WantRead())
                 FD_SET(i, &rds);
-            if(fd_array[i]->WantWrite())
+            if(m_pFdArray[i]->WantWrite())
                 FD_SET(i, &wrs);
         }
-        int res = select(max_fd+1, &rds, &wrs, 0, 0);
+        int res = select(m_MaxFd+1, &rds, &wrs, 0, 0);
         if(res < 0) {
             if(errno == EINTR) //If we need to process input signals
                 continue;
@@ -77,13 +77,13 @@ void EventSelector::Run()
                 break; //Need to proceed!!!!!
         }
         if(res > 0) {
-            for(i = 0; i < fd_array_len; i++) {
-                if(!fd_array[i])
+            for(i = 0; i < m_ArrayLength; i++) {
+                if(!m_pFdArray[i])
                     continue;
                 bool r = FD_ISSET(i, &rds);
                 bool w = FD_ISSET(i, &wrs);
                 if(r || w)
-                    fd_array[i]->Process(r, w);
+                    m_pFdArray[i]->VProcessing(r, w);
             }
             ///////////////////////////////////
             //////////////////////////////////
@@ -91,7 +91,7 @@ void EventSelector::Run()
             /////////////////////////////////
             /////////////////////////////////
         }
-    } while(!quit_flag);
+    } while(!m_QuitFlag);
 }
 
 

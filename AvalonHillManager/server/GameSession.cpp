@@ -18,18 +18,18 @@ GameSession::GameSession(GameServer *a_master, int fd, int pl_nmbr)
 }
 
 
-void GameSession::Process(bool r, bool w)
+void GameSession::VProcessing(bool r, bool w)
 {
     if(!r)
         return;
 
-    if(the_master->game_begun == false) {
+    if(the_master->/*m_GameBegun */  == false) {
         if(!name) 
         {
-            read(GetFd(), name, max_name);
+            read(GetFd(), name, g_MaxName);
             Send(welcome_key);
         }
-        write(GetFd(), game_n_beg_msg, sizeof(game_n_beg_msg));
+        write(GetFd(), g_GameNotBegunMsg, sizeof(g_GameNotBegunMsg));
         return;
     }
 
@@ -45,8 +45,9 @@ char *GameSession::FormStr(int key) ///Need attantion
     char *res;
     switch(key) {
         welcome_key:
-            char* res(new  char[sizeof(welcome)+max_name+3]); 
-            sprintf(res, welcome, name, play_nmbr);
+            std::auto_ptr<char> res(new  char[sizeof(welcome)+max_name+3])
+            sprintf(res, g_WelcomeMsg, name, play_nmbr);
+
             return res;
         info_key:
             

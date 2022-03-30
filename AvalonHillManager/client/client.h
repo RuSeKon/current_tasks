@@ -19,7 +19,7 @@ enum constants {
         buf_size = 256
 };
 
-static const mesg[] = ("Do you want to say something?\n");
+static const char mesg[] = ("Do you want to say something?\n");
 
 class ServerForClient : public FdHandler {
     char buffer[256];
@@ -40,7 +40,7 @@ class Console : public FdHandler {
 public:
     ~Console() = default;
     void Process(bool r, bool w);
-    static Console* Start(int fd);
+    static Console* Start(ServerForClient* master, int fd);
 };
 
 #endif

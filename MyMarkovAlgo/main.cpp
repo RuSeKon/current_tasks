@@ -3,34 +3,34 @@
 
 std::string NONWORD{"\0"};
 
-Tab statetab;
+Tab g_Statetab;
 
 #if DEBUG >= 2 
 void print_point(const Prefix& src)
 {
     std::cout << "///////POINT///////" << std::endl;
     for(int i=0; i < NPREF; i++)
-        std::cout << (statetab[src].getPref())[i] << std::endl;
-    std::cout << "FIRST_SUFFIX: " << statetab[src].getSuf(0) << std::endl;
-    std::cout << "SUFCOUNT: " << statetab[src].sufSize() << std::endl;
+        std::cout << (g_Statetab[src].GetPref())[i] << std::endl;
+    std::cout << "FIRST_SUFFIX: " << g_Statetab[src].GetSuf(0) << std::endl;
+    std::cout << "SUFCOUNT: " << g_Statetab[src].SufSize() << std::endl;
 }
 #endif
 
-void build(Prefix&, std::istream&);
-void add(Prefix&, std::string&);
-void generate(int);
+void Build(Prefix&, std::istream&);
+void Add(Prefix&, std::string&);
+void Generate(int);
 
 int main()
 {
 
     Prefix initPrefix{NONWORD};
     try {
-    build(initPrefix, std::cin);
-    add(initPrefix, NONWORD);
+    Build(initPrefix, std::cin);
+    Add(initPrefix, NONWORD);
 #if DEBUG
     std::cout<<"Creation complete!\n";
 #endif
-    generate(MAXGEN);
+    Generate(MAXGEN);
     }
     catch(const std::out_of_range& a)
     {
@@ -39,34 +39,34 @@ int main()
     return 0;
 }
 
-void add(Prefix&, std::string&);
+void Add(Prefix&, std::string&);
 
-void build(Prefix& pref, std::istream& is)
+void Build(Prefix& pref, std::istream& is)
 {
     std::string buf;
 
     while(is >> buf)
-        add(pref, buf);
+        Add(pref, buf);
 }
 
-void add(Prefix& pref, std::string& suf)
+void Add(Prefix& pref, std::string& suf)
 {
-    statetab[pref].add_suffix(suf);
+    g_Statetab[pref].AddSuffix(suf);
 #if DEBUG >= 2 
-    print_point(statetab[pref].getPref());
+    print_point(g_Statetab[pref].GetPref());
 #endif
     pref.push_back(suf);
 }
 
-void generate(int maxgen)
+void Generate(int maxgen)
 {
     Prefix pref{NONWORD};
     int i{0};
     for(; i < maxgen; i++) {
-        Point& tmp = statetab[pref];
-        int h = rand() % tmp.sufSize();
+        Point& tmp = g_Statetab[pref];
+        int h = rand() % tmp.SufSize();
 
-        const std::string& s = tmp.getSuf(h);
+        const std::string& s = tmp.GetSuf(h);
         if(s == NONWORD) {
 #if DEBUG
             std::cout << std::endl << "--- i ---: " << i << std::endl;

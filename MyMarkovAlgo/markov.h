@@ -19,7 +19,7 @@
 #define MULTIPLIER 7
 
 class Prefix{
-    std::string container[NPREF];
+    std::string m_Container[NPREF];
 public:
     Prefix() = delete;
     Prefix(std::string& src);
@@ -32,34 +32,34 @@ public:
 
 class Suffix{
 friend class Point;
-    std::string word;
+    std::string m_Word;
     Suffix* next;
 };
 
 class Point{
 friend class Tab;
-    Prefix pref;
-    Suffix* suf;
-    int sufCount;
+    Prefix m_Prefix;
+    Suffix* m_pSuffix;
+    int m_SufCounter;
     Point* next;
 public:
     Point() = delete;
     ~Point(); 
-    Point(const Prefix& src) : pref(src), suf(nullptr),
-                               sufCount(0),  next(nullptr) {}
-    int sufSize() const {return sufCount;}
-    inline const Prefix& getPref() const {return pref;}
-    const std::string& getSuf(int indx) const; 
-    void add_suffix(const std::string& src);
+    Point(const Prefix& src) : m_Prefix(src), m_pSuffix(nullptr),
+                               m_SufCounter(0),  next(nullptr) {}
+    int SufSize() const {return m_SufCounter;}
+    inline const Prefix& GetPref() const {return m_Prefix;}
+    const std::string& GetSuf(int indx) const; 
+    void AddSuffix(const std::string& src);
 };
 
 class Tab{
-    Point* table[TABSIZE];
+    Point* m_Table[TABSIZE];
 public:
     Point& operator[](const Prefix& indx);
 private:
-    unsigned hash(const Prefix& src);
-    Point* lookup(const Prefix& src);
+    unsigned Hash(const Prefix& src);
+    Point* Lookup(const Prefix& src);
 };
 
 #endif
