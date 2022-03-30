@@ -3,8 +3,9 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <memory>
-#include "server.hpp"
-#include <application.h>
+#include <iostream>
+#include "server.h"
+#include "application.h"
 
 
 
@@ -23,14 +24,41 @@ void GameSession::VProcessing(bool r, bool w)
     if(!r)
         return;
 
-    if(the_master->/*m_GameBegun */  == false) {
+    if(the_master->m_GameBegun == false) {
         if(!name) 
         {
-            read(GetFd(), name, g_MaxName);
-            Send(welcome_key);
+            recv(GetFd(), name, g_MaxName);
+            std::auto_ptr<char> res(new char[sizeof(g_WelcomeAllMsg)+g_MaxName+3]);
+            sprintf(res, g_WelcomeAllMsg, name, play_nmbr);
+            the_master->SendAll(res, *this);
+            sprintf(res, g_WelcomeMsg, tmp->Session->GetName(), tmp->Session->GetNumber());
+            Send(res);
+        } else {
+            Send(g_GameNotBegunMsg);
+            return;
         }
-        write(GetFd(), g_GameNotBegunMsg, sizeof(g_GameNotBegunMsg));
-        return;
+    } else {
+        buf_used = recv(GetFd(), buffer, g_BufSize);
+        if(buf_used == -1)
+        {
+            std::cerr << "Error reading from client number: " << play_nmbr << std::endl;
+            exit(5);
+        }
+        if(buf_used >= g_BufSize-1) {
+            std::cerr << "Error buffer of client " << play_nmbr << " overflow\n";
+            exit(6);
+        } else { buffer[buf_used] = '\0';}
+        int i{0}; 
+        for(int b=0; buffer[i]; i++)
+        {
+            if(buffer[i] == '\n') {
+                Write(1, "FROM CLIENT: ", 13);
+                Write(1, buffer+b, i+1-b);
+                b += i+1;
+            }
+            buf_used -= i+1;
+        }
+        memove(buffer, buffer+i+1, i+1);
     }
 
 
@@ -40,7 +68,7 @@ void GameSession::VProcessing(bool r, bool w)
 }
 
 
-char *GameSession::FormStr(int key) ///Need attantion
+/*char *GameSession::FormStr(int key) ///Need attantion
 {
     char *res;
     switch(key) {
@@ -66,6 +94,7 @@ void GameSession::Send(int key)
     write(GetFd(), mes, sizeof(mes));
     delete [] mes;
 }
+*/
 
 void GameSession::Send(char *message)
 {
