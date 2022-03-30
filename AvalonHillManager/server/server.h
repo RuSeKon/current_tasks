@@ -14,44 +14,40 @@
 
 /* Section for constant message initialization!!! */
 //GameServer strings//
-static const char already_playing_msg[] = {"Sorry, game is already started." 
+static const char g_AlreadyPlayingMsg[] = {"Sorry, game is already started." 
                         " You can play next one\n"};
-static const char welcome[] = {"Welcome to the game %s, you play-number: %d\n"};
-static const char welcome_all[] = {"%s number %d joined to the game!\n"};
+static const char g_WelcomeMsg[] = {"Welcome to the game %s, you play-number: %d\n"};
+static const char g_WelcomeAllMsg[] = {"%s number %d joined to the game!\n"};
 
 //GameSession strings//
-static const char game_n_beg_msg[] = {"The game haven't started yet. Please wait:)\n"};
+static const char g_GameNotBegunMsg[] = {"The game haven't started yet. Please wait:)\n"};
 
 
 //////////////////////////////////////////////////////////////////////////////////////
 class GameSession;
 
 enum ConstantsForServer { 
-    max_gamer_number = MAXGAMERNUMBER,
-    max_name = 10,
+    g_MaxGamerNumber = MAXGAMERNUMBER,
+    g_MaxName = 10,
 };
 
 struct item {
-        GameSession *session;
+        GameSession* Session;
         
         item* next;
 
-        item(int fd) : session(nullptr), next(nullptr), number(fd) {}
+        item(int fd) : session(nullptr), next(nullptr) {}
         item() = delete; //Because number must be initialized
         ~item() noexcept {if(session) delete session;}
-        int GetNumber() const {return number;}
-private:
-        const int number;
 };
 
-class GameServer : public FdHandler {
-    EventSelector *the_selector;
+class GameServer : public IFdHandler {
+    EventSelector *m_pSelector; //the_selector
     
-    item *itemHandler;
+    item *m_pItemHandler;
 
-    int gamer_counter;
-    bool game_begun;
-    static bool serverRun;
+    int m_GamerCounter;
+    bool m_GameBegun; //need getr function
 
     /*Private constructor will use on method Start. For prevent unexpected GameServer construction, 
     because Sever should be one*/
@@ -66,19 +62,19 @@ public:
     void SendAll(char *message, GameSession* except);
   ///  void GameLaunch(); ///////Needed parameters//////
 private:
-    void Process(bool r, bool w);
+    void VProcessing(bool r, bool w);
 };
 
 
 //Keys for form Send massages
-enum serverKeys { 
+enum ServerKeys { 
     welcome_key = 0,
     player_joined_key = 1,
 };
 
 /* SERVERS IMPLEMENTATIONS OF USER SESSION */
 
-class GameSession : FdHandler {
+class GameSession : IFdHandler {
     friend class GameServer;
     GameServer *the_master;
 
@@ -98,9 +94,10 @@ class GameSession : FdHandler {
     GameSession(GameServer *a_master, int fd, int pl_nmbr);
     ~GameSession();
 
-    void Process(bool r, bool w);
+    void VProcessing(bool r, bool w);
     void Send(int key);
     void Send(char *message);
+    int GetNumber() const { return play_nmbr; }
     char* FormStr(char*);
 };
 

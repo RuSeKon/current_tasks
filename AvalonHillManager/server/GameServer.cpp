@@ -9,30 +9,25 @@
 /////////////////////////////////////////SERVER//////////////////////////////////////
 
 GameServer::GameServer(EventSelector *sel, int fd)
-        : FdHandler(fd), the_selector(sel), itemHandler(nullptr), 
-        gamer_counter(0), game_begun(false) 
+        : IFdHandler(fd), m_pSelector(sel), m_pItemHandler(nullptr), 
+        m_GamerCounter(0), m_GameBegun(false) 
 {
-    the_selector->Add(this);
+    m_pSelector->Add(this);
 }
 
 GameServer::~GameServer()
 {
-    while(itemHandler) {
-        item *tmp = itemHandler;
-        itemHandler = itemHandler->next;
-        the_selector->Remove(tmp->session);
+    while(m_pItemHandler) {
+        item *tmp = m_pItemHandler;
+        m_pItemHandler = m_pItemHandler->next;
+        m_pSelector->Remove(tmp->session);
         delete tmp;
     }
-    the_selector->Remove(this);
+    m_pSelector->Remove(this);
 }
 
 GameServer *GameServer::ServerStart(EventSelector *sel, int port)
 {
-    if(serverRun)
-        return nullptr;
-    else
-        serverRun = true;  
-
     struct sockaddr_in addr;
 
     int ls = socket(AF_INET, SOCK_STREAM, 0);
@@ -58,14 +53,14 @@ GameServer *GameServer::ServerStart(EventSelector *sel, int port)
 
 void GameServer::RemoveSession(GameSession *s)
 {
-    the_selector->Remove(s);
-    for(item **tmp = &itemHandler; *tmp; tmp = &((*tmp)->next)) {
+    m_pSelector->Remove(s);
+    for(item **tmp = &m_pItemHandler; *tmp; tmp = &((*tmp)->next)) {
         if((*tmp)->session == s) {
             item *p = *tmp;
             *tmp = p->next;
             delete p->session;
             delete p;
-            gamer_counter--;
+            m_GamerCounter--;
             return;
         }
     }
@@ -78,24 +73,24 @@ variables (after cast to *str) implicity on body of Send. */
 void GameServer::SendAll(int key, GameSession* except)
 {
     if(key == player_joined_key) {
-        char* res = new char[sizeof(welcome_all)+max_name+3];
-        sprintf(res, welcome_all, except->name, except->play_nmbr);
+        char* res = new char[sizeof(g_WelcomeAllMsg)+g_MaxName+3];
+        sprintf(res, g_WelcomeAllMsg, except->name, except->GetNumber());
         SendAll(res, except);
     }
 
-    for(item *tmp = itemHandler; tmp != nullptr; tmp = tmp->next)
+    for(item *tmp = m_pItemHandler; tmp != nullptr; tmp = tmp->next)
         if(tmp->session != except)
             tmp->session->Send(key);
 }
 
 void GameServer::SendAll(char *message, GameSession* except)
 {
-    for(item *tmp = itemHandler; tmp != nullptr; tmp = tmp->next)
+    for(item *tmp = m_pItemHandler; tmp != nullptr; tmp = tmp->next)
         if(tmp->session != except)
             tmp->session->Send(message);
 }
 
-void GameServer::Process(bool r, bool w)
+void GameServer::VProcessing(bool r, bool w)
 {
     if(!r)  //Explantation on README
         return;
@@ -105,22 +100,22 @@ void GameServer::Process(bool r, bool w)
     session_descriptor = accept(GetFd(), (struct sockaddr*) &addr, &len);
     if(session_descriptor == -1)
         return;
-    if(game_begun) {       //session not creating
-        write(session_descriptor, already_playing_msg, sizeof(already_playing_msg));
+    if(m_GameBegun) {       //session not creating
+        write(session_descriptor, g_AlreadyPlayingMsg, sizeof(g_AlreadyPlayingMsg));
         shutdown(session_descriptor, SHUT_RDWR);
         close(session_descriptor);
     } else {
-        item *tmp = new item(gamer_counter);
-        tmp->session = new GameSession(this, session_descriptor, gamer_counter);
-        tmp->next = itemHandler;
-        itemHandler = tmp;
-        ++gamer_counter;
-        the_selector->Add(tmp->session);
+        item *tmp = new item(m_GamerCounter);
+        tmp->session = new GameSession(this, session_descriptor, m_GamerCounter);
+        tmp->next = m_pItemHandler;
+        m_pItemHandler = tmp;
+        ++m_GamerCounter;
+        m_pSelector->Add(tmp->session);
         
 
         SendAll(player_joined_key, tmp->session);
         tmp->session->Send(welcome_key);
     }
-    if(gamer_counter == max_gamer_number)
-        game_begun = true;
+    if(m_GamerCounter == g_MaxGamerNumber) // need attantion
+        m_GameBegun = true;
 }
