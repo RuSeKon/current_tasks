@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <memory>
 #include "server.hpp"
 #include <application.h>
 
@@ -44,8 +45,9 @@ char *GameSession::FormStr(int key) ///Need attantion
     char *res;
     switch(key) {
         welcome_key:
-            res = new  char[sizeof(g_WelcomeMsg)+g_MaxName+3]; 
+            std::auto_ptr<char> res(new  char[sizeof(welcome)+max_name+3])
             sprintf(res, g_WelcomeMsg, name, play_nmbr);
+
             return res;
         info_key:
             
