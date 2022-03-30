@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <memory>
 #include "server.h"
 #include "application.h"
  
@@ -78,7 +79,7 @@ variables (after cast to *str) implicity on body of Send. */
 void GameServer::SendAll(int key, GameSession* except)
 {
     if(key == player_joined_key) {
-        char* res = new char[sizeof(welcome_all)+max_name+3];
+        std::auto_ptr<char> res(new char[sizeof(welcome_all)+max_name+3]);
         sprintf(res, welcome_all, except->name, except->play_nmbr);
         SendAll(res, except);
     }
@@ -86,6 +87,7 @@ void GameServer::SendAll(int key, GameSession* except)
     for(item *tmp = itemHandler; tmp != nullptr; tmp = tmp->next)
         if(tmp->session != except)
             tmp->session->Send(key);
+
 }
 
 void GameServer::SendAll(char *message, GameSession* except)
