@@ -19,6 +19,9 @@ GameSession::GameSession(GameServer *a_master, int fd, int pl_nmbr)
     Send("Your welcome! Enter you m_PlayNumber...\n");
 }
 
+//GameSession::~GameSession()
+
+
 void GameSession::VProcessing(bool r, bool w) {
     if(!r)
         return;

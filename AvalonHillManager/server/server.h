@@ -91,7 +91,7 @@ class GameSession : public IFdHandler {
     char m_Name[g_MaxName];
 
     GameSession(GameServer *a_master, int fd, int pl_nmbr);
-    ~GameSession();
+    ~GameSession(){}
 
     void VProcessing(bool r, bool w);
     //void Send(int key);
