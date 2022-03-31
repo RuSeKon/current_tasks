@@ -38,7 +38,7 @@ int main(int argc, char **argv)
     }
  
     ServerForClient* serv = ServerForClient::Start(server_ip, port);
-    Console* console = Console::Start(serv, 0);
+    Console* console = Console::Start(serv, STDIN_FILENO);
     
     //main loop
     do {

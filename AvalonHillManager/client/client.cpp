@@ -63,6 +63,17 @@ int Write(int fd, const void *buf, size_t count)
     return res;
 };
 
+int Read(int fd, void *buf, size_t count)
+{
+    int res = read(fd, buf, count);
+    if(res == -1)
+    {
+        std::cerr << "Error reading\n";
+        exit(EXIT_FAILURE);
+    }
+    return res;
+};
+
 int Send(int sockfd, const void *buf, size_t len, int flags)
 {
     int res = send(sockfd, buf, len, flags);
@@ -138,29 +149,31 @@ ServerForClient* ServerForClient::Start(std::string& adress, int port)
 
 void ServerForClient::VProcessing(bool r, bool w)
 {
-    if(r) {
+    if(r) 
+    {
         m_BufUsed = Recv(GetFd(), m_Buffer, g_BufSize, 0);
         if(m_BufUsed == -1)
         {
             std::cerr << "Error reading from server\n";
             exit(EXIT_FAILURE);
         }
-        if(m_BufUsed >= g_BufSize-1) {
-            std::cerr << "Error m_Buffer overflow\n";
+        if(m_BufUsed >= g_BufSize-1) 
+        {
+            std::cerr << "Error buffer overflow\n";
             exit(EXIT_FAILURE);
         }
 
-        int b{0}; 
-        for(int i=0; m_Buffer[i]; i++)
+        int i{0}; 
+        for(; m_Buffer[i]; i++)
         {
-            if(m_Buffer[i] == '\n') {
+            if(m_Buffer[i] == '\n') 
+            {
                 Write(STDOUT_FILENO, "FROM SERVER: ", 13);
-                Write(STDOUT_FILENO, m_Buffer+b, i+1-b);
-                b += i+1;
+                Write(STDOUT_FILENO, m_Buffer, i+1);
                 m_BufUsed -= i+1;
-            }
-        }
-        Memove(m_Buffer, m_Buffer+b, b);
+                break;
+            } }
+        Memove(m_Buffer, m_Buffer+i+1, m_BufUsed);
     
     }
     
@@ -173,26 +186,40 @@ Console* Console::Start(ServerForClient* master, int fd)
 
 void Console::VProcessing(bool r, bool w)
 {
-    if(r) {
-        m_BufUsed = Send(m_pTheMaster->GetFd(), m_Buffer, g_BufSize, 0);
+    if(r) 
+    {
+        m_BufUsed = Read(GetFd(), m_Buffer, g_BufSize);
+        
         if(m_BufUsed == -1)
         {
-            std::cerr << "Error sending to server\n";
+            std::cerr << "Error reading from console\n";
             exit(EXIT_FAILURE);
         }
 
-        if(m_BufUsed >= g_BufSize) {
-            std::cerr << "Error m_Buffer overflow\n";
+        if(m_BufUsed >= g_BufSize) 
+        {
+            std::cerr << "Error buffer overflow\n";
             exit(EXIT_FAILURE);
-        } else { m_Buffer[m_BufUsed] = '\0';}
+        }
 
 	    if(strstr(m_Buffer, "quit"))
+        {
 		    exit(0);
+        }
 
-        Write(1, "FROM ME: ", 9);
-        Write(1, m_Buffer, m_BufUsed);
+        int i{0};
 
-        Memove(m_Buffer, m_Buffer+m_BufUsed, m_BufUsed);
+        for(; m_Buffer[i]; i++)
+        {
+            if(m_Buffer[i] == '\n')
+            {
+                Send(m_pTheMaster->GetFd(), m_Buffer, i+1, 0);
+                m_BufUsed -= i+1;
+                break;
+            }
+        }
+
+        Memove(m_Buffer, m_Buffer+i+1, m_BufUsed);
     
     }
 };

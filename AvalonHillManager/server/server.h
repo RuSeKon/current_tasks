@@ -22,7 +22,8 @@ static const char g_GameStartSoon[] = {"The game will start soon!:)\n"};
 //GameSession strings//
 static const char g_GameNotBegunMsg[] = {"The game haven't started yet. Please wait:)\n"};
 
-static const char g_Greeting[] = {"Your welcome! Enter you name...\n"};
+static const char g_GreetingMsg[] = {"Your welcome! Enter you name...\n"};
+static const char g_AnnoyingMsg[] = {"You are very annoying... Goodbye!\n"};
 
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -90,10 +91,10 @@ class GameSession : public IFdHandler {
     int product;
     int money;
     */
-    char m_Name[g_MaxName];
+    char *m_Name;
 
     GameSession(GameServer *a_master, int fd, int pl_nmbr);
-    ~GameSession(){}
+    ~GameSession();
 
     void VProcessing(bool r, bool w);
     //void Send(int key);
