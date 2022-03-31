@@ -13,51 +13,51 @@
 ////////////////////////////SESSIONS/////////////////////////////////////////////////////
 
 GameSession::GameSession(GameServer *a_master, int fd, int pl_nmbr)
-        : IFdHandler(fd), the_master(a_master), buf_used(0),  
-        play_nmbr(pl_nmbr)/*, factories(2), rawMaterial(4), money(10000)*/
+        : IFdHandler(fd), m_pTheMaster(a_master), m_BufUsed(0),  
+        m_PlayNumber(pl_nmbr)/*, factories(2), rawMaterial(4), money(10000)*/
 {
-    Send("Your welcome! Enter you name...\n");
+    Send("Your welcome! Enter you m_PlayNumber...\n");
 }
 
 void GameSession::VProcessing(bool r, bool w) {
     if(!r)
         return;
 
-    if(the_master->m_GameBegun == false) {
-        if(!name) 
+    if(m_pTheMaster->GameBegun() == false) {
+        if(!m_PlayNumber) 
         {
-            recv(GetFd(), name, g_MaxName, 0);
+            recv(GetFd(), m_PlayNumber, g_MaxName, 0);
             std::auto_ptr<char> res(new char[sizeof(g_WelcomeAllMsg)+g_MaxName+3]);
-            sprintf(res.get(), g_WelcomeAllMsg, name, play_nmbr);
-            the_master->SendAll(res.get(), this);
-            sprintf(res.get(), g_WelcomeMsg, name, play_nmbr);
+            sprintf(res.get(), g_WelcomeAllMsg, m_PlayNumber, m_PlayNumber);
+            m_pTheMaster->SendAll(res.get(), this);
+            sprintf(res.get(), g_WelcomeMsg, m_PlayNumber, m_PlayNumber);
             Send(res.get());
         } else {
             Send(g_GameNotBegunMsg);
             return;
         }
     } else {
-        buf_used = recv(GetFd(), buffer, g_BufSize, 0);
-        if(buf_used == -1)
+        m_BufUsed = recv(GetFd(), m_Buffer, g_BufSize, 0);
+        if(m_BufUsed == -1)
         {
-            std::cerr << "Error reading from client number: " << play_nmbr << std::endl;
+            std::cerr << "Error reading from client number: " << m_PlayNumber << std::endl;
             exit(5);
         }
-        if(buf_used >= g_BufSize-1) {
-            std::cerr << "Error buffer of client " << play_nmbr << " overflow\n";
+        if(m_BufUsed >= g_BufSize-1) {
+            std::cerr << "Error m_Buffer of client " << m_PlayNumber << " overflow\n";
             exit(6);
-        } else { buffer[buf_used] = '\0';}
+        } else { m_Buffer[m_BufUsed] = '\0';}
         int i{0}; 
-        for(int b=0; buffer[i]; i++)
+        for(int b=0; m_Buffer[i]; i++)
         {
-            if(buffer[i] == '\n') {
+            if(m_Buffer[i] == '\n') {
                 write(1, "FROM CLIENT: ", 13);
-                write(1, buffer+b, i+1-b);
+                write(1, m_Buffer+b, i+1-b);
                 b += i+1;
             }
-            buf_used -= i+1;
+            m_BufUsed -= i+1;
         }
-        memmove(buffer, buffer+i+1, i+1);
+        memmove(m_Buffer, m_Buffer+i+1, i+1);
     }
 
 
@@ -73,14 +73,14 @@ void GameSession::VProcessing(bool r, bool w) {
     switch(key) {
         welcome_key:
             std::auto_ptr<char> res(new  char[sizeof(welcome)+max_name+3])
-            sprintf(res, g_WelcomeMsg, name, play_nmbr);
+            sprintf(res, g_WelcomeMsg, m_PlayNumber, m_PlayNumber);
 
             return res;
         info_key:
             
         default:
         #ifdef DEBUG
-            the_master->SendAll("Unexpected behavior from server: "
+            m_pTheMaster->SendAll("Unexpected behavior from server: "
                                         "unexpected key for Send\n");
         #endif
     }
@@ -97,5 +97,5 @@ void GameSession::Send(int key)
 
 void GameSession::Send(const char *message)
 {
-    write(GetFd(), message, sizeof(message));
+    send(GetFd(), message, sizeof(message));
 }

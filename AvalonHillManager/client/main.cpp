@@ -26,11 +26,11 @@ int main(int argc, char **argv)
         std::tuple<std::string, std::string> tmp = Parse(argc, argv);
         port = std::stoi(std::get<0>(tmp));
 	    server_ip = std::get<1>(tmp);
-        if(!is_addres(server_ip.c_str()))
+        if(!IsAdress(server_ip.c_str()))
 	    {
             std::cout << "\nInvalid ip adress for server! Try again!\n\n";
             continue;
-        } else if(port < valid_port) {
+        } else if(port < g_ValidPort) {
             std::cout << "\nInvalid port! Try again!\n\n";
             continue;
         }

@@ -11,7 +11,7 @@
 
 /* Client Object-oriented design implementation */
 
-bool is_addres(const char* src)
+bool IsAdress(const char* src)
 {
     if(!src) return false;
     int res{0};
@@ -99,7 +99,7 @@ std::tuple<std::string, std::string> Parse(int cnt, char **src)
             std::getline(std::cin, port);
 	    std::cout << std::endl;
         } else {
-            if(is_addres(src[1])) {
+            if(IsAdress(src[1])) {
                 tmp = src[1];
                 std::cout << "\nEnter server port: ";
                 std::getline(std::cin, port);
@@ -110,7 +110,7 @@ std::tuple<std::string, std::string> Parse(int cnt, char **src)
             }
         }
     } else {
-        if(is_addres(src[2])) {
+        if(IsAdress(src[2])) {
             port = src[1];
         }
     }
@@ -139,28 +139,28 @@ ServerForClient* ServerForClient::Start(std::string& adress, int port)
 void ServerForClient::VProcessing(bool r, bool w)
 {
     if(r) {
-        buf_used = Recv(GetFd(), buffer, buf_size, 0);
-        if(buf_used == -1)
+        m_BufUsed = Recv(GetFd(), m_Buffer, g_BufSize, 0);
+        if(m_BufUsed == -1)
         {
             std::cerr << "Error reading from server\n";
             exit(5);
         }
-        if(buf_used >= buf_size-1) {
-            std::cerr << "Error buffer overflow\n";
+        if(m_BufUsed >= g_BufSize-1) {
+            std::cerr << "Error m_Buffer overflow\n";
             exit(6);
-        } else { buffer[buf_used] = '\0';}
+        } else { m_Buffer[m_BufUsed] = '\0';}
 
         int i{0}; 
-        for(int b=0; buffer[i]; i++)
+        for(int b=0; m_Buffer[i]; i++)
         {
-            if(buffer[i] == '\n') {
+            if(m_Buffer[i] == '\n') {
                 Write(1, "FROM SERVER: ", 13);
-                Write(1, buffer+b, i+1-b);
+                Write(1, m_Buffer+b, i+1-b);
                 b += i+1;
             }
-            buf_used -= i+1;
+            m_BufUsed -= i+1;
         }
-        Memove(buffer, buffer+i+1, i+1);
+        Memove(m_Buffer, m_Buffer+i+1, i+1);
     
     }
     
@@ -174,24 +174,24 @@ Console* Console::Start(ServerForClient* master, int fd)
 void Console::VProcessing(bool r, bool w)
 {
     if(r) {
-        buf_used = Send(the_master->GetFd(), buffer, buf_size, 0);
-        if(buf_used == -1)
+        m_BufUsed = Send(the_master->GetFd(), m_Buffer, g_BufSize, 0);
+        if(m_BufUsed == -1)
         {
             std::cerr << "Error sending to server\n";
             exit(11);
         }
 
-        if(buf_used >= buf_size) {
-            std::cerr << "Error buffer overflow\n";
+        if(m_BufUsed >= g_BufSize) {
+            std::cerr << "Error m_Buffer overflow\n";
             exit(6);
-        } else { buffer[buf_used] = '\0';}
-	if(strstr(buffer, "quit"))
+        } else { m_Buffer[m_BufUsed] = '\0';}
+	if(strstr(m_Buffer, "quit"))
 		exit(0);
 
         Write(1, "FROM ME: ", 9);
-        Write(1, buffer, buf_used);
+        Write(1, m_Buffer, m_BufUsed);
 
-        Memove(buffer, buffer+buf_used, buf_used);
+        Memove(m_Buffer, m_Buffer+m_BufUsed, m_BufUsed);
     
     }
 };

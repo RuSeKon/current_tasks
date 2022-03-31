@@ -31,8 +31,5 @@ int main(int argc, char **argv)
     GameServer *Server = GameServer::ServerStart(Selector, 777);
     if(!Server)
         return 1;
-    Selector->Run();
-   //for(;;) {
-   //   if(Server->game_begun == true) {
-          
+    Selector->Run();          
 }

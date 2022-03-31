@@ -7,7 +7,7 @@
 #include "application.h"
 
 //Function wrappers
-bool is_addres(const char*);
+bool IsAdress(const char*);
 int Socket(int, int, int);
 void Connect(int, const struct sockaddr*, socklen_t);
 void Memove(void *dst, const void* src, int size);
@@ -17,26 +17,24 @@ int Recv(int, void*, size_t, int);
 std::tuple<std::string, std::string> Parse(int, char**);
 
 enum constants { 
-        buf_size = 256,
-        valid_port = 1000
+        g_BufSize = 256,
+        g_ValidPort = 1000
 };
 
-static const char mesg[] = ("Do you want to say something?\n");
-
 class ServerForClient : public IFdHandler {
-    char buffer[256];
-    int buf_used;
-    ServerForClient(int fd) : IFdHandler(fd), buf_used(0) {};
+    char m_Buffer[256];
+    int m_BufUsed;
+    ServerForClient(int fd) : IFdHandler(fd), m_BufUsed(0) {};
 public:
     void VProcessing(bool r, bool w);
     static ServerForClient* Start(std::string& adress, int port);
 };
 
 class Console : public IFdHandler {
-    ServerForClient* the_master;
-    char buffer[256];
-    int buf_used;
-    Console(ServerForClient* master, int fd) : IFdHandler(fd), the_master(master), buf_used(0) {};
+    ServerForClient* g_mTheMaster;
+    char m_Buffer[256];
+    int m_BufUsed;
+    Console(ServerForClient* master, int fd) : IFdHandler(fd), g_mTheMaster(master), m_BufUsed(0) {};
 public:
     void VProcessing(bool r, bool w);
     static Console* Start(ServerForClient* master, int fd);

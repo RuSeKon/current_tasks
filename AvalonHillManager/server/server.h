@@ -64,6 +64,7 @@ public:
     static GameServer *ServerStart(EventSelector *sel, int port);
 
     void RemoveSession(GameSession *s);
+    bool GameBegun() const {return m_GameBegun;}
     void SendAll(char *message, GameSession* except);
   ///  void GameLaunch(); ///////Needed parameters//////
 private:
@@ -74,12 +75,12 @@ private:
 
 class GameSession : public IFdHandler {
     friend class GameServer;
-    GameServer *the_master;
+    GameServer *m_pTheMaster;
 
-    char buffer[g_BufSize];
-    int buf_used;
+    char m_Buffer[g_BufSize];
+    int m_BufUsed;
     
-    int play_nmbr;
+    int m_PlayNumber;
 
     /*/Game resources
     int factories;
@@ -87,7 +88,7 @@ class GameSession : public IFdHandler {
     int product;
     int money;
     */
-    char name[g_MaxName];
+    char m_Name[g_MaxName];
 
     GameSession(GameServer *a_master, int fd, int pl_nmbr);
     ~GameSession();
@@ -95,8 +96,8 @@ class GameSession : public IFdHandler {
     void VProcessing(bool r, bool w);
     //void Send(int key);
     void Send(const char *message);
-    int GetNumber() const { return play_nmbr; }
-    const char* GetName() const { return name; }
+    int GetNumber() const { return m_PlayNumber; }
+    const char* GetName() const { return m_Name; }
     char* FormStr(char*);
 };
 
