@@ -13,7 +13,7 @@
 
 /* Section for constant message initialization!!! */
 //GameServer strings//
-static const char g_AlreadyPlayingMsg[] = {"Sorry, game is already started." 
+static const char g_AlreadyPlayingMsg [] = {"Sorry, game is already started." 
                         " You can play next one\n"};
 static const char g_WelcomeMsg[] = {"Welcome to the game %s, you play-number: %d\n"};
 static const char g_WelcomeAllMsg[] = {"%s number %d joined to the game!\n"};
@@ -65,7 +65,7 @@ public:
 
     void RemoveSession(GameSession *s);
     bool GameBegun() const {return m_GameBegun;}
-    void SendAll(char *message, GameSession* except);
+    void SendAll(const char *message, GameSession* except);
   ///  void GameLaunch(); ///////Needed parameters//////
 private:
     void VProcessing(bool r, bool w);

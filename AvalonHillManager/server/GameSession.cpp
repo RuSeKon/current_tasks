@@ -24,13 +24,13 @@ void GameSession::VProcessing(bool r, bool w) {
         return;
 
     if(m_pTheMaster->GameBegun() == false) {
-        if(!m_PlayNumber) 
+        if(!m_Name) 
         {
-            recv(GetFd(), m_PlayNumber, g_MaxName, 0);
-            std::auto_ptr<char> res(new char[sizeof(g_WelcomeAllMsg)+g_MaxName+3]);
-            sprintf(res.get(), g_WelcomeAllMsg, m_PlayNumber, m_PlayNumber);
+            recv(GetFd(), m_Name, g_MaxName, 0);
+            std::unique_ptr<char> res(new char[sizeof(g_WelcomeAllMsg)+g_MaxName+3]);
+            sprintf(res.get(), g_WelcomeAllMsg, m_Name, m_PlayNumber);
             m_pTheMaster->SendAll(res.get(), this);
-            sprintf(res.get(), g_WelcomeMsg, m_PlayNumber, m_PlayNumber);
+            sprintf(res.get(), g_WelcomeMsg, m_Name, m_PlayNumber);
             Send(res.get());
         } else {
             Send(g_GameNotBegunMsg);
@@ -97,5 +97,5 @@ void GameSession::Send(int key)
 
 void GameSession::Send(const char *message)
 {
-    send(GetFd(), message, sizeof(message));
+    send(GetFd(), message, sizeof(message), 0);
 }

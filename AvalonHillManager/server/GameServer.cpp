@@ -67,7 +67,7 @@ void GameServer::RemoveSession(GameSession *s)
     }
 }
 
-void GameServer::SendAll(char *message, GameSession* except)
+void GameServer::SendAll(const char *message, GameSession* except)
 {
     for(item *tmp = m_pItemHandler; tmp != nullptr; tmp = tmp->next)
         if(tmp->Session != except)
@@ -97,7 +97,7 @@ void GameServer::VProcessing(bool r, bool w)
         m_pSelector->Add(tmp->Session);
         
         ///Send message about joined new player
-        /*std::auto_ptr<char> res(new char[sizeof(g_WelcomeAllMsg)+g_MaxName+3]);
+        /*std::unique_ptr<char> res(new char[sizeof(g_WelcomeAllMsg)+g_MaxName+3]);
         sprintf(res, g_WelcomeAllMsg, except->GetName(), except->GetNumber());
         SendAll(res, tmp->Session);
         sprintf(res, g_WelcomeMsg, tmp->Session->GetName(), tmp->Session->GetNumber());
@@ -105,6 +105,6 @@ void GameServer::VProcessing(bool r, bool w)
     }
     if(m_GamerCounter == g_MaxGamerNumber) { // need attantion
         m_GameBegun = true;
-        SendAll(g_GameStartSoon);
+        SendAll(g_GameStartSoon, nullptr);
     }
 }

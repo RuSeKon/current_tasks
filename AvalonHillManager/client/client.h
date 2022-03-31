@@ -34,7 +34,7 @@ class Console : public IFdHandler {
     ServerForClient* m_pTheMaster;
     char m_Buffer[256];
     int m_BufUsed;
-    Console(ServerForClient* master, int fd) : IFdHandler(fd), g_mTheMaster(master), m_BufUsed(0) {};
+    Console(ServerForClient* master, int fd) : IFdHandler(fd), m_pTheMaster(master), m_BufUsed(0) {};
 public:
     void VProcessing(bool r, bool w);
     static Console* Start(ServerForClient* master, int fd);

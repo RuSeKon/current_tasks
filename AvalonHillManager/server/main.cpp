@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     enum const_for_port {
         VALID = 0,
         PERMITTED = 1000, 
-    }
+    };
 
     if(port < VALID || port < PERMITTED) {
         std::cout << "Invalid port entered! Please try again.\n";
