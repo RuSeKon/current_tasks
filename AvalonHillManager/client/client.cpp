@@ -174,7 +174,7 @@ Console* Console::Start(ServerForClient* master, int fd)
 void Console::VProcessing(bool r, bool w)
 {
     if(r) {
-        m_BufUsed = Send(the_master->GetFd(), m_Buffer, g_BufSize, 0);
+        m_BufUsed = Send(m_pTheMaster->GetFd(), m_Buffer, g_BufSize, 0);
         if(m_BufUsed == -1)
         {
             std::cerr << "Error sending to server\n";

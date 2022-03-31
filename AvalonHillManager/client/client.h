@@ -31,7 +31,7 @@ public:
 };
 
 class Console : public IFdHandler {
-    ServerForClient* g_mTheMaster;
+    ServerForClient* m_pTheMaster;
     char m_Buffer[256];
     int m_BufUsed;
     Console(ServerForClient* master, int fd) : IFdHandler(fd), g_mTheMaster(master), m_BufUsed(0) {};
