@@ -16,7 +16,7 @@ GameSession::GameSession(GameServer *a_master, int fd, int pl_nmbr)
         : IFdHandler(fd), m_pTheMaster(a_master), m_BufUsed(0),  
         m_PlayNumber(pl_nmbr)/*, factories(2), rawMaterial(4), money(10000)*/
 {
-    Send("Your welcome! Enter you m_PlayNumber...\n");
+    Send(g_Greeting);
 }
 
 //GameSession::~GameSession()
@@ -30,7 +30,7 @@ void GameSession::VProcessing(bool r, bool w) {
         if(!m_Name) 
         {
             recv(GetFd(), m_Name, g_MaxName, 0);
-            std::unique_ptr<char> res(new char[sizeof(g_WelcomeAllMsg)+g_MaxName+3]);
+            std::unique_ptr<char> res(new char[strlen(g_WelcomeAllMsg)+g_MaxName+3]);
             sprintf(res.get(), g_WelcomeAllMsg, m_Name, m_PlayNumber);
             m_pTheMaster->SendAll(res.get(), this);
             sprintf(res.get(), g_WelcomeMsg, m_Name, m_PlayNumber);
@@ -75,7 +75,7 @@ void GameSession::VProcessing(bool r, bool w) {
     char *res;
     switch(key) {
         welcome_key:
-            std::auto_ptr<char> res(new  char[sizeof(welcome)+max_name+3])
+            std::auto_ptr<char> res(new  char[strlen(welcome)+max_name+3])
             sprintf(res, g_WelcomeMsg, m_PlayNumber, m_PlayNumber);
 
             return res;
@@ -93,12 +93,17 @@ void GameSession::VProcessing(bool r, bool w) {
 void GameSession::Send(int key)
 {
     char *mes = FormStr(key);
-    write(GetFd(), mes, sizeof(mes));
+    send(GetFd(), mes, strlen(mes));
     delete [] mes;
 }
 */
 
 void GameSession::Send(const char *message)
 {
-    send(GetFd(), message, sizeof(message), 0);
+    int res{0};
+    res = send(GetFd(), message, strlen(message), 0);
+    if(res == -1) {
+        std::cout << "Client if offline\n";
+        return;
+    }
 }

@@ -26,7 +26,7 @@ int Socket(int domain, int type, int protocol)
     if(res == -1)
     {
         std::cerr << "Error socket creation\n";
-        exit(2);
+        exit(EXIT_FAILURE);
     }
     return res;
 };
@@ -37,7 +37,7 @@ void Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
     if(res == -1)
     {
         std::cerr << "Connection error\n";
-        exit(4);
+        exit(EXIT_FAILURE);
     }
 };
 
@@ -48,7 +48,7 @@ void Memove(void *dst, const void* src, int size)
     if(!tmp)
     {
         std::cerr << "Error allocating memory\n";
-        exit(7);
+        exit(EXIT_FAILURE);
     }
 };
 
@@ -58,7 +58,7 @@ int Write(int fd, const void *buf, size_t count)
     if(res == -1)
     {
         std::cerr << "Error write to socket\n";
-        exit(8);
+        exit(EXIT_FAILURE);
     }
     return res;
 };
@@ -69,18 +69,18 @@ int Send(int sockfd, const void *buf, size_t len, int flags)
     if(res == -1)
     {
         std::cerr << "Error send\n";
-        exit(9);
+        exit(EXIT_FAILURE);
     }
     return res;
 };
 
 int Recv(int sockfd, void *buf, size_t len, int flags)
 {
-    int res = send(sockfd, buf, len, flags);
+    int res = recv(sockfd, buf, len, flags);
     if(res == -1)
     {
         std::cerr << "Error recv\n";
-        exit(10);
+        exit(EXIT_FAILURE);
     }
     return res;
 };
@@ -125,10 +125,10 @@ ServerForClient* ServerForClient::Start(std::string& adress, int port)
     
     struct sockaddr_in serv_addr;
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htonl(port);
+    serv_addr.sin_port = htons(port);
     if(!inet_aton(adress.c_str(), &(serv_addr.sin_addr))) {
        std::cerr << "Error ip convertion by inet_aton\n";
-       exit(3);
+       exit(EXIT_FAILURE);
     }   
     
     Connect(sock_fd, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
@@ -143,24 +143,24 @@ void ServerForClient::VProcessing(bool r, bool w)
         if(m_BufUsed == -1)
         {
             std::cerr << "Error reading from server\n";
-            exit(5);
+            exit(EXIT_FAILURE);
         }
         if(m_BufUsed >= g_BufSize-1) {
             std::cerr << "Error m_Buffer overflow\n";
-            exit(6);
-        } else { m_Buffer[m_BufUsed] = '\0';}
+            exit(EXIT_FAILURE);
+        }
 
-        int i{0}; 
-        for(int b=0; m_Buffer[i]; i++)
+        int b{0}; 
+        for(int i=0; m_Buffer[i]; i++)
         {
             if(m_Buffer[i] == '\n') {
-                Write(1, "FROM SERVER: ", 13);
-                Write(1, m_Buffer+b, i+1-b);
+                Write(STDOUT_FILENO, "FROM SERVER: ", 13);
+                Write(STDOUT_FILENO, m_Buffer+b, i+1-b);
                 b += i+1;
+                m_BufUsed -= i+1;
             }
-            m_BufUsed -= i+1;
         }
-        Memove(m_Buffer, m_Buffer+i+1, i+1);
+        Memove(m_Buffer, m_Buffer+b, b);
     
     }
     
@@ -178,15 +178,16 @@ void Console::VProcessing(bool r, bool w)
         if(m_BufUsed == -1)
         {
             std::cerr << "Error sending to server\n";
-            exit(11);
+            exit(EXIT_FAILURE);
         }
 
         if(m_BufUsed >= g_BufSize) {
             std::cerr << "Error m_Buffer overflow\n";
-            exit(6);
+            exit(EXIT_FAILURE);
         } else { m_Buffer[m_BufUsed] = '\0';}
-	if(strstr(m_Buffer, "quit"))
-		exit(0);
+
+	    if(strstr(m_Buffer, "quit"))
+		    exit(0);
 
         Write(1, "FROM ME: ", 9);
         Write(1, m_Buffer, m_BufUsed);

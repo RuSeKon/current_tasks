@@ -22,6 +22,8 @@ static const char g_GameStartSoon[] = {"The game will start soon!:)\n"};
 //GameSession strings//
 static const char g_GameNotBegunMsg[] = {"The game haven't started yet. Please wait:)\n"};
 
+static const char g_Greeting[] = {"Your welcome! Enter you name...\n"};
+
 
 //////////////////////////////////////////////////////////////////////////////////////
 class GameSession;

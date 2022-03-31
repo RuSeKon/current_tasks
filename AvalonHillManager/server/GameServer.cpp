@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <memory>
+#include <iostream>
+#include <cstring>
 #include "server.h"
 #include "application.h"
  
@@ -49,6 +51,12 @@ GameServer *GameServer::ServerStart(EventSelector *sel, int port)
     res = listen(ls, 16);
     if(res == -1)
         return nullptr;
+    /*
+    char buf[INET_ADDRSTRLEN]{0};
+    inet_ntop(AF_INET, &addr.sin_addr, buf, INET_ADDRSTRLEN); //need reper 
+    std::cout << "Server adress: " << buf << std:: endl;
+    */
+
     return new GameServer(sel, ls);
 }
 
@@ -85,7 +93,7 @@ void GameServer::VProcessing(bool r, bool w)
     if(session_descriptor == -1)
         return;
     if(m_GameBegun) {       //session not creating
-        write(session_descriptor, g_AlreadyPlayingMsg, sizeof(g_AlreadyPlayingMsg));
+        write(session_descriptor, g_AlreadyPlayingMsg, strlen(g_AlreadyPlayingMsg));
         shutdown(session_descriptor, SHUT_RDWR);
         close(session_descriptor);
     } else {
@@ -97,7 +105,7 @@ void GameServer::VProcessing(bool r, bool w)
         m_pSelector->Add(tmp->Session);
         
         ///Send message about joined new player
-        /*std::unique_ptr<char> res(new char[sizeof(g_WelcomeAllMsg)+g_MaxName+3]);
+        /*std::unique_ptr<char> res(new char[strlen(g_WelcomeAllMsg)+g_MaxName+3]);
         sprintf(res, g_WelcomeAllMsg, except->GetName(), except->GetNumber());
         SendAll(res, tmp->Session);
         sprintf(res, g_WelcomeMsg, tmp->Session->GetName(), tmp->Session->GetNumber());

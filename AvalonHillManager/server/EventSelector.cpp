@@ -64,10 +64,13 @@ void EventSelector::Run()
         FD_ZERO(&rds);
         FD_ZERO(&wrs);
         for(i=0; i < m_ArrayLength; i++){
-            if(m_pFdArray[i]->WantRead())
-                FD_SET(i, &rds);
-            if(m_pFdArray[i]->WantWrite())
-                FD_SET(i, &wrs);
+            if(m_pFdArray[i])
+            {
+                if(m_pFdArray[i]->WantRead())
+                    FD_SET(i, &rds);
+                if(m_pFdArray[i]->WantWrite())
+                    FD_SET(i, &wrs);
+            }
         }
         int res = select(m_MaxFd+1, &rds, &wrs, 0, 0);
         if(res < 0) {
