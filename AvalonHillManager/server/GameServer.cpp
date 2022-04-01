@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cstring>
 #include "server.h"
+#include "errproc.h"
 #include "application.h"
  
 
@@ -75,11 +76,11 @@ void GameServer::RemoveSession(GameSession *s)
     }
 }
 
-void GameServer::SendAll(const char *message, GameSession* except)
+void GameServer::SendMsgAll(const char *message, GameSession* except)
 {
     for(item *tmp = m_pItemHandler; tmp != nullptr; tmp = tmp->next)
         if(tmp->Session != except)
-            tmp->Session->Send(message);
+            tmp->Session->SendMsg(message);
 }
 
 void GameServer::VProcessing(bool r, bool w)
@@ -93,7 +94,7 @@ void GameServer::VProcessing(bool r, bool w)
     if(session_descriptor == -1)
         return;
     if(m_GameBegun) {       //session not creating
-        write(session_descriptor, g_AlreadyPlayingMsg, strlen(g_AlreadyPlayingMsg));
+        send(session_descriptor, g_AlreadyPlayingMsg, strlen(g_AlreadyPlayingMsg), 0);
         shutdown(session_descriptor, SHUT_RDWR);
         close(session_descriptor);
     } else {
@@ -104,15 +105,15 @@ void GameServer::VProcessing(bool r, bool w)
         ++m_GamerCounter;
         m_pSelector->Add(tmp->Session);
         
-        ///Send message about joined new player
+        ///SendMsg message about joined new player
         /*std::unique_ptr<char> res(new char[strlen(g_WelcomeAllMsg)+g_MaxName+3]);
         sprintf(res, g_WelcomeAllMsg, except->GetName(), except->GetNumber());
-        SendAll(res, tmp->Session);
+        SendMsgAll(res, tmp->Session);
         sprintf(res, g_WelcomeMsg, tmp->Session->GetName(), tmp->Session->GetNumber());
-        tmp->Session->Send(res); */
+        tmp->Session->SendMsg(res); */
     }
     if(m_GamerCounter == g_MaxGamerNumber) { // need attantion
         m_GameBegun = true;
-        SendAll(g_GameStartSoon, nullptr);
+        SendMsgAll(g_GameStartSoon, nullptr);
     }
 }

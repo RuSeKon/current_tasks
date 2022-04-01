@@ -68,7 +68,7 @@ public:
 
     void RemoveSession(GameSession *s);
     bool GameBegun() const {return m_GameBegun;}
-    void SendAll(const char *message, GameSession* except);
+    void SendMsgAll(const char *message, GameSession* except);
   ///  void GameLaunch(); ///////Needed parameters//////
 private:
     void VProcessing(bool r, bool w);
@@ -98,7 +98,7 @@ class GameSession : public IFdHandler {
 
     void VProcessing(bool r, bool w);
     //void Send(int key);
-    void Send(const char *message);
+    void SendMsg(const char *message);
     int GetNumber() const { return m_PlayNumber; }
     const char* GetName() const { return m_Name; }
     char* FormStr(char*);

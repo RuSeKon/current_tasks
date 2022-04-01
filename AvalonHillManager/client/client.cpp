@@ -7,6 +7,7 @@
 #include <cstring>
 #include "client.h"
 #include "application.h"
+#include "errproc.h"
 
 
 /* Client Object-oriented design implementation */
@@ -20,81 +21,7 @@ bool IsAdress(const char* src)
     return res == 3;
 };
 
-int Socket(int domain, int type, int protocol)
-{
-    int res = socket(domain, type, protocol);
-    if(res == -1)
-    {
-        std::cerr << "Error socket creation\n";
-        exit(EXIT_FAILURE);
-    }
-    return res;
-};
 
-void Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
-{
-    int res = connect(sockfd, addr, addrlen);
-    if(res == -1)
-    {
-        std::cerr << "Connection error\n";
-        exit(EXIT_FAILURE);
-    }
-};
-
-void Memove(void *dst, const void* src, int size)
-{
-    void *tmp;
-    tmp = memmove(dst, src, size);
-    if(!tmp)
-    {
-        std::cerr << "Error allocating memory\n";
-        exit(EXIT_FAILURE);
-    }
-};
-
-int Write(int fd, const void *buf, size_t count)
-{
-    int res = write(fd, buf, count);
-    if(res == -1)
-    {
-        std::cerr << "Error write to socket\n";
-        exit(EXIT_FAILURE);
-    }
-    return res;
-};
-
-int Read(int fd, void *buf, size_t count)
-{
-    int res = read(fd, buf, count);
-    if(res == -1)
-    {
-        std::cerr << "Error reading\n";
-        exit(EXIT_FAILURE);
-    }
-    return res;
-};
-
-int Send(int sockfd, const void *buf, size_t len, int flags)
-{
-    int res = send(sockfd, buf, len, flags);
-    if(res == -1)
-    {
-        std::cerr << "Error send\n";
-        exit(EXIT_FAILURE);
-    }
-    return res;
-};
-
-int Recv(int sockfd, void *buf, size_t len, int flags)
-{
-    int res = recv(sockfd, buf, len, flags);
-    if(res == -1)
-    {
-        std::cerr << "Error recv\n";
-        exit(EXIT_FAILURE);
-    }
-    return res;
-};
 
 std::tuple<std::string, std::string> Parse(int cnt, char **src)
 {
@@ -151,12 +78,8 @@ void ServerForClient::VProcessing(bool r, bool w)
 {
     if(r) 
     {
-        m_BufUsed = Recv(GetFd(), m_Buffer, g_BufSize, 0);
-        if(m_BufUsed == -1)
-        {
-            std::cerr << "Error reading from server\n";
-            exit(EXIT_FAILURE);
-        }
+        m_BufUsed = Recv(GetFd(), m_Buffer, g_BufSize);
+        
         if(m_BufUsed >= g_BufSize-1) 
         {
             std::cerr << "Error buffer overflow\n";
@@ -189,12 +112,6 @@ void Console::VProcessing(bool r, bool w)
     if(r) 
     {
         m_BufUsed = Read(GetFd(), m_Buffer, g_BufSize);
-        
-        if(m_BufUsed == -1)
-        {
-            std::cerr << "Error reading from console\n";
-            exit(EXIT_FAILURE);
-        }
 
         if(m_BufUsed >= g_BufSize) 
         {
@@ -213,7 +130,7 @@ void Console::VProcessing(bool r, bool w)
         {
             if(m_Buffer[i] == '\n')
             {
-                Send(m_pTheMaster->GetFd(), m_Buffer, i+1, 0);
+                int res = send(m_pTheMaster->GetFd(), m_Buffer, i+1, 0);
                 m_BufUsed -= i+1;
                 break;
             }
