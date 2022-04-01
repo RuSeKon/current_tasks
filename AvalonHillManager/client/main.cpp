@@ -24,6 +24,16 @@ int main(int argc, char **argv)
     //Here i must to process input hostname and port
     while(!end) {
         std::tuple<std::string, std::string> tmp = Parse(argc, argv);
+        if(!std::get<0>(tmp).size())
+        {
+            std::cout << "Port field is empty, try again.\n";
+            continue;
+        }
+        else if(!std::get<1>(tmp).size())
+        {
+            std::cout << "Addres field is empty, try again.\n";
+            continue;
+        }
         port = std::stoi(std::get<0>(tmp));
 	    server_ip = std::get<1>(tmp);
         if(!IsAdress(server_ip.c_str()))

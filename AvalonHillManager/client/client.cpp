@@ -28,7 +28,7 @@ std::tuple<std::string, std::string> Parse(int cnt, char **src)
     std::string tmp, port;
 
     if(cnt < 3) {
-        std::cout << "                 Please enter server ip and port for connection!" << std::endl << std::endl;
+        std::cout << std::endl;
         if(cnt < 2) {
             std::cout << "Enter server ip (example: 192.168.0.1): ";
 	    std::getline(std::cin, tmp);
@@ -48,7 +48,13 @@ std::tuple<std::string, std::string> Parse(int cnt, char **src)
             }
         }
     } else {
-        if(IsAdress(src[2])) {
+        if(IsAdress(src[1])) {
+            port = src[2];
+            tmp = src[1];
+        }
+        else
+        {
+            tmp = src[2];
             port = src[1];
         }
     }
@@ -79,8 +85,12 @@ void ServerForClient::VProcessing(bool r, bool w)
     if(r) 
     {
         m_BufUsed = Recv(GetFd(), m_Buffer, g_BufSize);
-        
-        if(m_BufUsed >= g_BufSize-1) 
+        if(m_BufUsed == -1)
+        {
+            std::cout << "Error incorrect connection:(\n";
+            return;
+        }
+        else if(m_BufUsed >= g_BufSize-1) 
         {
             std::cerr << "Error buffer overflow\n";
             exit(EXIT_FAILURE);
@@ -118,6 +128,11 @@ void Console::VProcessing(bool r, bool w)
             std::cerr << "Error buffer overflow\n";
             exit(EXIT_FAILURE);
         }
+        else if(m_BufUsed == 0)
+        {
+            std::cout << "Programm terminated!\n";
+            exit(EXIT_FAILURE);
+        }
 
 	    if(strstr(m_Buffer, "quit"))
         {
@@ -131,6 +146,11 @@ void Console::VProcessing(bool r, bool w)
             if(m_Buffer[i] == '\n')
             {
                 int res = send(m_pTheMaster->GetFd(), m_Buffer, i+1, 0);
+                if(res == -1)
+                {
+                    std::cout << "Error sending message, server doesn't respond:(\n";
+                    return;
+                }
                 m_BufUsed -= i+1;
                 break;
             }

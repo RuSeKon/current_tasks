@@ -2,6 +2,8 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <iostream>
+#include <cstring>
 #include "errproc.h"
 
 int Socket(int domain, int type, int protocol)

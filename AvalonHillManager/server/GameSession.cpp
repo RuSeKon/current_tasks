@@ -15,14 +15,19 @@
 
 GameSession::GameSession(GameServer *a_master, int fd, int pl_nmbr)
         : IFdHandler(fd), m_pTheMaster(a_master), m_BufUsed(0),  
-        m_PlayNumber(pl_nmbr)/*, factories(2), rawMaterial(4), money(10000)*/
+          m_PlayNumber(pl_nmbr), m_Name(nullptr)
 {
     SendMsg(g_GreetingMsg);
 }
 
 GameSession::~GameSession()
 {
-    delete [] m_Name;
+    if(m_Name) 
+    {
+        delete[] m_Name;
+    }
+    shutdown(GetFd(), SHUT_RDWR);
+    close(GetFd());
 }
 
 
@@ -37,9 +42,19 @@ void GameSession::VProcessing(bool r, bool w)
         {
             std::cout << "Message came!\n";
             
-            m_BufUsed = Recv(GetFd(), m_Buffer, g_MaxName);
+            m_BufUsed = recv(GetFd(), m_Buffer, g_MaxName, 0);
             
-            if(m_BufUsed >= g_MaxName)
+            if(m_BufUsed == -1)
+            {
+                m_pTheMaster->RemoveSession(this);
+                return;
+            }
+            else if(m_BufUsed == 0)
+            {
+                m_pTheMaster->RemoveSession(this);
+                return;
+            }
+            else if(m_BufUsed >= g_MaxName)
             {
                 SendMsg("It's not name, stupid\n");
                 m_BufUsed = 0;
@@ -62,20 +77,32 @@ void GameSession::VProcessing(bool r, bool w)
         {
 
             std::cout << "Message came!\n";
-            m_BufUsed += Recv(GetFd(), m_Buffer, g_BufSize);
+            m_BufUsed += recv(GetFd(), m_Buffer, g_BufSize, 0);
             
-            if(m_BufUsed >= g_BufSize)
+            if(m_BufUsed == -1)
+            {
+                m_pTheMaster->RemoveSession(this);
+                return;
+            }
+            else if(m_BufUsed == 0)
+            {
+                m_pTheMaster->RemoveSession(this);
+                return;
+            }
+            else if(m_BufUsed >= g_BufSize)
             {
                 SendMsg(g_AnnoyingMsg);
                 m_pTheMaster->RemoveSession(this);
+                return;
             }
+            
             SendMsg(g_GameNotBegunMsg);
             return;
         }
     } 
     else 
     {
-        m_BufUsed = Recv(GetFd(), m_Buffer, g_BufSize);
+        m_BufUsed = recv(GetFd(), m_Buffer, g_BufSize, 0);///Needed attantion
         
         if(m_BufUsed >= g_BufSize-1)
         {
@@ -94,7 +121,7 @@ void GameSession::VProcessing(bool r, bool w)
                 m_BufUsed -= i+1;
             }
         }
-        Memmove(m_Buffer, m_Buffer+i+1, m_BufUsed);
+        Memove(m_Buffer, m_Buffer+i+1, m_BufUsed);
     }
 
     ///Here data from player came, and we need to processe them and send to Game class///

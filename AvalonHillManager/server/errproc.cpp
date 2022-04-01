@@ -2,6 +2,8 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <iostream>
+#include <cstring>
 #include "errproc.h"
 
 int Socket(int domain, int type, int protocol)
@@ -71,6 +73,7 @@ int Send(int sockfd, const void *buf, size_t len)
 };
 */
 
+/*
 int Recv(int sockfd, void *buf, size_t len)
 {
     int res = recv(sockfd, buf, len, 0);
@@ -81,3 +84,5 @@ int Recv(int sockfd, void *buf, size_t len)
     }
     return res;
 };
+
+*/

@@ -47,7 +47,7 @@ bool EventSelector::Remove(IFdHandler *h)
     int fd = h->GetFd();
     if(fd >= m_ArrayLength || m_pFdArray[fd] != h)
         return false;
-    m_pFdArray[fd] = 0;
+    m_pFdArray[fd] = nullptr;
     if(fd == m_MaxFd) {
         while(m_MaxFd >= 0 && !m_pFdArray[m_MaxFd])
             m_MaxFd--;

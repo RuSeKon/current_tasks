@@ -14,7 +14,7 @@
 
 GameServer::GameServer(EventSelector *sel, int fd)
         : IFdHandler(fd), m_pSelector(sel), m_pItemHandler(nullptr), 
-        m_GamerCounter(0), m_GameBegun(false) 
+        m_GamerCounter(1), m_GameBegun(false) 
 {
     m_pSelector->Add(this);
 }
