@@ -80,7 +80,7 @@ ServerForClient* ServerForClient::Start(std::string& adress, int port)
     return new ServerForClient(sock_fd);
 };
 
-void ServerForClient::VProcessing(bool r, bool w)
+void ServerForClient::VProcessing(bool r, bool w) override
 {
     if(r) 
     {
@@ -117,7 +117,7 @@ Console* Console::Start(ServerForClient* master, int fd)
     return new Console(master, fd);
 };
 
-void Console::VProcessing(bool r, bool w)
+void Console::VProcessing(bool r, bool w) override
 {
     if(r) 
     {

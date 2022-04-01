@@ -1,8 +1,7 @@
-#include "application.h"
-#include "server.h"
 #include <iostream>
 #include <string>
-
+#include "application.h"
+#include "server.h"
 
 
 int main(int argc, char **argv)
@@ -23,9 +22,9 @@ int main(int argc, char **argv)
     };
 
     
-    if(tmp.size() < 4)  //for permitted and not entered port string
+    if(tmp.size() < 4 || tmp[0] == '-')  //for permitted, not entered and not valid port string
     {
-        std::cout << "Invalid port entered! Please try again.\n";
+        std::cerr << "Invalid port entered! Please try again.\n";
         return 1;
     }
         
@@ -35,7 +34,8 @@ int main(int argc, char **argv)
     GameServer *Server = GameServer::ServerStart(Selector, port);
     if(!Server)
         return 1;
+
     Selector->Run();
-    std::cout << "I am here\n";
+    std::cout << "Game over:)\n";
     return 0;     
 }

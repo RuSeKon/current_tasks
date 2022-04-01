@@ -6,7 +6,6 @@
 #include <tuple>
 #include "application.h"
 
-//Function wrappers
 bool IsAdress(const char*);
 std::tuple<std::string, std::string> Parse(int, char**);
 
@@ -20,7 +19,7 @@ class ServerForClient : public IFdHandler {
     int m_BufUsed;
     ServerForClient(int fd) : IFdHandler(fd), m_BufUsed(0) {};
 public:
-    void VProcessing(bool r, bool w);
+    void VProcessing(bool r, bool w) override;
     static ServerForClient* Start(std::string& adress, int port);
 };
 
@@ -30,7 +29,7 @@ class Console : public IFdHandler {
     int m_BufUsed;
     Console(ServerForClient* master, int fd) : IFdHandler(fd), m_pTheMaster(master), m_BufUsed(0) {};
 public:
-    void VProcessing(bool r, bool w);
+    void VProcessing(bool r, bool w) override;
     static Console* Start(ServerForClient* master, int fd);
 };
 

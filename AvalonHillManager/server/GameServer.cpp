@@ -68,7 +68,6 @@ void GameServer::RemoveSession(GameSession *s)
         if((*tmp)->Session == s) {
             item *p = *tmp;
             *tmp = p->next;
-            delete p->Session;
             delete p;
             m_GamerCounter--;
             return;
@@ -83,26 +82,28 @@ void GameServer::SendMsgAll(const char *message, GameSession* except)
             tmp->Session->SendMsg(message);
 }
 
-void GameServer::VProcessing(bool r, bool w)
+void GameServer::VProcessing(bool r, bool w) override
 {
     if(!r)  //Explantation on README
         return;
     int session_descriptor;
     struct sockaddr_in addr;
     socklen_t len = sizeof(addr);
+
     session_descriptor = accept(GetFd(), (struct sockaddr*) &addr, &len);
     if(session_descriptor == -1)
         return;
+
     if(m_GameBegun) {       //session not creating
-        send(session_descriptor, g_AlreadyPlayingMsg, strlen(g_AlreadyPlayingMsg), 0);
+        send(session_descriptor, g_AlreadyPlayingMsg, 
+                                            strlen(g_AlreadyPlayingMsg), 0);
         shutdown(session_descriptor, SHUT_RDWR);
         close(session_descriptor);
     } else {
         item *tmp = new item(m_GamerCounter);
-        tmp->Session = new GameSession(this, session_descriptor, m_GamerCounter);
+        tmp->Session = new GameSession(this, session_descriptor, m_GamerCounter++);
         tmp->next = m_pItemHandler;
         m_pItemHandler = tmp;
-        ++m_GamerCounter;
         m_pSelector->Add(tmp->Session);
         
         ///SendMsg message about joined new player

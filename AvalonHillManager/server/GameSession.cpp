@@ -31,7 +31,7 @@ GameSession::~GameSession()
 }
 
 
-void GameSession::VProcessing(bool r, bool w) 
+void GameSession::VProcessing(bool r, bool w) override
 {
     if(!r)
         return;
@@ -44,19 +44,14 @@ void GameSession::VProcessing(bool r, bool w)
             
             m_BufUsed = recv(GetFd(), m_Buffer, g_MaxName, 0);
             
-            if(m_BufUsed == -1)
-            {
-                m_pTheMaster->RemoveSession(this);
-                return;
-            }
-            else if(m_BufUsed == 0)
+            if(m_BufUsed == -1 || m_BufUsed == 0)
             {
                 m_pTheMaster->RemoveSession(this);
                 return;
             }
             else if(m_BufUsed >= g_MaxName)
             {
-                SendMsg("It's not name, stupid\n");
+                SendMsg(g_NotNameMsg);
                 m_BufUsed = 0;
                 return;
             }
@@ -79,12 +74,7 @@ void GameSession::VProcessing(bool r, bool w)
             std::cout << "Message came!\n";
             m_BufUsed += recv(GetFd(), m_Buffer, g_BufSize, 0);
             
-            if(m_BufUsed == -1)
-            {
-                m_pTheMaster->RemoveSession(this);
-                return;
-            }
-            else if(m_BufUsed == 0)
+            if(m_BufUsed == -1 || m_BufUsed == 0)
             {
                 m_pTheMaster->RemoveSession(this);
                 return;
@@ -95,8 +85,9 @@ void GameSession::VProcessing(bool r, bool w)
                 m_pTheMaster->RemoveSession(this);
                 return;
             }
-            
+
             SendMsg(g_GameNotBegunMsg);
+            m_BufUsed = 0;
             return;
         }
     } 
@@ -107,16 +98,16 @@ void GameSession::VProcessing(bool r, bool w)
         if(m_BufUsed >= g_BufSize-1)
         {
             std::cerr << "Error m_Buffer of client " << m_PlayNumber << " overflow\n";
-            exit(6);
+            exit(EXIT_FAILURE);
         }
         else 
+        //////NEED to SOLVE////
         { m_Buffer[m_BufUsed] = '\0';}
         
         int i{0};
         for(; m_Buffer[i]; i++)
         {
             if(m_Buffer[i] == '\n') {
-                Write(1, "FROM CLIENT: ", 13);
                 Write(1, m_Buffer, i+1);
                 m_BufUsed -= i+1;
             }
@@ -124,43 +115,13 @@ void GameSession::VProcessing(bool r, bool w)
         Memove(m_Buffer, m_Buffer+i+1, m_BufUsed);
     }
 
-    ///Here data from player came, and we need to processe them and send to Game class///
 }
-
-
-/*char *GameSession::FormStr(int key) ///Need attantion
-{
-    char *res;
-    switch(key) {
-        welcome_key:
-            std::auto_ptr<char> res(new  char[strlen(welcome)+max_name+3])
-            sprintf(res, g_WelcomeMsg, m_PlayNumber, m_PlayNumber);
-
-            return res;
-        info_key:
-            
-        default:
-        #ifdef DEBUG
-            m_pTheMaster->SendAll("Unexpected behavior from server: "
-                                        "unexpected key for Send\n");
-        #endif
-    }
-    return nullptr;
-}        
-
-void GameSession::Send(int key)
-{
-    char *mes = FormStr(key);
-    send(GetFd(), mes, strlen(mes));
-    delete [] mes;
-}
-*/
 
 void GameSession::SendMsg(const char *message)
 {
     int res{0};
     res = send(GetFd(), message, strlen(message), 0);
-    if(res == -1) {
+    if(res == -1 || res == 0) {
         std::cout << "Client is offline\n";
         m_pTheMaster->RemoveSession(this);
         return;

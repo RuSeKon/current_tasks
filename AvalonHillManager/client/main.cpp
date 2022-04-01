@@ -17,7 +17,6 @@ int main(int argc, char **argv)
     int port;
     std::string server_ip;
 
-    bool quit{false};
     bool end{false};
 
     std::cout << "\n\n            ----Welcome to the Manager game from Avalon Hill!!!!----\n\n";
@@ -47,21 +46,22 @@ int main(int argc, char **argv)
         end = true;
     }
  
-    ServerForClient* serv = ServerForClient::Start(server_ip, port);
-    Console* console = Console::Start(serv, STDIN_FILENO);
-    
+    ServerForClient* server = ServerForClient::Start(server_ip, port);
+    Console* console = Console::Start(server, STDIN_FILENO);
+   
+    bool quit{false};
     //main loop
     do {
         fd_set rds, wrs;
         FD_ZERO(&rds);
         FD_ZERO(&wrs);
 
-        FD_SET(serv->GetFd(), &rds);
-        FD_SET(serv->GetFd(), &wrs);
+        FD_SET(server->GetFd(), &rds);
+        FD_SET(server->GetFd(), &wrs);
         FD_SET(console->GetFd(), &rds);
         FD_SET(console->GetFd(), &wrs);
 
-        int res = select(serv->GetFd()+1, &rds, &wrs, 0, 0);
+        int res = select(server->GetFd()+1, &rds, &wrs, 0, 0);
         if(res < 0) {
             if(errno == EINTR) //If we need to process input signals
                 continue;
@@ -69,14 +69,14 @@ int main(int argc, char **argv)
                 break; //Need to proceed!!!!!
         }
         
-        //read_from_buffer
-        if(FD_ISSET(serv->GetFd(), &rds))
+        //read from server
+        if(FD_ISSET(server->GetFd(), &rds))
         {
-            serv->VProcessing(1, 0);
+            server->VProcessing(1, 0);
         }
 
-        //write_to_buffer  
-        if(FD_ISSET(console->GetFd(), &rds) && FD_ISSET(serv->GetFd(), &wrs))
+        //read from console and send to server  
+        if(FD_ISSET(console->GetFd(), &rds) && FD_ISSET(server->GetFd(), &wrs))
         {
             console->VProcessing(1, 0);
         }
