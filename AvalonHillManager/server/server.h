@@ -12,24 +12,31 @@
 
 
 /* Section for constant message initialization!!! */
-//GameServer strings//
-static const char g_AlreadyPlayingMsg[] = {"Sorry, game is already started." 
+//////////GameServer strings////////////////////////
+static const char g_AlreadyPlayingMsg [] = {"Sorry, game is already started." 
                         " You can play next one\n"};
-static const char g_WelcomeMsg[] = {"Welcome to the game %s, you play-number: %d\n"};
+static const char g_WelcomeMsg[] = {"Welcome to the game %s, " 
+                                                     "you play-number: %d\n"};
 static const char g_WelcomeAllMsg[] = {"%s number %d joined to the game!\n"};
 static const char g_GameStartSoon[] = {"The game will start soon!:)\n"};
 
-//GameSession strings//
-static const char g_GameNotBegunMsg[] = {"The game haven't started yet. Please wait:)\n"};
+//////////GameSession strings///////////////////////
+static const char g_GameNotBegunMsg[] = {"The game haven't started yet. " 
+                                                           "Please wait:)\n"};
+
+static const char g_GreetingMsg[] = {"Your welcome! Enter you name:\n"};
+static const char g_AnnoyingMsg[] = {"You are very annoying... Goodbye!\n"};
+static const char g_NotNameMsg[] = {"Your name is too long, KISS\n"};
 
 
-//////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+
 class GameSession;
 
 enum ConstantsForServer { 
     g_MaxGamerNumber = MAXGAMERNUMBER,
     g_MaxName = 10,
-    g_BufSize = 256,
+    g_BufSize = 256
 };
 
 struct item {
@@ -38,7 +45,7 @@ struct item {
         item* next;
 
         item(int fd) : Session(nullptr), next(nullptr) {}
-        item() = delete; //Because number must be initialized
+        ~item() {if(Session) delete Session;}
 };
 
 //Keys for form Send massages
@@ -53,7 +60,7 @@ class GameServer : public IFdHandler {
     item *m_pItemHandler;
 
     int m_GamerCounter;
-    bool m_GameBegun; //need getr function
+    bool m_GameBegun; //need getr function or not?
 
     /*Private constructor will use on method Start. For prevent unexpected GameServer construction, 
     because Sever should be one*/
@@ -64,39 +71,32 @@ public:
     static GameServer *ServerStart(EventSelector *sel, int port);
 
     void RemoveSession(GameSession *s);
-    void SendAll(char *message, GameSession* except);
+    bool GameBegun() const {return m_GameBegun;}
+    void SendMsgAll(const char *message, GameSession* except);
   ///  void GameLaunch(); ///////Needed parameters//////
 private:
-    void VProcessing(bool r, bool w);
+    void VProcessing(bool r, bool w) override;
 };
 
 /* SERVERS IMPLEMENTATIONS OF USER SESSION */
 
 class GameSession : public IFdHandler {
     friend class GameServer;
-    GameServer *the_master;
+    GameServer *m_pTheMaster;
 
-    char buffer[g_BufSize];
-    int buf_used;
+    char m_Buffer[g_BufSize];
+    int m_BufUsed;
     
-    int play_nmbr;
-
-    /*/Game resources
-    int factories;
-    int rawMaterial;
-    int product;
-    int money;
-    */
-    char name[g_MaxName];
+    int m_PlayNumber;
+    char *m_Name;
 
     GameSession(GameServer *a_master, int fd, int pl_nmbr);
     ~GameSession();
 
-    void VProcessing(bool r, bool w);
-    //void Send(int key);
-    void Send(const char *message);
-    int GetNumber() const { return play_nmbr; }
-    const char* GetName() const { return name; }
+    void VProcessing(bool r, bool w) override;
+    void SendMsg(const char *message);
+    int GetNumber() const { return m_PlayNumber; }
+    const char* GetName() const { return m_Name; }
     char* FormStr(char*);
 };
 

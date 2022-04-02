@@ -93,6 +93,3 @@ void EventSelector::Run()
         }
     } while(!m_QuitFlag);
 }
-
-
-

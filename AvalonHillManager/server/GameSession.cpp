@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cstring>
 #include "server.h"
+#include "errproc.h"
 #include "application.h"
 
 
@@ -13,89 +14,116 @@
 ////////////////////////////SESSIONS/////////////////////////////////////////////////////
 
 GameSession::GameSession(GameServer *a_master, int fd, int pl_nmbr)
-        : IFdHandler(fd), the_master(a_master), buf_used(0),  
-        play_nmbr(pl_nmbr)/*, factories(2), rawMaterial(4), money(10000)*/
+        : IFdHandler(fd), m_pTheMaster(a_master), m_BufUsed(0),  
+          m_PlayNumber(pl_nmbr), m_Name(nullptr)
 {
-    Send("Your welcome! Enter you name...\n");
+    SendMsg(g_GreetingMsg);
 }
 
-void GameSession::VProcessing(bool r, bool w) {
+GameSession::~GameSession()
+{
+    if(m_Name) 
+    {
+        delete[] m_Name;
+    }
+    shutdown(GetFd(), SHUT_RDWR);
+    close(GetFd());
+}
+
+
+void GameSession::VProcessing(bool r, bool w) override
+{
     if(!r)
         return;
 
-    if(the_master->m_GameBegun == false) {
-        if(!name) 
+    if(m_pTheMaster->GameBegun() == false) 
+    {
+        if(!m_Name) 
         {
-            recv(GetFd(), name, g_MaxName, 0);
-            std::auto_ptr<char> res(new char[sizeof(g_WelcomeAllMsg)+g_MaxName+3]);
-            sprintf(res.get(), g_WelcomeAllMsg, name, play_nmbr);
-            the_master->SendAll(res.get(), this);
-            sprintf(res.get(), g_WelcomeMsg, name, play_nmbr);
-            Send(res.get());
-        } else {
-            Send(g_GameNotBegunMsg);
+            std::cout << "Message came!\n";
+            
+            m_BufUsed = recv(GetFd(), m_Buffer, g_MaxName, 0);
+            
+            if(m_BufUsed == -1 || m_BufUsed == 0)
+            {
+                m_pTheMaster->RemoveSession(this);
+                return;
+            }
+            else if(m_BufUsed >= g_MaxName)
+            {
+                SendMsg(g_NotNameMsg);
+                m_BufUsed = 0;
+                return;
+            }
+
+            m_Name = new char[m_BufUsed];
+            strncpy(m_Name, m_Buffer, m_BufUsed-1);
+            m_Name[m_BufUsed] = '\0';
+            m_BufUsed = 0;
+        
+
+            std::unique_ptr<char> res(new char[strlen(g_WelcomeAllMsg)+g_MaxName+3]);
+            //sprintf(res.get(), g_WelcomeAllMsg, m_Name, m_PlayNumber);
+            //m_pTheMaster->SendAll(res.get(), this);
+            sprintf(res.get(), g_WelcomeMsg, m_Name, m_PlayNumber);
+            SendMsg(res.get());
+        } 
+        else 
+        {
+
+            std::cout << "Message came!\n";
+            m_BufUsed += recv(GetFd(), m_Buffer, g_BufSize, 0);
+            
+            if(m_BufUsed == -1 || m_BufUsed == 0)
+            {
+                m_pTheMaster->RemoveSession(this);
+                return;
+            }
+            else if(m_BufUsed >= g_BufSize)
+            {
+                SendMsg(g_AnnoyingMsg);
+                m_pTheMaster->RemoveSession(this);
+                return;
+            }
+
+            SendMsg(g_GameNotBegunMsg);
+            m_BufUsed = 0;
             return;
         }
-    } else {
-        buf_used = recv(GetFd(), buffer, g_BufSize, 0);
-        if(buf_used == -1)
+    } 
+    else 
+    {
+        m_BufUsed = recv(GetFd(), m_Buffer, g_BufSize, 0);///Needed attantion
+        
+        if(m_BufUsed >= g_BufSize-1)
         {
-            std::cerr << "Error reading from client number: " << play_nmbr << std::endl;
-            exit(5);
+            std::cerr << "Error m_Buffer of client " << m_PlayNumber << " overflow\n";
+            exit(EXIT_FAILURE);
         }
-        if(buf_used >= g_BufSize-1) {
-            std::cerr << "Error buffer of client " << play_nmbr << " overflow\n";
-            exit(6);
-        } else { buffer[buf_used] = '\0';}
-        int i{0}; 
-        for(int b=0; buffer[i]; i++)
+        else 
+        //////NEED to SOLVE////
+        { m_Buffer[m_BufUsed] = '\0';}
+        
+        int i{0};
+        for(; m_Buffer[i]; i++)
         {
-            if(buffer[i] == '\n') {
-                write(1, "FROM CLIENT: ", 13);
-                write(1, buffer+b, i+1-b);
-                b += i+1;
+            if(m_Buffer[i] == '\n') {
+                Write(1, m_Buffer, i+1);
+                m_BufUsed -= i+1;
             }
-            buf_used -= i+1;
         }
-        memmove(buffer, buffer+i+1, i+1);
+        Memove(m_Buffer, m_Buffer+i+1, m_BufUsed);
     }
 
-
-
-
-    ///Here data from player came, and we need to processe them and send to Game class///
 }
 
-
-/*char *GameSession::FormStr(int key) ///Need attantion
+void GameSession::SendMsg(const char *message)
 {
-    char *res;
-    switch(key) {
-        welcome_key:
-            std::auto_ptr<char> res(new  char[sizeof(welcome)+max_name+3])
-            sprintf(res, g_WelcomeMsg, name, play_nmbr);
-
-            return res;
-        info_key:
-            
-        default:
-        #ifdef DEBUG
-            the_master->SendAll("Unexpected behavior from server: "
-                                        "unexpected key for Send\n");
-        #endif
+    int res{0};
+    res = send(GetFd(), message, strlen(message), 0);
+    if(res == -1 || res == 0) {
+        std::cout << "Client is offline\n";
+        m_pTheMaster->RemoveSession(this);
+        return;
     }
-    return nullptr;
-}        
-
-void GameSession::Send(int key)
-{
-    char *mes = FormStr(key);
-    write(GetFd(), mes, sizeof(mes));
-    delete [] mes;
-}
-*/
-
-void GameSession::Send(const char *message)
-{
-    write(GetFd(), message, sizeof(message));
 }

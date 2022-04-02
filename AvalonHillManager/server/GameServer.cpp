@@ -3,7 +3,10 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <memory>
+#include <iostream>
+#include <cstring>
 #include "server.h"
+#include "errproc.h"
 #include "application.h"
  
 
@@ -11,7 +14,7 @@
 
 GameServer::GameServer(EventSelector *sel, int fd)
         : IFdHandler(fd), m_pSelector(sel), m_pItemHandler(nullptr), 
-        m_GamerCounter(0), m_GameBegun(false) 
+        m_GamerCounter(1), m_GameBegun(false) 
 {
     m_pSelector->Add(this);
 }
@@ -49,6 +52,12 @@ GameServer *GameServer::ServerStart(EventSelector *sel, int port)
     res = listen(ls, 16);
     if(res == -1)
         return nullptr;
+    /*
+    char buf[INET_ADDRSTRLEN]{0};
+    inet_ntop(AF_INET, &addr.sin_addr, buf, INET_ADDRSTRLEN); //need reper 
+    std::cout << "Server adress: " << buf << std:: endl;
+    */
+
     return new GameServer(sel, ls);
 }
 
@@ -59,7 +68,6 @@ void GameServer::RemoveSession(GameSession *s)
         if((*tmp)->Session == s) {
             item *p = *tmp;
             *tmp = p->next;
-            delete p->Session;
             delete p;
             m_GamerCounter--;
             return;
@@ -67,44 +75,46 @@ void GameServer::RemoveSession(GameSession *s)
     }
 }
 
-void GameServer::SendAll(char *message, GameSession* except)
+void GameServer::SendMsgAll(const char *message, GameSession* except)
 {
     for(item *tmp = m_pItemHandler; tmp != nullptr; tmp = tmp->next)
         if(tmp->Session != except)
-            tmp->Session->Send(message);
+            tmp->Session->SendMsg(message);
 }
 
-void GameServer::VProcessing(bool r, bool w)
+void GameServer::VProcessing(bool r, bool w) override
 {
     if(!r)  //Explantation on README
         return;
     int session_descriptor;
     struct sockaddr_in addr;
     socklen_t len = sizeof(addr);
+
     session_descriptor = accept(GetFd(), (struct sockaddr*) &addr, &len);
     if(session_descriptor == -1)
         return;
+
     if(m_GameBegun) {       //session not creating
-        write(session_descriptor, g_AlreadyPlayingMsg, sizeof(g_AlreadyPlayingMsg));
+        send(session_descriptor, g_AlreadyPlayingMsg, 
+                                            strlen(g_AlreadyPlayingMsg), 0);
         shutdown(session_descriptor, SHUT_RDWR);
         close(session_descriptor);
     } else {
         item *tmp = new item(m_GamerCounter);
-        tmp->Session = new GameSession(this, session_descriptor, m_GamerCounter);
+        tmp->Session = new GameSession(this, session_descriptor, m_GamerCounter++);
         tmp->next = m_pItemHandler;
         m_pItemHandler = tmp;
-        ++m_GamerCounter;
         m_pSelector->Add(tmp->Session);
         
-        ///Send message about joined new player
-        /*std::auto_ptr<char> res(new char[sizeof(g_WelcomeAllMsg)+g_MaxName+3]);
+        ///SendMsg message about joined new player
+        /*std::unique_ptr<char> res(new char[strlen(g_WelcomeAllMsg)+g_MaxName+3]);
         sprintf(res, g_WelcomeAllMsg, except->GetName(), except->GetNumber());
-        SendAll(res, tmp->Session);
+        SendMsgAll(res, tmp->Session);
         sprintf(res, g_WelcomeMsg, tmp->Session->GetName(), tmp->Session->GetNumber());
-        tmp->Session->Send(res); */
+        tmp->Session->SendMsg(res); */
     }
     if(m_GamerCounter == g_MaxGamerNumber) { // need attantion
         m_GameBegun = true;
-        SendAll(g_GameStartSoon);
+        SendMsgAll(g_GameStartSoon, nullptr);
     }
 }

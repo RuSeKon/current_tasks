@@ -47,7 +47,7 @@ bool EventSelector::Remove(IFdHandler *h)
     int fd = h->GetFd();
     if(fd >= m_ArrayLength || m_pFdArray[fd] != h)
         return false;
-    m_pFdArray[fd] = 0;
+    m_pFdArray[fd] = nullptr;
     if(fd == m_MaxFd) {
         while(m_MaxFd >= 0 && !m_pFdArray[m_MaxFd])
             m_MaxFd--;
@@ -64,10 +64,13 @@ void EventSelector::Run()
         FD_ZERO(&rds);
         FD_ZERO(&wrs);
         for(i=0; i < m_ArrayLength; i++){
-            if(m_pFdArray[i]->WantRead())
-                FD_SET(i, &rds);
-            if(m_pFdArray[i]->WantWrite())
-                FD_SET(i, &wrs);
+            if(m_pFdArray[i])
+            {
+                if(m_pFdArray[i]->WantRead())
+                    FD_SET(i, &rds);
+                if(m_pFdArray[i]->WantWrite())
+                    FD_SET(i, &wrs);
+            }
         }
         int res = select(m_MaxFd+1, &rds, &wrs, 0, 0);
         if(res < 0) {
