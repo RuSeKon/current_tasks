@@ -62,6 +62,7 @@ void GameSession::VProcessing(bool r, bool w)
 		m_BufUsed = GetMessage();
 		if(m_BufUsed > 0)
 		{
+			//Need to manage resources more clever!
 			if(m_Request) delete[] m_Request;//clear last request
 
 			m_Request = new char[m_BufUsed];
