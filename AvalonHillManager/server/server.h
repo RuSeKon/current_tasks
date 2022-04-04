@@ -14,15 +14,15 @@
 /* Section for constant message initialization!!! */
 //////////GameServer strings////////////////////////
 static const char g_AlreadyPlayingMsg [] = {"Sorry, game is already started." 
-                        " You can play next one\n"};
+						" You can play next one\n"};
 static const char g_WelcomeMsg[] = {"Welcome to the game %s, " 
-                                                     "you play-number: %d\n"};
+													"you play-number: %d\n"};
 static const char g_WelcomeAllMsg[] = {"%s number %d joined to the game!\n"};
 static const char g_GameStartSoon[] = {"The game will start soon!:)\n"};
 
 //////////GameSession strings///////////////////////
 static const char g_GameNotBegunMsg[] = {"The game haven't started yet. " 
-                                                           "Please wait:)\n"};
+														   "Please wait:)\n"};
 
 static const char g_GreetingMsg[] = {"Your welcome! Enter you name:\n"};
 static const char g_AnnoyingMsg[] = {"You are very annoying... Goodbye!\n"};
@@ -31,73 +31,72 @@ static const char g_NotNameMsg[] = {"Your name is too long, KISS\n"};
 
 /////////////////////////////////////////////////////////////////////////////
 
-class GameSession;
-
 enum ConstantsForServer { 
-    g_MaxGamerNumber = MAXGAMERNUMBER,
-    g_MaxName = 10,
-    g_BufSize = 256
+	g_MaxGamerNumber = MAXGAMERNUMBER,
+	g_MaxName = 10,
+	g_BufSize = 256
 };
 
-struct item {
-        GameSession* Session;
-        
-        item* next;
-
-        item(int fd) : Session(nullptr), next(nullptr) {}
-        ~item() {if(Session) delete Session;}
-};
-
-//Keys for form Send massages
-enum ServerKeys { 
-    g_WelcomeKey = 0,
-    g_PlayerJoinedKey = 1,
-};
-
-class GameServer : public IFdHandler {
-    EventSelector *m_pSelector; //the_selector
-    
-    item *m_pItemHandler;
-
-    int m_GamerCounter;
-    bool m_GameBegun; //need getr function or not?
-
-    /*Private constructor will use on method Start. For prevent unexpected GameServer construction, 
-    because Sever should be one*/
-    GameServer(EventSelector *sel, int fd); 
-public:
-    GameServer() = delete;
-    ~GameServer();
-    static GameServer *ServerStart(EventSelector *sel, int port);
-
-    void RemoveSession(GameSession *s);
-    bool GameBegun() const {return m_GameBegun;}
-    void SendMsgAll(const char *message, GameSession* except);
-  ///  void GameLaunch(); ///////Needed parameters//////
-private:
-    void VProcessing(bool r, bool w) override;
-};
+class GameServer;
 
 /* SERVERS IMPLEMENTATIONS OF USER SESSION */
 
 class GameSession : public IFdHandler {
-    friend class GameServer;
-    GameServer *m_pTheMaster;
+	friend class GameServer;
+	GameServer *m_pTheMaster;
 
-    char m_Buffer[g_BufSize];
-    int m_BufUsed;
+	char m_Buffer[g_BufSize];
+	int m_BufUsed;
     
-    int m_PlayNumber;
-    char *m_Name;
+	int m_PlayNumber;
+	char *m_Name;
+public:
+	GameSession(GameServer *a_master, int fd, int pl_nmbr);
+	~GameSession();
 
-    GameSession(GameServer *a_master, int fd, int pl_nmbr);
-    ~GameSession();
+	void VProcessing(bool r, bool w) override;
+	void SendMsg(const char *message);
+	int GetNumber() const { return m_PlayNumber; }
+	const char* GetName() const { return m_Name; }
+	char* FormStr(char*);
+};
 
-    void VProcessing(bool r, bool w) override;
-    void SendMsg(const char *message);
-    int GetNumber() const { return m_PlayNumber; }
-    const char* GetName() const { return m_Name; }
-    char* FormStr(char*);
+struct item {
+		GameSession* Session;
+        
+		item* next;
+
+		item(int fd) : Session(nullptr), next(nullptr) {}
+};
+
+//Keys for form Send massages
+enum ServerKeys { 
+	g_WelcomeKey = 0,
+	g_PlayerJoinedKey = 1,
+};
+
+class GameServer : public IFdHandler {
+	EventSelector *m_pSelector; //the_selector
+    
+	item *m_pItemHandler;
+
+	int m_GamerCounter;
+	bool m_GameBegun; //need getr function or not?
+
+	/*Private constructor will use on method Start. For prevent unexpected GameServer construction, 
+	because Sever should be one*/
+	GameServer(EventSelector *sel, int fd); 
+public:
+	GameServer() = delete;
+	~GameServer();
+	static GameServer *ServerStart(EventSelector *sel, int port);
+
+	void RemoveSession(GameSession *s);
+	bool GameBegun() const {return m_GameBegun;}
+	void SendMsgAll(const char *message, GameSession* except);
+	///void GameLaunch(); ///////Needed parameters//////
+private:
+	void VProcessing(bool r, bool w) override;
 };
 
 #endif

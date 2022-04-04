@@ -2,9 +2,8 @@
 "FOR TAB RESIZE"
 set tabstop=4
 set shiftwidth=4
-set softtabstop=4
+set softtabstop=0 noexpandtab
 set smarttab
-set expandtab
 set smartindent
 
 "FOR NUMERING STRING"

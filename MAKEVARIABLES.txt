@@ -1,0 +1,13 @@
+CC - compiler C;
+CFLAGS - flags for C compilers;
+CXX - compiler C++;
+CXXFLAGS - flags for C++ compilers;
+CPPFLAGS - preprocessor parametrs;
+LD - linker invoke;
+MAKE - make invoke command; 
+
+#pseudovariables
+
+$@ - current target name;
+$< - first target from prerequsites list;
+$^ - list of all prerequisites;
