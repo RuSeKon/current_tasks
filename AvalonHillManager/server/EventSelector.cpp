@@ -5,7 +5,7 @@ sockets and file descriptors directly */
 #include <cerrno>
 #include <unistd.h>
 
-#include "application.h"
+#include "share/application.h"
 
 IFdHandler::~IFdHandler()
 {
@@ -18,7 +18,7 @@ EventSelector::~EventSelector()
 		delete[] m_pFdArray;
 }
 
-void EventSelector::Add(IFdHandler *h)
+void EventSelector::Add(IFdHandler *h, int to_game)
 {
 	int i;
 	int fd = h->GetFd();
@@ -40,6 +40,9 @@ void EventSelector::Add(IFdHandler *h)
 	if(fd > m_MaxFd)
 		m_MaxFd = fd;
 	m_pFdArray[fd] = h;
+
+	if(to_game)
+		m_pGame->GamerAdd(h);
 }
 
 bool EventSelector::Remove(IFdHandler *h)
@@ -86,13 +89,12 @@ void EventSelector::Run()
 				bool r = FD_ISSET(i, &rds);
 				bool w = FD_ISSET(i, &wrs);
 				if(r || w)
+				{
 					m_pFdArray[i]->VProcessing(r, w);
+					m_pGame->Process(m_pFdArray->GetFd());//////
+				}
 			}
-			///////////////////////////////////
-			//////////////////////////////////
-			//////GAME LOGIC HERE/////////////
-			/////////////////////////////////
-			/////////////////////////////////
+			m_pGame->Circle(); ////////
 		}
 	} while(!m_QuitFlag);
 }
