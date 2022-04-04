@@ -3,9 +3,15 @@
 
 #include <tuple>
 
+static const char g_AlreadyPlayingMsg [] = {"Sorry, game is already started." 
+						" You can play next one\n"};
+static const char g_WelcomeMsg[] = {"Welcome to the game %s, " 
+													"you play-number: %d\n"};
+static const char g_WelcomeAllMsg[] = {"%s number %d joined to the game!\n"};
+static const char g_GameStartSoon[] = {"The game will start soon!:)\n"};
+
 static const char g_CommandsList[][] = {"market", "player", "prod",
 					"buy", "sell", "build", "turn", "help"};
-
 
 enum RequestConst {
 	
