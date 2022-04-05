@@ -42,7 +42,8 @@ void EventSelector::Add(IFdHandler *h, int to_game)
 	m_pFdArray[fd] = h;
 
 	if(to_game)
-		m_pGame->GamerAdd(h);
+		//Need attantion
+		m_pGame->GamerAdd(std::dynamic_cast<GameSession*>(h));
 }
 
 bool EventSelector::Remove(IFdHandler *h)

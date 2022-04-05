@@ -5,7 +5,7 @@ class IFdHandler {
 	int m_Fd;
 public:
 	IFdHandler(int a_fd) : m_Fd(a_fd) {}
-	virtual ~IFdHandler();
+	virtual ~IFdHandler() noexcept {close(m_Fd);}
     
 	virtual void VProcessing(bool r, bool w) = 0;
 	int GetFd() const {return m_Fd;}

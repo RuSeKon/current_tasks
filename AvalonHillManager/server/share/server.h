@@ -10,10 +10,7 @@
 #endif
 
 //////////GameSession strings///////////////////////
-static const char g_GameNotBegunMsg[] = {"The game haven't started yet. " 
-														   "Please wait:)\n"};
 
-static const char g_GreetingMsg[] = {"Your welcome! Enter you name:\n"};
 static const char g_AnnoyingMsg[] = {"You are very annoying... Goodbye!\n"};
 static const char g_NotNameMsg[] = {"Your name is too long, KISS\n"};
 
@@ -30,7 +27,8 @@ class GameServer;
 
 /* SERVERS IMPLEMENTATIONS OF USER SESSION */
 
-class GameSession : public IFdHandler {
+class GameSession : public IFdHandler 
+{
 	friend class GameServer;
 	friend class Gamer;
 
@@ -39,21 +37,20 @@ class GameSession : public IFdHandler {
 	char m_Buffer[g_BufSize];
 	int m_BufUsed;
     
-	char *m_Name;
 	char *m_Request;
 
 	GameSession(GameServer *a_master, int fd);
-	~GameSession();
+	~GameSession() noexcept;
 
 	void VProcessing(bool r, bool w) override;
 	void SendMsg(const char *message);
 	int GetMessage();
-public:
 	const char* GetRequest() const {return m_Request;}
 	void DeleteMe();
 };
 
-class GameServer : public IFdHandler {
+class GameServer : public IFdHandler 
+{
 	EventSelector *m_pSelector;
     
 	/*Private constructor will use on method Start. For prevent unexpected GameServer construction, 
@@ -61,7 +58,7 @@ class GameServer : public IFdHandler {
 	GameServer(EventSelector *sel, int fd); 
 public:
 	GameServer() = delete;
-	~GameServer();
+	~GameServer() noexcept;
 	static GameServer *ServerStart(EventSelector *sel, int port);
 
 	void RemoveSession(GameSession *s);
