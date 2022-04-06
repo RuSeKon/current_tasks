@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
-#include "application.h"
-#include "server.h"
+#include "share/application.h"
+#include "share/server.h"
 
 
 int main(int argc, char **argv)

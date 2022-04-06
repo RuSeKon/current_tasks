@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -Wall -g
-OBJMODULES = client.o EventSelector.o errproc.o
+OBJMODULES = client.o errproc.o
 
 %.o : %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
