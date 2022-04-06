@@ -5,6 +5,7 @@
 #define SERVERHPPSENTRY
 
 #include "application.h" 
+
 #ifndef MAXGAMERNUMBER
 #define MAXGAMERNUMBER 10
 #endif
@@ -43,10 +44,10 @@ class GameSession : public IFdHandler
 	~GameSession() noexcept;
 
 	void VProcessing(bool r, bool w) override;
-	void SendMsg(const char *message);
+	void VSendMsg(const char *message) override;
 	int GetMessage();
 	const char* GetRequest() const {return m_Request;}
-	void DeleteMe();
+	void Delete();
 };
 
 class GameServer : public IFdHandler 

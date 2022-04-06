@@ -52,7 +52,6 @@ GameServer *GameServer::ServerStart(EventSelector *sel, int port)
 void GameServer::RemoveSession(GameSession *s)
 {
 	m_pSelector->Remove(s);
-	delete s;
 }
 
 void GameServer::VProcessing(bool r, bool w)
@@ -69,4 +68,5 @@ void GameServer::VProcessing(bool r, bool w)
 	
 	GameSession *tmp = new GameSession(this, session_descriptor);
 	m_pSelector->Add(tmp, 1);
+	VSendMsg(nullptr);
 }

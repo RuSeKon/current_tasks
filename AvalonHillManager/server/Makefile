@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -Wall -g
 OBJMODULES = GameSession.o GameServer.o EventSelector.o \
-			 errproc.o Gamer.o GmaeBanker.o
+			 Errproc.o Manager.o Banker.o Game.o
 
 %.o : %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@

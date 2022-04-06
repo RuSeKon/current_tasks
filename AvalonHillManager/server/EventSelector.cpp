@@ -7,11 +7,6 @@ sockets and file descriptors directly */
 
 #include "share/application.h"
 
-IFdHandler::~IFdHandler()
-{
-	close(m_Fd);
-}
-
 EventSelector::~EventSelector()
 {
 	if(m_pFdArray)
@@ -42,8 +37,7 @@ void EventSelector::Add(IFdHandler *h, int to_game)
 	m_pFdArray[fd] = h;
 
 	if(to_game)
-		//Need attantion
-		m_pGame->GamerAdd(std::dynamic_cast<GameSession*>(h));
+		m_pGame->VPlayerAdd(h);
 }
 
 bool EventSelector::Remove(IFdHandler *h)
@@ -92,10 +86,10 @@ void EventSelector::Run()
 				if(r || w)
 				{
 					m_pFdArray[i]->VProcessing(r, w);
-					m_pGame->Process(m_pFdArray->GetFd());//////
+					m_pGame->VProcess(m_pFdArray[i]->GetFd());//////
 				}
 			}
-			m_pGame->Circle(); ////////
+			m_pGame->VCircle(); ////////
 		}
 	} while(!m_QuitFlag);
 }

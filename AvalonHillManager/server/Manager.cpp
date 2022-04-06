@@ -4,36 +4,35 @@
 #include <cstring>
 #include <memory>
 #include "share/server.h"
-#include "game_logic.h"
+#include "share/banker.h"
 
-Gamer::Gamer(GameBanker* b, GameSession* s, int num) : m_pBanker(b), 
-					m_pSession(s), m_GamerNumber(num), m_Name(nullptr),
-					m_Material(4), m_Products(2), m_Money(10000), m_End(false)
+Manager::Manager(Game* b, FdHandler* s, int num) : Player(b, s, num), 
+					m_Name(nullptr),m_Material(4), m_Products(2), 
+					m_Money(10000), m_End(false)
 {}
 
-Gamer::~Gamer()
+Manager::~Manager()
 {
 	if(m_Name)
 		delete[] m_Name;
-	m_pSession->DeleteMe();	
 }
 
-void Gamer::Send(const char* message)
+void Manager::VSend(const char* message)
 {
-	m_pSession->SendMsg(message);
+	m_pApplication->SendMsg(message);
 }
 
-void Gamer::AskToRequest()
+void Manager::VAskToRequest()
 {
 	if(!m_pBanker->GameBegun())
 	{
-		Send(g_GameNotBegunMsg);
+		VSend(g_GameNotBegunMsg);
 		return;
 	}
-	const char* req = m_pSession->GetRequest();
+	const char* req = m_pApplication->GetBuffer(); //NeedAttantion
 	if(!req)
 	{
-		m_pSession->SendMsg(g_BadRequestMsg);
+		m_pApplication->SendMsg(g_BadRequestMsg);
 		return;
 	}
 	else if(!m_Name)
@@ -41,8 +40,8 @@ void Gamer::AskToRequest()
 		m_Name = new char[strlen(req)];
 		strncpy(m_Name, req, strlen(req));
 		std::unique_ptr<char> res(new char[strlen(g_WelcomeMsg)+g_MaxName+3]);
-		sprintf(res.get(), g_WelcomeMsg, m_Name, m_GamerNumber);
-		Send(res.get());
+		sprintf(res.get(), g_WelcomeMsg, m_Name, PlayerNumber());
+		VSend(res.get());
 		return;
 	}
 
@@ -54,7 +53,7 @@ void Gamer::AskToRequest()
 
 	for(int i=0; i < 8; i++) 
 	{
-		if(!strncmp(req, g_CommandList[i], strlen(g_CommandList[i])))
+		if(!strncmp(req, g_CommandList[i].c_str(), g_CommandList[i].size()))
 			res = i+1;
 	}
 	std::tuple<int, int> t = Parse(req);
@@ -62,13 +61,13 @@ void Gamer::AskToRequest()
 	switch(res)
 	{
 		case Market:
-				m_pBanker->MarketCondition(m_GamerNumber); 
+				m_pBanker->MarketCondition(PlayerNumber()); 
 				break;
 		case AnotherPlayer:
-				m_pBanker->GetInfo(m_GamerNumber, std::get<0>(t));
+				m_pBanker->GetInfo(PlayerNumber(), std::get<0>(t));
 				break;
 		case Production:
-				m_pBanker->Enterprise(m_GamerNumber, std::get<0>(t));
+				m_pBanker->Enterprise(PlayerNumber(), std::get<0>(t));
 				break;
 		case Buy:
 				/*
@@ -103,16 +102,16 @@ void Gamer::AskToRequest()
 				m_SellApply = t;
 				break;
 		case Build:
-				m_pBanker->Build(m_GamerNumber);
+				m_pBanker->Build(PlayerNumber());
 				break;
 		case Turn:
 				m_End = true;
 				break;
 		case Help:
-				m_pSession->SendMsg(g_HelpMsg);	
+				m_pApplication->VSendMsg(g_HelpMsg);	
 				break;
 		default:
-				m_pSession->SendMsg(g_UnknownReqMsg);
+				m_pApplication->VSendMsg(g_UnknownReqMsg);
 	}
 	return;
 }

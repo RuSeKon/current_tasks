@@ -1,9 +1,10 @@
-#ifndef GAMELOGICSENTRY
-#define GAMELOGICSENTRY
+#ifndef BANKERHPPSENTRY
+#define BANKERHPPSENTRY
 
 #include <tuple>
 #include <vector>
 #include <string>
+#include "game.h"
 
 /* Section for const messages */
 static const char g_GreetingMsg[] = {"Your welcome! Enter you name:\n"};
@@ -31,7 +32,7 @@ static const char g_GetInfoMsg[] = {"The state of affairs(%d.%s):\n"
 								"Automatic factorie: %d.\n"};
 
 
-static const std::vector<char*> g_CommandList{"market\0", "player\0", "prod\0",
+static const std::vector<std::string> g_CommandList{"market\0", "player\0", "prod\0",
 					"buy\0", "sell\0", "build\0", "turn\0", "help\0"};
 
 enum RequestConst {
@@ -46,14 +47,11 @@ enum RequestConst {
 	Help = 8,
 };
 
-class GameBanker;
-class Gamer
+class Banker;
+class Manager : public Player 
 {
-	friend class GameBanker;
-	GameBanker* m_pBanker;
-	GameSession* m_pSession;
+	friend class Banker;
 
-	int m_GamerNumber;
 	char* m_Name;
 
 	int m_Material;
@@ -66,41 +64,35 @@ class Gamer
 	std::tuple<int, int> m_BuyApply; 	
 	std::tuple<int, int> m_SellApply;
 
-	Gamer(GameBanker* b, GameSession* s, int num);
-	~Gamer() noexcept;
+	Manager(Game* b, FdHandler* s, int num);
+	~Manager() noexcept;
 
 	std::tuple<int, int> Parse(const char* req);
-	void AskToRequest();
-	void Send(const char* message);
+	void VAskToRequest() override;
+	void VSend(const char* message) override;
 };
 
-class GameBanker
+class Banker : public Game
 {
-
-	std::vector<Gamer*> m_pList;
-
-	int m_Cercle;
+	int m_Circle;
 	
 	//get<0> quantity, get<1> cost
 	std::tuple<int, int> m_Raw; 	
 	std::tuple<int, int> m_Products;
 
-	bool m_GameBegun;
-
 public:
+	Banker() : m_Circle(0) {};
+	~Banker() noexcept;
 
-	GameBanker();
-	~GameBanker() noexcept;
+	void VPlayerAdd(FdHandler* h) override;
+	void VProcess(int fd) override;
+	void VCircle() override;
 
-	bool GameBegun() const {return m_GameBegun;}
 	void SendAll(const char* message, int except);
-	void GamerAdd(GameSession* h);
-	void Process(int fd);
 	void MarketCondition(int number);
 	void GetInfo(int number, int arg);
 	void Enterprise(int number, int arg);
 	void Build(int number);
 	
-	void Circle();
 };
 #endif

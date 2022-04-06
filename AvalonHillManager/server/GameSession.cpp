@@ -2,8 +2,6 @@
 #include <cstdio>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <memory>
-#include <iostream>
 #include <cstring>
 #include "share/server.h"
 #include "share/errproc.h"
@@ -15,7 +13,6 @@
 
 GameSession::GameSession(GameServer *a_master, int fd)
 		: IFdHandler(fd), m_pTheMaster(a_master), m_BufUsed(0),  
-		  m_Name(nullptr), m_Request(nullptr) 
 {}
 
 GameSession::~GameSession()
@@ -52,19 +49,19 @@ int GameSession::GetMessage()
             
 	if(m_BufUsed == -1 || m_BufUsed == 0)
 	{
-		DeleteMe();
+		Delete();
 		return 0;
 	}
 	else if(m_BufUsed >= g_BufSize-1)
 	{
-		SendMsg(g_AnnoyingMsg); //need to send "Illegal request, try againg or type help!"
-		DeleteMe();
+		VSendMsg(g_AnnoyingMsg); //need to send "Illegal request, try againg or type help!"
+		Delete();
 		return 0;
 	}
 	return res;
 }
 
-void GameSession::SendMsg(const char *message)
+void GameSession::VSendMsg(const char *message)
 {
 	int res{0};
 	res = send(GetFd(), message, strlen(message), 0);
@@ -72,12 +69,12 @@ void GameSession::SendMsg(const char *message)
 		if(m_Request)
 			delete[] m_Request;
 		m_Request = new char[7];
-		m_Request = "offline";
+		strcpy(m_Request, "offline");
 		return;
 	}
 }
 
-void DeleteMe()
+void GameSession::Delete()
 {
-	m_pTheMaster->RemoveSession(this);
+	delete this;	
 }
