@@ -4,7 +4,8 @@
 #ifndef SERVERHPPSENTRY
 #define SERVERHPPSENTRY
 
-#include "application.h" 
+#include "application.h"
+#include "game.h"
 
 #ifndef MAXGAMERNUMBER
 #define MAXGAMERNUMBER 10
@@ -12,7 +13,7 @@
 
 //////////GameSession strings///////////////////////
 
-static const char g_AnnoyingMsg[] = {"You are very annoying... Goodbye!\n"};
+static const char g_IllegalMsg[] = {"Illegal request, buffer overflow...Goodbye!\n"};
 static const char g_NotNameMsg[] = {"Your name is too long, KISS\n"};
 
 
@@ -31,7 +32,7 @@ class GameServer;
 class GameSession : public IFdHandler 
 {
 	friend class GameServer;
-	friend class Gamer;
+	friend class Player;
 
 	GameServer *m_pTheMaster;
 
@@ -44,15 +45,17 @@ class GameSession : public IFdHandler
 	~GameSession() noexcept;
 
 	void VProcessing(bool r, bool w) override;
-	void VSendMsg(const char *message) override;
+	void Send(const char *message);
 	int GetMessage();
-	const char* GetRequest() const {return m_Request;}
+	const char* GetBuffer() const {return m_Request;}
 	void Delete();
+	void Offliene();
 };
 
 class GameServer : public IFdHandler 
 {
 	EventSelector *m_pSelector;
+	Game* m_pGame;
     
 	/*Private constructor will use on method Start. For prevent unexpected GameServer construction, 
 	because Sever should be one*/
@@ -63,6 +66,7 @@ public:
 	static GameServer *ServerStart(EventSelector *sel, int port);
 
 	void RemoveSession(GameSession *s);
+	void GameInteract(GameSession *s);
 private:
 	void VProcessing(bool r, bool w) override;
 };

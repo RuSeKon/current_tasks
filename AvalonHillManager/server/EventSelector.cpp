@@ -5,7 +5,7 @@ sockets and file descriptors directly */
 #include <cerrno>
 #include <unistd.h>
 
-#include "share/application.h"
+#include "application.h"
 
 EventSelector::~EventSelector()
 {
@@ -86,10 +86,8 @@ void EventSelector::Run()
 				if(r || w)
 				{
 					m_pFdArray[i]->VProcessing(r, w);
-					m_pGame->VProcess(m_pFdArray[i]->GetFd());//////
 				}
 			}
-			m_pGame->VCircle(); ////////
 		}
 	} while(!m_QuitFlag);
 }

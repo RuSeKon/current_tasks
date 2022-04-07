@@ -52,7 +52,7 @@ class Manager : public Player
 {
 	friend class Banker;
 
-	char* m_Name;
+	std::string m_Name;
 
 	int m_Material;
 	int m_Products;
@@ -64,35 +64,34 @@ class Manager : public Player
 	std::tuple<int, int> m_BuyApply; 	
 	std::tuple<int, int> m_SellApply;
 
-	Manager(Game* b, FdHandler* s, int num);
+	Manager(Game* b, GameSession* s, int num);
 	~Manager() noexcept;
 
-	std::tuple<int, int> Parse(const char* req);
-	void VAskToRequest() override;
-	void VSend(const char* message) override;
+	Request VGetRequest() override;
 };
 
 class Banker : public Game
 {
-	int m_Circle;
-	
+	int m_Cycle;
+	std::vector<Manager*> m_pList;
+
 	//get<0> quantity, get<1> cost
 	std::tuple<int, int> m_Raw; 	
 	std::tuple<int, int> m_Products;
 
 public:
-	Banker() : m_Circle(0) {};
+	Banker();
 	~Banker() noexcept;
 
-	void VPlayerAdd(FdHandler* h) override;
-	void VProcess(int fd) override;
-	void VCircle() override;
-
-	void SendAll(const char* message, int except);
-	void MarketCondition(int number);
-	void GetInfo(int number, int arg);
-	void Enterprise(int number, int arg);
-	void Build(int number);
+	void VPlayerAdd(GameSession* h) override;
+	void VProcess(GameSession* h) override;
 	
+	void RequestProc(Request& req, Manager* plr);
+	void SendAll(const char* message, Manager* except);
+	void MarketCondition(Manager* plr);
+	void GetInfo(Manager* plr, Request* arg);
+	void Enterprise(Manager* plr, Request* arg);
+	void Build(Manager* plr);
+	void Cycle();
 };
 #endif

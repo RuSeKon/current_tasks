@@ -3,16 +3,17 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <cstring>
-#include "share/server.h"
-#include "share/errproc.h"
-#include "share/application.h"
+#include "server.h"
+#include "errproc.h"
+#include "application.h"
 
 
 
 ////////////////////////////SESSIONS/////////////////////////////////////////////////////
 
 GameSession::GameSession(GameServer *a_master, int fd)
-		: IFdHandler(fd), m_pTheMaster(a_master), m_BufUsed(0),  
+		: IFdHandler(fd), m_pTheMaster(a_master), m_BufUsed(0),
+		m_Request(nullptr)  
 {}
 
 GameSession::~GameSession()
@@ -41,6 +42,7 @@ void GameSession::VProcessing(bool r, bool w)
 		m_Request[m_BufUsed] = '\0';
 		m_BufUsed = 0;
 	}
+	m_pTheMaster->GameInteract(this);
 }
 
 int GameSession::GetMessage()
@@ -49,32 +51,38 @@ int GameSession::GetMessage()
             
 	if(m_BufUsed == -1 || m_BufUsed == 0)
 	{
-		Delete();
+		Offline();
 		return 0;
 	}
 	else if(m_BufUsed >= g_BufSize-1)
 	{
-		VSendMsg(g_AnnoyingMsg); //need to send "Illegal request, try againg or type help!"
-		Delete();
+		VSendMsg(g_IllegalMsg);
+		Offline();
 		return 0;
 	}
 	return res;
 }
 
-void GameSession::VSendMsg(const char *message)
+void GameSession::Send(const char *message)
 {
 	int res{0};
 	res = send(GetFd(), message, strlen(message), 0);
 	if(res == -1 || res == 0) {
-		if(m_Request)
-			delete[] m_Request;
-		m_Request = new char[7];
-		strcpy(m_Request, "offline");
+		Offline();
 		return;
 	}
 }
 
 void GameSession::Delete()
 {
+	m_pTheMaster->RemoveSession(this);
 	delete this;	
+}
+
+void GameSession::Offline()
+{
+	if(m_Request)
+			delete[] m_Request;
+	m_Request = new char[7];
+	strcpy(m_Request, "offline");
 }

@@ -1,21 +1,17 @@
 #ifndef APPLICATIONHPPSENTRY
 #define APPLICATIONHPPSENTRY
 
+#include <unistd.h>
 #include "game.h"
-#include "unistd.h"
-
-class Game;
 
 class IFdHandler {
 	int m_Fd;
 
-	char* m_pRequest;
 public: 
 	IFdHandler(int a_fd) : m_Fd(a_fd) {} 
 	virtual ~IFdHandler() noexcept {close(m_Fd);}
     
 	virtual void VProcessing(bool r, bool w) = 0;
-	virtual void VSendMsg(const char* message) = 0;
 	int GetFd() const {return m_Fd;}
 
 	virtual bool WantRead() const {return true;}

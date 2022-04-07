@@ -2,12 +2,10 @@
 #include <cstdio>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <memory>
-#include <iostream>
-#include <cstring>
-#include "share/server.h"
-#include "share/errproc.h"
-#include "share/application.h"
+#include "server.h"
+#include "errproc.h"
+#include "application.h"
+#include "game.h"
  
 
 /////////////////////////////////////////SERVER//////////////////////////////////////
@@ -68,5 +66,10 @@ void GameServer::VProcessing(bool r, bool w)
 	
 	GameSession *tmp = new GameSession(this, session_descriptor);
 	m_pSelector->Add(tmp, 1);
-	VSendMsg(nullptr);
+	m_pGame->VPlayerAdd(tmp);
+}
+
+void GameServer::GameInteract(GameSession* h)
+{
+	m_pGame->VProcess(h);
 }

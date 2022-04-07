@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <cstring>
-#include "share/errproc.h"
+#include "errproc.h"
 
 int Socket(int domain, int type, int protocol)
 {
