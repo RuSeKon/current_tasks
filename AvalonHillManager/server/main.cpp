@@ -2,6 +2,8 @@
 #include <string>
 #include "share/application.h"
 #include "share/server.h"
+#include "application.h"
+#include "game.h"
 
 
 int main(int argc, char **argv)
@@ -31,7 +33,7 @@ int main(int argc, char **argv)
 	int port = std::stoi(tmp);
 
 	EventSelector *Selector = new EventSelector;
-	GameServer *Server = GameServer::ServerStart(Selector, port);
+	Game *Server = Game::GameStart(Selector, port);
 	if(!Server)
 		return 1;
 

@@ -63,10 +63,12 @@ using Apply = std::tuple<int, int>; // <0> quantity,  <1> cost
 enum ConstantsForGame { 
 	g_MaxGamerNumber = MAXGAMERNUMBER,
 	g_MaxName = 10,
-	g_BufSize = 256
+	g_BufSize = 256,
+	g_MaxParams = 3
 };
 
 class Game;
+class Request;
 
 class Player : public IFdHandler 
 {
@@ -82,17 +84,12 @@ class Player : public IFdHandler
 	std::unordered_map<std::string, int> m_Resources;
     bool m_End;
 
-    //std::vector<int> m_Factories; //Need to solve
-
-    //std::tuple<int, int> m_BuyApply;
-    //std::tuple<int, int> m_SellApply;
-    
 	Player(Game *a_master, int fd, int num);
 	~Player() noexcept;
 
 	void VProcessing(bool r, bool w) override;
 	void Send(const char *message);
-	Request& GetRequest();
+	Request& ParseRequest();
 };
 
 class Game : public IFdHandler 
@@ -123,4 +120,17 @@ private:
 	Game(EventSelector *sel, int fd); 
 };
 
+class Request
+{
+	std::string m_Text;
+	std::vector<int> m_Params;
+public:
+	Request(std::string in) : m_Text(in) { m_Params.reserve(g_MaxParams);}
+	~Request() noexcept;
+
+	Request& operator=(Request&) = delete;
+	Request& operator=(Request&& src);
+	std::string& GetText() const {return m_Text;}
+	void AddParam(int i) {m_Params.push_back(i);}
+};
 #endif

@@ -39,18 +39,18 @@ void Player::VProcessing(bool r, bool w)
             
 	if(m_BufUsed == -1 || m_BufUsed == 0)
 	{
-		Offline();
+		m_pTheGame->RemovePlayer(this);
 		return;
 	}
 	else if(m_BufUsed >= g_BufSize-1)
 	{
 		Send(g_IllegalMsg);
-		Offline();
+		m_pTheGame->RemovePlayer(this);
 		return;
 	}
 	else	
 	{
-		Request req = GetRequest();
+		Request req = ParseRequest();
 		if(!req.size()) //////////////////////
 		{
 			Send(g_BadRequestMsg);
@@ -59,6 +59,11 @@ void Player::VProcessing(bool r, bool w)
 	
 		if(!m_Name.size())
 		{
+			if(req.size() > g_MaxName)
+			{
+				Send(g_NotNameMsg);
+				return;
+			}
 			m_Name = req;
 			std::unique_ptr<char> res(new char[strlen(g_WelcomeMsg)+g_MaxName+3]);
 			sprintf(res.get(), g_WelcomeMsg, m_Name.c_str(), m_PlayerNumber);
@@ -83,12 +88,12 @@ void Player::Send(const char *message)
 	int res{0};
 	res = send(GetFd(), message, strlen(message), 0);
 	if(res == -1 || res == 0) {
-		Offline();
+		m_pTheGame->RemovePlayer(this);
 		return;
 	}
 }
 
-Request& Player::GetRequest()
+Request& Player::ParseRequest()
 {
 	int arr[3];
 	std::string tmp;

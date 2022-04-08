@@ -48,6 +48,7 @@ Game *Game::GameStart(EventSelector *sel, int port)
 void Game::RemovePlayer(Player *s)
 {
 	m_pSelector->Remove(s);
+	delete s;
 }
 
 void Game::VProcessing(bool r, bool w)

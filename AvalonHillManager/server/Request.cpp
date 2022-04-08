@@ -1,27 +1,17 @@
 #include <utility>
 #include "game.h"
 
-Player::Player(Game* b, GameSession* s, int num) : m_pGame(b),
-										m_pSession(s), 
-										m_PlayerNumber(num) 
-{}
-
-Player::~Player()
+Request::Request(std::string in) : m_Text(in)
 {
-    m_pSession->Delete();
+    m_Params.reserve(g_MaxParams);
 }
-
-void Player::Send(const char* message) 
-{
-    m_pSession->Send(message);
-}	
-
+/*
 Request& Request::operator=(Request src)
 {
     std::swap(src);
     return *this;
 }
-
+*/
 Request& Request::operator=(Request&& src)
 {
     m_Text = std::move(src.m_Text);
@@ -29,6 +19,12 @@ Request& Request::operator=(Request&& src)
     return *this;
 }
 
-Request::Request(Request&& src) : m_Text(src.m_Text),
-                                  m_Params(src.m_Params)
-{}
+std::string& Request::GetText() const
+{
+    return m_Text;
+}
+
+void Request::AddParam(int i)
+{
+    m_Params.push_back(i);
+}
