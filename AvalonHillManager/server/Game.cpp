@@ -2,26 +2,24 @@
 #include <cstdio>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include "server.h"
 #include "errproc.h"
 #include "application.h"
 #include "game.h"
  
 
-/////////////////////////////////////////SERVER//////////////////////////////////////
+/////////////////////////////////////////GAME//////////////////////////////////////
 
-GameServer::GameServer(EventSelector *sel, int fd)
-						: IFdHandler(fd), m_pSelector(sel) 
+Game::Game(EventSelector *sel, int fd) : IFdHandler(fd), m_pSelector(sel) 
 {
-	m_pSelector->Add(this, 0);
+	m_pSelector->Add(this);
 }
 
-GameServer::~GameServer()
+Game::~Game()
 {
 	m_pSelector->Remove(this);
 }
 
-GameServer *GameServer::ServerStart(EventSelector *sel, int port)
+Game *Game::ServerStart(EventSelector *sel, int port)
 {
 	struct sockaddr_in addr;
 
@@ -44,18 +42,16 @@ GameServer *GameServer::ServerStart(EventSelector *sel, int port)
 	if(res == -1)
 	return nullptr;
 	
-	return new GameServer(sel, ls);
+	return new Game(sel, ls);
 }
 
-void GameServer::RemoveSession(GameSession *s)
+void Game::RemovePlayer(Player *s)
 {
 	m_pSelector->Remove(s);
 }
 
-void GameServer::VProcessing(bool r, bool w)
+int Game::VProcessing()
 {
-	if(!r)  //Explantation on README
-		return;
 	int session_descriptor;
 	struct sockaddr_in addr;
 	socklen_t len = sizeof(addr);
@@ -64,12 +60,29 @@ void GameServer::VProcessing(bool r, bool w)
 	if(session_descriptor == -1)
 		return;
 	
-	GameSession *tmp = new GameSession(this, session_descriptor);
-	m_pSelector->Add(tmp, 1);
-	m_pGame->VPlayerAdd(tmp);
+	Player *tmp = new Player(this, session_descriptor);
+
+	int plr;
+    for(plr = 0; plr < g_MaxGamerNumber; plr++)
+        if(!m_pList[plr])
+            break;	
+	if(plr > g_MaxGamerNumber)
+	{
+		tmp->Send(g_AlreadyPlayingMsg);
+		RemovePlayer(tmp);
+	}
+	else
+	{
+		m_pList.push_back(tmp);
+		m_pSelecotr->Add(tmp);
+	}
 }
 
-void GameServer::GameInteract(GameSession* h)
+void Game::SendAll(const char* message, Player* except)
 {
-	m_pGame->VProcess(h);
+	for(auto x : m_pList)
+		if(x != except)
+			x->Send(message);
 }
+
+

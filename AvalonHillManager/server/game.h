@@ -1,58 +1,90 @@
-#ifndef GAMEHPPSENTRY
-#define GAMEHPPSENTRY
+/* 
+----Game Logic implementation----
+*/
+#ifndef SERVERHPPSENTRY
+#define SERVERHPPSENTRY
 
-#include "server.h"
+#include "application.h"
+
+#ifndef MAXGAMERNUMBER
+#define MAXGAMERNUMBER 10
+#endif
+
+//////////Player strings///////////////////////
+
+static const char g_IllegalMsg[] = {"Illegal request, buffer overflow...Goodbye!\n"};
+static const char g_NotNameMsg[] = {"Your name is too long, KISS\n"};
+static const char g_AlreadyPlayingMsg [] = {"Sorry, game is already started."
+						                        " You can play next one\n"};
+
+/////////////////////////////////////////////////////////////////////////////
+
+using Apply = std::tuple<int, int>; // <0> quantity,  <1> cost
+
+enum ConstantsForServer { 
+	g_MaxGamerNumber = MAXGAMERNUMBER,
+	g_MaxName = 10,
+	g_BufSize = 256
+};
 
 class Game;
-class Request;
 
-class  Player 
+/* SERVERS IMPLEMENTATIONS OF USER SESSION */
+
+class Player : public IFdHandler 
 {
 	friend class Game;
-	Game* m_pGame;
-	GameSession* m_pSession;
 
+	Game *m_pTheMaster;
+	char m_Buffer[g_BufSize];
+	int m_BufUsed;
+
+	std::string m_Name;
 	int m_PlayerNumber;
 
-public:
-	Player(Game* b, GameSession* s, int num);
-	virtual ~Player() noexcept;
+    int m_Material;
+    int m_Products;
+    int m_Money;
+    bool m_End;
 
-	int PlayerNumber() const {return m_PlayerNumber;}
-	void Send(const char* message);
-	virtual Request VGetRequest() = 0;
+    //std::vector<int> m_Factories; //Need to solve
+
+    //std::tuple<int, int> m_BuyApply;
+    //std::tuple<int, int> m_SellApply;
+    
+	Player(Game *a_master, int fd);
+	~Player() noexcept;
+
+	void VProcessing(bool r, bool w) override;
+	void Send(const char *message);
+	const char* GetBuffer() const {return m_Request;}
+	void Offline();
 };
 
-class Game
+class Game : public IFdHandler 
 {
+	EventSelector *m_pSelector;
 	bool m_GameBegun;
+	int m_Cycle;
 
+	std::vector<Player*> m_pList;
+    
 public:
+	Game() = delete;
+	~Game() noexcept;
+	static Game *ServerStart(EventSelector *sel, int port);
 
-	Game() : m_GameBegun(false) {}
-	virtual ~Game() noexcept;
-
-	bool GameBegun() const {return m_GameBegun;}
-	virtual void VPlayerAdd(GameSession* h) = 0;
-	virtual void VProcess(GameSession* h) = 0;
-	void RequestProc(Request& req);
+	void RemoveSession(Player *s);
+	void VProcessing(bool r, bool w) override;
+	void RequestProc(Manager* plr, Request& req);
+    void SendAll(const char* message, Manager* except);
+    void MarketCondition(Manager* plr);
+    void GetInfo(Manager* plr, Request& arg);
+    void Enterprise(Manager* plr, Request& arg);
+    void Build(Manager* plr);
+    void Cycle();
+private:
+	Game(EventSelector *sel, int fd); 
 };
 
-class Request
-{
-	std::string m_Text;
-	std::vector<int> m_Params;
-public:
-	Request(const char* s) : m_Text(s) {m_Params.reserve(3);}
-	Request() : m_Text(nullptr) {m_Params.reserve(3);}
-	~Request();
-
-	Request& operator=(Request src) = delete;
-	Request& operator=(Request&& src);
-	Request(Request& src) = delete;
-	Request(Request&& src);
-	void AddParam(int p) {m_Params.push_back(p);}
-	int GetParam(int n) const {return m_Params[n];}
-	const std::string& GetText() const {return m_Text;}
-}
 #endif

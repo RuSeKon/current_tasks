@@ -31,8 +31,20 @@ void GameSession::VProcessing(bool r, bool w)
 {
 	if(!r)
 		return;
-	m_BufUsed = GetMessage();
-	if(m_BufUsed > 0)
+	m_BufUsed = recv(GetFd(), m_Buffer, g_BufSize, 0);
+            
+	if(m_BufUsed == -1 || m_BufUsed == 0)
+	{
+		Offline();
+		return 0;
+	}
+	else if(m_BufUsed >= g_BufSize-1)
+	{
+		Send(g_IllegalMsg);
+		Offline();
+		return 0;
+	}
+	else	
 	{
 		//Need to manage resources more clever!
 		if(m_Request) delete[] m_Request;//clear last request
@@ -42,25 +54,6 @@ void GameSession::VProcessing(bool r, bool w)
 		m_Request[m_BufUsed] = '\0';
 		m_BufUsed = 0;
 	}
-	m_pTheMaster->GameInteract(this);
-}
-
-int GameSession::GetMessage()
-{
-	int res = recv(GetFd(), m_Buffer, g_MaxName, 0);
-            
-	if(m_BufUsed == -1 || m_BufUsed == 0)
-	{
-		Offline();
-		return 0;
-	}
-	else if(m_BufUsed >= g_BufSize-1)
-	{
-		VSendMsg(g_IllegalMsg);
-		Offline();
-		return 0;
-	}
-	return res;
 }
 
 void GameSession::Send(const char *message)

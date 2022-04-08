@@ -4,7 +4,7 @@
 #include <tuple>
 #include <vector>
 #include <string>
-#include "game.h"
+#include "server.h"
 
 /* Section for const messages */
 static const char g_GreetingMsg[] = {"Your welcome! Enter you name:\n"};
@@ -48,11 +48,12 @@ enum RequestConst {
 };
 
 class Banker;
-class Manager : public Player 
+class Manager : public GameSession 
 {
 	friend class Banker;
 
 	std::string m_Name;
+	int m_PlayerNumber;
 
 	int m_Material;
 	int m_Products;
@@ -66,12 +67,14 @@ class Manager : public Player
 
 	Manager(Game* b, GameSession* s, int num);
 	~Manager() noexcept;
-
-	Request VGetRequest() override;
+	
+	void VProcessing(bool r, bool w);
+	Request& VGetRequest() override;
 };
 
-class Banker : public Game
+class Banker : public GameServer
 {
+	int m_GamerCount;
 	int m_Cycle;
 	std::vector<Manager*> m_pList;
 
@@ -83,15 +86,14 @@ public:
 	Banker();
 	~Banker() noexcept;
 
-	void VPlayerAdd(GameSession* h) override;
-	void VProcess(GameSession* h) override;
+	void VProcessing(bool r, bool w) override;
 	
-	void RequestProc(Request& req, Manager* plr);
+	void RequestProc(Manager* plr, Request& req);
 	void SendAll(const char* message, Manager* except);
 	void MarketCondition(Manager* plr);
-	void GetInfo(Manager* plr, Request* arg);
-	void Enterprise(Manager* plr, Request* arg);
-	void Build(Manager* plr);
-	void Cycle();
+	void GetInfo(Manager* plr, Request& arg);
+	//void Enterprise(Manager* plr, Request& arg);
+	//void Build(Manager* plr);
+	//void Cycle();
 };
 #endif

@@ -13,7 +13,7 @@ EventSelector::~EventSelector()
 		delete[] m_pFdArray;
 }
 
-void EventSelector::Add(IFdHandler *h, int to_game)
+void EventSelector::Add(IFdHandler *h)
 {
 	int i;
 	int fd = h->GetFd();
@@ -35,9 +35,6 @@ void EventSelector::Add(IFdHandler *h, int to_game)
 	if(fd > m_MaxFd)
 		m_MaxFd = fd;
 	m_pFdArray[fd] = h;
-
-	if(to_game)
-		m_pGame->VPlayerAdd(h);
 }
 
 bool EventSelector::Remove(IFdHandler *h)
