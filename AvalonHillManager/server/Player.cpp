@@ -14,7 +14,7 @@
 
 Player::Player(Game *a_master, int fd, int num)
 		: IFdHandler(fd), m_pTheGame(a_master), m_BufUsed(0),
-		m_Name(nullptr), m_PlayerNumber(num), m_Resources(0), m_End(false)
+		 m_PlayerNumber(num), m_End(false)
 {
 	m_Resources["Factory"] = 2;
 	m_Resources["Raw"] = 4;
@@ -51,7 +51,7 @@ void Player::VProcessing(bool r, bool w)
 	else	
 	{
 		Request req = ParseRequest();
-		if(!req.size()) //////////////////////
+		if(!req.GetText().size()) //////////////////////
 		{
 			Send(g_BadRequestMsg);
 			return;
@@ -59,12 +59,12 @@ void Player::VProcessing(bool r, bool w)
 	
 		if(!m_Name.size())
 		{
-			if(req.size() > g_MaxName)
+			if(req.GetText().size() > g_MaxName)
 			{
 				Send(g_NotNameMsg);
 				return;
 			}
-			m_Name = req;
+			m_Name = req.GetText();
 			std::unique_ptr<char> res(new char[strlen(g_WelcomeMsg)+g_MaxName+3]);
 			sprintf(res.get(), g_WelcomeMsg, m_Name.c_str(), m_PlayerNumber);
 			Send(res.get());
@@ -100,12 +100,13 @@ Request& Player::ParseRequest()
 
 	for(int i=0, b=0; i < m_BufUsed; i++) //Parse
 	{
-		if(isalpha((m_Buffer[i]))
+		if(isalpha(m_Buffer[i]))
 			tmp.push_back(m_Buffer[i]);
 		if(isdigit(m_Buffer[i]))
 		{
-			for(int c=i; isdigit(m_Buffer[c] && b < 3; c++))
-				arr[b] += arr[b]*10 + (req[c]-48);
+			int c;
+			for(c=i; isdigit(m_Buffer[c]) && b < 3; c++)
+				arr[b] += arr[b]*10 + (m_Buffer[c]-48);
 			b++;
 			i += c-1;
 		}

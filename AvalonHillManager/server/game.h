@@ -111,11 +111,11 @@ public:
 	void VProcessing(bool r, bool w) override;
 	void RequestProc(Player* plr, Request& req);
     void SendAll(const char* message, Player* except);
-    void MarketCondition(Player* plr);
-    void GetInfo(Player* plr, Request& arg);
-    void Enterprise(Player* plr, Request& arg);
-    void Build(Player* plr);
-    void Cycle();
+    //void MarketCondition(Player* plr);
+    //void GetInfo(Player* plr, Request& arg);
+    //void Enterprise(Player* plr, Request& arg);
+    //void Build(Player* plr);
+    //void Cycle();
 private:
 	Game(EventSelector *sel, int fd); 
 };
@@ -125,12 +125,14 @@ class Request
 	std::string m_Text;
 	std::vector<int> m_Params;
 public:
-	Request(std::string in) : m_Text(in) { m_Params.reserve(g_MaxParams);}
-	~Request() noexcept;
+	Request(std::string in);
+	~Request() noexcept = default;
 
-	Request& operator=(Request&) = delete;
-	Request& operator=(Request&& src);
-	std::string& GetText() const {return m_Text;}
-	void AddParam(int i) {m_Params.push_back(i);}
+	Request(const Request&);
+	Request(Request&&);
+	Request& operator=(const Request&) = delete;
+	Request operator=(Request&& src) = delete;
+	const std::string& GetText() const;
+	void AddParam(int i);
 };
 #endif

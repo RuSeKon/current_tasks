@@ -1,7 +1,5 @@
 #include <iostream>
 #include <string>
-#include "share/application.h"
-#include "share/server.h"
 #include "application.h"
 #include "game.h"
 

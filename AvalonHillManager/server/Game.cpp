@@ -47,6 +47,14 @@ Game *Game::GameStart(EventSelector *sel, int port)
 
 void Game::RemovePlayer(Player *s)
 {
+	for(auto x : m_pList)
+	{
+		if(x == s)
+		{
+			x = nullptr;
+			break;
+		}
+	}
 	m_pSelector->Remove(s);
 	delete s;
 }
@@ -64,9 +72,9 @@ void Game::VProcessing(bool r, bool w)
 		return;
 	
 	int plr;
-    for(plr = 0; plr < g_MaxGamerNumber; plr++)
+    for(plr = 1; plr < g_MaxGamerNumber; plr++)
 	{
-        if(!m_pList[plr])
+        if(plr > m_pList.size() || !m_pList[plr])
             break;	
 	}
 			
@@ -100,7 +108,7 @@ void Game::RequestProc(Player* plr, Request& req)
 		if(req.GetText() == g_CommandList[i])
 			res = i+1;
 	}
-
+/*
 	switch(res)
 	{
 		case Market:
@@ -109,7 +117,7 @@ void Game::RequestProc(Player* plr, Request& req)
 		case AnotherPlayer:
 				GetInfo(plr, req);
 				break;
-/*		case Production:
+		case Production:
 				Enterprise(plr, req);
 				break;
 		case Buy:
@@ -155,8 +163,9 @@ void Game::RequestProc(Player* plr, Request& req)
 				break;
 		default:
 				plr->Send(g_UnknownReqMsg);
-*/
 	}
+
+*/
 	return;
 }
 

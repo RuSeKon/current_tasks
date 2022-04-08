@@ -85,8 +85,8 @@ void ServerForClient::VProcessing(bool r, bool w)
 		m_BufUsed = recv(GetFd(), m_Buffer, g_BufSize, 0);
 		if(m_BufUsed == -1 || m_BufUsed == 0)
 		{
-			std::cout << "Error incorrect connection:(\n";
-			return;
+			std::cout << "Error server doesn't respond:(\n";
+			exit(EXIT_FAILURE);
 		}
 		else if(m_BufUsed >= g_BufSize-1) 
 		{
