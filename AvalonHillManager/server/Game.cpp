@@ -19,7 +19,7 @@ Game::~Game()
 	m_pSelector->Remove(this);
 }
 
-Game *Game::ServerStart(EventSelector *sel, int port)
+Game *Game::GameStart(EventSelector *sel, int port)
 {
 	struct sockaddr_in addr;
 
@@ -60,12 +60,15 @@ int Game::VProcessing()
 	if(session_descriptor == -1)
 		return;
 	
-	Player *tmp = new Player(this, session_descriptor);
+	
 
 	int plr;
     for(plr = 0; plr < g_MaxGamerNumber; plr++)
         if(!m_pList[plr])
             break;	
+			
+	Player *tmp = new Player(this, session_descriptor, plr);
+	
 	if(plr > g_MaxGamerNumber)
 	{
 		tmp->Send(g_AlreadyPlayingMsg);
@@ -85,4 +88,72 @@ void Game::SendAll(const char* message, Player* except)
 			x->Send(message);
 }
 
+
+void Game::RequestProc(Manager* plr, Request& req)
+{
+	int res{0};
+	for(int i=0; i < 8; i++) 
+	{
+		if(req.GetText() == g_CommandList[i])
+			res = i+1;
+	}
+
+	switch(res)
+	{
+		case Market:
+				MarketCondition(plr); 
+				break;
+		case AnotherPlayer:
+				GetInfo(plr, req);
+				break;
+/*		case Production:
+				Enterprise(plr, req);
+				break;
+		case Buy:
+				
+				if(std::get<0>(t) > std::get<0>(m_pBanker->Raw))
+				{
+					m_pSession->SendMsg("The amount of raw materials"
+										" sold by the market is less\n");
+					break;
+				}
+				else if(std::get<1>(t) < std::get<1>(m_pBanker->Raw))
+				{
+					m_pSession->SendMsg("Your cost is less than market\n");
+					break;
+				} 
+			
+				//m_BuyApply = t;
+				break;
+		case Sell:
+				
+				if(std::get<0>(t) > s)
+				{
+					m_pSession->SendMsg("You don't have that many"
+										" products\n");
+					break;
+				}
+				//Maybe it's not need
+				else if(std::get<1>(t) > std::get<1>(m_pBanker->Raw))
+				{
+					m_pSession->SendMsg("Your cost is larger than market\n");
+					break;
+				} 
+				//m_SellApply = t;
+				break;
+		case Build:
+				Build(plr);
+				break;
+		case Turn:
+				m_End = true;
+				break;
+		case Help:
+				Send(g_HelpMsg);	
+				break;
+		default:
+				plr->Send(g_UnknownReqMsg);
+*/
+	}
+	return;
+}
 

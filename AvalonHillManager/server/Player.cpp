@@ -3,20 +3,26 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <cstring>
-#include "server.h"
 #include "errproc.h"
 #include "application.h"
+#include "game.h"
 
 
 
-////////////////////////////SESSIONS/////////////////////////////////////////////////////
+////////////////////////////PLAYER/////////////////////////////////////////////////////
 
-GameSession::GameSession(GameServer *a_master, int fd)
+Player::Player(Game *a_master, int fd, int num)
 		: IFdHandler(fd), m_pTheMaster(a_master), m_BufUsed(0),
-		m_Request(nullptr)  
-{}
+		m_Name(nullptr), m_PlayerNumber(num), m_Resources(0), m_End(false)
+{
+	m_Resources["Factory"] = 2;
+	m_Resources["Raw"] = 4;
+	m_Resources["Production"] = 2;
+	m_Resources["Money"] = 10000;
+	Send(g_GreetingMsg);
+}
 
-GameSession::~GameSession()
+Player::~Player()
 {
 	if(m_Request)
 	{
@@ -27,10 +33,11 @@ GameSession::~GameSession()
 }
 
 
-void GameSession::VProcessing(bool r, bool w)
+void Player::VProcessing(bool r, bool w)
 {
 	if(!r)
 		return;
+
 	m_BufUsed = recv(GetFd(), m_Buffer, g_BufSize, 0);
             
 	if(m_BufUsed == -1 || m_BufUsed == 0)
@@ -46,17 +53,35 @@ void GameSession::VProcessing(bool r, bool w)
 	}
 	else	
 	{
-		//Need to manage resources more clever!
-		if(m_Request) delete[] m_Request;//clear last request
+		Request req = GetRequest();
+		if(!req.size()) //////////////////////
+		{
+			Send(g_BadRequestMsg);
+			return;
+		}
+	
+		if(!m_Name.size())
+		{
+			m_Name = req;
+			std::unique_ptr<char> res(new char[strlen(g_WelcomeMsg)+g_MaxName+3]);
+			sprintf(res.get(), g_WelcomeMsg, m_Name, PlayerNumber());
+			Send(res.get());
+			return;
+		}
+		else if(!m_pGame->GameBegun())
+		{
+			Send(g_GameNotBegunMsg);
+			return;
+		}
+		else
+		{	
+			m_pTheGame->RequestProc(this, req);
 
-		m_Request = new char[m_BufUsed];
-		strncpy(m_Request, m_Buffer, m_BufUsed-1);
-		m_Request[m_BufUsed] = '\0';
-		m_BufUsed = 0;
+		}
 	}
 }
 
-void GameSession::Send(const char *message)
+void Player::Send(const char *message)
 {
 	int res{0};
 	res = send(GetFd(), message, strlen(message), 0);
@@ -66,16 +91,27 @@ void GameSession::Send(const char *message)
 	}
 }
 
-void GameSession::Delete()
+Request& Player::GetRequest()
 {
-	m_pTheMaster->RemoveSession(this);
-	delete this;	
-}
+	int arr[3];
+	std::string tmp;
 
-void GameSession::Offline()
-{
-	if(m_Request)
-			delete[] m_Request;
-	m_Request = new char[7];
-	strcpy(m_Request, "offline");
+	for(int i=0, b=0; i < m_BufUsed; i++) //Parse
+	{
+		if(isalpha((m_Buffer[i]))
+			tmp.push_back(m_Buffer[i]);
+		if(isdigit(m_Buffer[i]))
+		{
+			for(int c=i; isdigit(m_Buffer[c] && b < 3; c++))
+				arr[b] += arr[b]*10 + (req[c]-48);
+			b++;
+			i += c-1;
+		}
+	}
+
+	Request rq{tmp};
+	for(int i=0; i < 3; i++)
+		rq.AddParam(arr[i]);
+	
+	return rq;
 }
