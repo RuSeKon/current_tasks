@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <cstring>
+#include <memory>
 #include "errproc.h"
 #include "application.h"
 #include "game.h"
@@ -12,7 +13,7 @@
 ////////////////////////////PLAYER/////////////////////////////////////////////////////
 
 Player::Player(Game *a_master, int fd, int num)
-		: IFdHandler(fd), m_pTheMaster(a_master), m_BufUsed(0),
+		: IFdHandler(fd), m_pTheGame(a_master), m_BufUsed(0),
 		m_Name(nullptr), m_PlayerNumber(num), m_Resources(0), m_End(false)
 {
 	m_Resources["Factory"] = 2;
@@ -24,10 +25,6 @@ Player::Player(Game *a_master, int fd, int num)
 
 Player::~Player()
 {
-	if(m_Request)
-	{
-		delete[] m_Request;
-	}
 	shutdown(GetFd(), SHUT_RDWR);
 	close(GetFd());
 }
@@ -43,13 +40,13 @@ void Player::VProcessing(bool r, bool w)
 	if(m_BufUsed == -1 || m_BufUsed == 0)
 	{
 		Offline();
-		return 0;
+		return;
 	}
 	else if(m_BufUsed >= g_BufSize-1)
 	{
 		Send(g_IllegalMsg);
 		Offline();
-		return 0;
+		return;
 	}
 	else	
 	{
@@ -64,11 +61,11 @@ void Player::VProcessing(bool r, bool w)
 		{
 			m_Name = req;
 			std::unique_ptr<char> res(new char[strlen(g_WelcomeMsg)+g_MaxName+3]);
-			sprintf(res.get(), g_WelcomeMsg, m_Name, PlayerNumber());
+			sprintf(res.get(), g_WelcomeMsg, m_Name.c_str(), m_PlayerNumber);
 			Send(res.get());
 			return;
 		}
-		else if(!m_pGame->GameBegun())
+		else if(!m_pTheGame->GameBegun())
 		{
 			Send(g_GameNotBegunMsg);
 			return;

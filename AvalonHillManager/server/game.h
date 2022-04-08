@@ -17,8 +17,6 @@
 /* Section for const messages */
 static const char g_IllegalMsg[] = {"Illegal request, buffer overflow...Goodbye!\n"};
 static const char g_NotNameMsg[] = {"Your name is too long, KISS\n"};
-static const char g_AlreadyPlayingMsg [] = {"Sorry, game is already started."
-						                        " You can play next one\n"};
 static const char g_GreetingMsg[] = {"Your welcome! Enter you name:\n"};
 static const char g_AlreadyPlayingMsg [] = {"Sorry, game is already started." 
 						" You can play next one\n"};
@@ -109,10 +107,10 @@ class Game : public IFdHandler
 public:
 	Game() = delete;
 	~Game() noexcept;
-	static Game *ServerStart(EventSelector *sel, int port);
+	static Game *GameStart(EventSelector *sel, int port);
 
 	bool GameBegun() const {return Begun;}
-	void RemoveSession(Player *s);
+	void RemovePlayer(Player *s);
 	void VProcessing(bool r, bool w) override;
 	void RequestProc(Player* plr, Request& req);
     void SendAll(const char* message, Player* except);

@@ -50,8 +50,10 @@ void Game::RemovePlayer(Player *s)
 	m_pSelector->Remove(s);
 }
 
-int Game::VProcessing()
+void Game::VProcessing(bool r, bool w)
 {
+	if(!r)
+		return;
 	int session_descriptor;
 	struct sockaddr_in addr;
 	socklen_t len = sizeof(addr);
@@ -60,12 +62,12 @@ int Game::VProcessing()
 	if(session_descriptor == -1)
 		return;
 	
-	
-
 	int plr;
     for(plr = 0; plr < g_MaxGamerNumber; plr++)
+	{
         if(!m_pList[plr])
             break;	
+	}
 			
 	Player *tmp = new Player(this, session_descriptor, plr);
 	
@@ -77,7 +79,7 @@ int Game::VProcessing()
 	else
 	{
 		m_pList.push_back(tmp);
-		m_pSelecotr->Add(tmp);
+		m_pSelector->Add(tmp);
 	}
 }
 
@@ -89,7 +91,7 @@ void Game::SendAll(const char* message, Player* except)
 }
 
 
-void Game::RequestProc(Manager* plr, Request& req)
+void Game::RequestProc(Player* plr, Request& req)
 {
 	int res{0};
 	for(int i=0; i < 8; i++) 
