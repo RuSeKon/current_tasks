@@ -1,29 +1,97 @@
 #include <utility>
+#include <cstring>
+#include <iostream>
 #include "game.h"
 
-Request::Request(std::string in) : m_Text(in)
+Request::Request(const char* in) : m_Set(0)
 {
-    m_Params.reserve(g_MaxParams);
+	std::cout << "Request ctr!\n";
+	m_pText = new char[strlen(in)+1];
+	strcpy(m_pText, in);
+	m_pParams = new int[g_MaxParams];
+	for(int i=0; i < g_MaxParams; i++)
+		m_pParams[i] = 0;
+}
+
+void Request::swap(Request& src)
+{
+	std::swap(m_pText, src.m_pText);
+	std::swap(m_pParams, src.m_pParams);
+}
+
+Request::~Request()
+{
+	std::cout << "Destructor Request!\n";
+	delete[] m_pText;
+	delete[] m_pParams;
 }
 
 Request::Request(Request&& src)
 {
-	m_Text = std::move(src.m_Text);
-    m_Params = std::move(src.m_Params);
+	std::cout << "Move constructor!\n";
+	m_pText = src.m_pText;
+	src.m_pText = nullptr;
+
+	m_pParams = src.m_pParams;
+	src.m_pParams = nullptr;
+
+	m_Set = src.m_Set;
+	src.m_Set = 0;
 }
 
 Request::Request(const Request& src)
 {
-	m_Text = src.m_Text;
-	m_Params = src.m_Params;
+	std::cout << "Copy constructor!\n";
+	size_t len = strlen(src.m_pText)+1;
+	m_pText = new char[len];
+	size_t i;
+	for(i=0; i < len; i++)
+		m_pText[i] = src.m_pText[i];
+	m_Set = src.m_Set;
+	m_pParams = new int[g_MaxParams];
+	for(i=0; i < m_Set; i++)
+		m_pParams[i] = src.m_pParams[i];
 }
 
-const std::string& Request::GetText() const
+Request& Request::operator=(Request in)
 {
-    return m_Text;
+	std::cout << "Assignment operator!\n";
+	swap(in);
+	m_Set = in.m_Set;
+	return *this;
+}
+
+Request& Request::operator=(Request&& in)
+{
+	std::cout << "Move assignment operator!\n";
+	if(&in == this)
+		return *this;
+	delete[] m_pText;
+	m_pText = in.m_pText;
+	in.m_pText = nullptr;
+	m_pParams = in.m_pParams;
+	in.m_pParams = nullptr;
+	m_Set = in.m_Set;
+	return *this;
+}
+
+const char* Request::GetText() const
+{
+    return m_pText;
 }
 
 void Request::AddParam(int i)
 {
-    m_Params.push_back(i);
+	if(m_Set >= g_MaxParams || i < 0)
+		return;//maybe need exception
+    else
+		m_pParams[m_Set++] = i;
+}
+
+int Request::GetParam(int num) const
+{
+	if(num > g_MaxParams || num < 1)
+		return 0;
+	else
+		return m_pParams[num-1];
 }

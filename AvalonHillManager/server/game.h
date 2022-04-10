@@ -17,7 +17,7 @@
 /* Section for const messages */
 static const char g_IllegalMsg[] = {"Illegal request, buffer overflow...Goodbye!\n"};
 static const char g_NotNameMsg[] = {"Your name is too long, KISS\n"};
-static const char g_GreetingMsg[] = {"Your welcome! Enter you name:\n"};
+static const char g_GreetingMsg[] = {"Your welcome! Please enter your name: \n"};
 static const char g_AlreadyPlayingMsg [] = {"Sorry, game is already started." 
 						" You can play next one\n"};
 static const char g_WelcomeMsg[] = {"Welcome to the game %s, " 
@@ -31,11 +31,11 @@ static const char g_InvalidArgumentMsg[] = {"Invalid argument, please try again!
 static const char g_BadRequestMsg[] = {"Bad request, please try again! Or type"
 									   " help:)\n"};
 static const char g_UnknownReqMsg[] = {"Unknown request, please try help!\n"};
-static const char g_MarketConditionMsg[] = {"            In the current month:  "
+static const char g_MarketCondMsg[] = {"            In the current month:  "
 										"            \nQuantity of materials sold:"
-										" %d by min price %d/unit.\nQuantity "
-										"of purchaced products: %d by max price "
-										"%d/unit.\n"};
+										" %d, by min price $%d /unit.\nQuantity "
+										"of purchaced products: %d, by max price "
+										"$%d /unit.\n"};
 static const char g_GetInfoMsg[] = {"The state of affairs(%d.%s):\n"
 								"Money: %d;\nMaterials: %d;\nProducts: %d;\n"
 								"Build factorie: %d;\nRegular factorie: %d;\n"
@@ -58,8 +58,6 @@ enum RequestConst {
 };
 /////////////////////////////////////////////////////////////////////////////
 
-using Apply = std::tuple<int, int>; // <0> quantity,  <1> cost
-
 enum ConstantsForGame { 
 	g_MaxGamerNumber = MAXGAMERNUMBER,
 	g_MaxName = 10,
@@ -78,7 +76,7 @@ class Player : public IFdHandler
 	char m_Buffer[g_BufSize];
 	int m_BufUsed;
 
-	std::string m_Name;
+	char* m_Name;
 	int m_PlayerNumber;
 
 	std::unordered_map<std::string, int> m_Resources;
@@ -89,32 +87,44 @@ class Player : public IFdHandler
 
 	void VProcessing(bool r, bool w) override;
 	void Send(const char *message);
-	Request& ParseRequest();
+	Request ParseRequest();
 };
+
+struct Item
+{
+	Player* plr;
+	int Raw[2];
+	int Prod[2];
+};
+
 
 class Game : public IFdHandler 
 {
 	EventSelector *m_pSelector;
 	bool m_GameBegun;
 	int m_Cycle;
+	int m_Players;
 
-	std::vector<Player*> m_pList;
-	bool Begun;
+	Item **m_pList;
+	int m_BankerRaw[2]; //[0] quantity, [1] cost
+	int m_BankerProd[2];//[0] quantity, [1] cost
     
 public:
 	Game() = delete;
 	~Game() noexcept;
 	static Game *GameStart(EventSelector *sel, int port);
 
-	bool GameBegun() const {return Begun;}
+	bool GameBegun() const {return m_GameBegun;}
 	void RemovePlayer(Player *s);
 	void VProcessing(bool r, bool w) override;
 	void RequestProc(Player* plr, Request& req);
     void SendAll(const char* message, Player* except);
-    //void MarketCondition(Player* plr);
-    //void GetInfo(Player* plr, Request& arg);
+
+    void MarketCondition(Player* plr);
+    void GetInfo(Player* plr, Request& arg);
     //void Enterprise(Player* plr, Request& arg);
     //void Build(Player* plr);
+	void SetMarketLvl(int num);
     //void Cycle();
 private:
 	Game(EventSelector *sel, int fd); 
@@ -122,17 +132,22 @@ private:
 
 class Request
 {
-	std::string m_Text;
-	std::vector<int> m_Params;
+	char* m_pText;
+	int* m_pParams;
+	size_t m_Set;
 public:
-	Request(std::string in);
-	~Request() noexcept = default;
+	Request() = delete;
+	Request(const char* in);
+	~Request() noexcept;
 
 	Request(const Request&);
 	Request(Request&&);
-	Request& operator=(const Request&) = delete;
-	Request operator=(Request&& src) = delete;
-	const std::string& GetText() const;
+	Request& operator=(const Request);
+	Request& operator=(Request&& src);
+	void swap(Request& src);
+
+	const char* GetText() const;
+	int GetParam(int num) const;
 	void AddParam(int i);
 };
 #endif

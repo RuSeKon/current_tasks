@@ -1,10 +1,12 @@
-#ifndef SERVER_SENTRY
-#define SERVER_SENTRY
+#ifndef APPLICATIONHPPSENTRY
+#define APPLICATIONHPPSENTRY
+
+#include <unistd.h>
 
 class IFdHandler {
 	int m_Fd;
-public:
-	IFdHandler(int a_fd) : m_Fd(a_fd) {}
+public: 
+	IFdHandler(int a_fd) : m_Fd(a_fd) {} 
 	virtual ~IFdHandler() noexcept {close(m_Fd);}
     
 	virtual void VProcessing(bool r, bool w) = 0;

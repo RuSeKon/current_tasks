@@ -14,6 +14,8 @@ enum constants {
 		g_ValidPort = 1000
 };
 
+static const char g_Quit[] = "quit";
+
 class ServerForClient : public IFdHandler {
 	char m_Buffer[256];
 	int m_BufUsed;

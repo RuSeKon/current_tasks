@@ -14,17 +14,18 @@
 
 Player::Player(Game *a_master, int fd, int num)
 		: IFdHandler(fd), m_pTheGame(a_master), m_BufUsed(0),
-		 m_PlayerNumber(num), m_End(false)
+		 m_Name(0), m_PlayerNumber(num), m_End(false)
 {
 	m_Resources["Factory"] = 2;
 	m_Resources["Raw"] = 4;
-	m_Resources["Production"] = 2;
+	m_Resources["Products"] = 2;
 	m_Resources["Money"] = 10000;
 	Send(g_GreetingMsg);
 }
 
 Player::~Player()
 {
+	if(m_Name) delete[] m_Name;
 	shutdown(GetFd(), SHUT_RDWR);
 	close(GetFd());
 }
@@ -51,22 +52,23 @@ void Player::VProcessing(bool r, bool w)
 	else	
 	{
 		Request req = ParseRequest();
-		if(!req.GetText().size()) //////////////////////
+		if(!req.GetText())
 		{
 			Send(g_BadRequestMsg);
 			return;
 		}
 	
-		if(!m_Name.size())
+		if(!m_Name)
 		{
-			if(req.GetText().size() > g_MaxName)
+			if(strlen(req.GetText()) > g_MaxName)
 			{
 				Send(g_NotNameMsg);
 				return;
 			}
-			m_Name = req.GetText();
+			m_Name = new char[strlen(req.GetText())];
+			strcpy(m_Name, req.GetText());
 			std::unique_ptr<char> res(new char[strlen(g_WelcomeMsg)+g_MaxName+3]);
-			sprintf(res.get(), g_WelcomeMsg, m_Name.c_str(), m_PlayerNumber);
+			sprintf(res.get(), g_WelcomeMsg, m_Name, m_PlayerNumber);
 			Send(res.get());
 			return;
 		}
@@ -93,7 +95,7 @@ void Player::Send(const char *message)
 	}
 }
 
-Request& Player::ParseRequest()
+Request Player::ParseRequest()
 {
 	int arr[3];
 	std::string tmp;
@@ -105,16 +107,16 @@ Request& Player::ParseRequest()
 		if(isdigit(m_Buffer[i]))
 		{
 			int c;
-			for(c=i; isdigit(m_Buffer[c]) && b < 3; c++)
+			for(c=i; isdigit(m_Buffer[c]) && b < g_MaxParams; c++)
 				arr[b] += arr[b]*10 + (m_Buffer[c]-48);
 			b++;
 			i += c-1;
 		}
 	}
 
-	Request rq{tmp};
-	for(int i=0; i < 3; i++)
+	Request rq(tmp.c_str());
+	for(int i=0; i < g_MaxParams; i++)
 		rq.AddParam(arr[i]);
 	
-	return rq;
+	return rq; //Rvalue ctor or NRVO optimization
 }

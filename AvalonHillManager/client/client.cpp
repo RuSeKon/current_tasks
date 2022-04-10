@@ -94,18 +94,17 @@ void ServerForClient::VProcessing(bool r, bool w)
 			exit(EXIT_FAILURE);
 		}
 
-		int i{0}; 
-		for(; m_Buffer[i]; i++)
+		for(int i=0; m_Buffer[i]; i++)
 		{
 			if(m_Buffer[i] == '\n') 
 			{
 				Write(STDOUT_FILENO, "FROM SERVER: ", 13);
 				Write(STDOUT_FILENO, m_Buffer, i+1);
+				Memove(m_Buffer, m_Buffer+i+1, m_BufUsed);
 				m_BufUsed -= i+1;
-				break;
+				i = 0;
 			}
 		}
-		Memove(m_Buffer, m_Buffer+i+1, m_BufUsed);
 	}
 };
 
@@ -130,8 +129,7 @@ void Console::VProcessing(bool r, bool w)
 			std::cout << "Programm terminated!\n";
 			exit(EXIT_FAILURE);
 		}
-
-		if(strstr(m_Buffer, "quit"))
+		else if(strstr(m_Buffer, g_Quit))
 		{
 			exit(0);
 		}
