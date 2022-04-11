@@ -8,7 +8,7 @@
 #include <linux/stat.h>
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Peter Jay Salzman");
+MODULE_AUTHOR("Ruslan Konyashkin");
 
 static short int myshort = 1;
 static int myint = 420;

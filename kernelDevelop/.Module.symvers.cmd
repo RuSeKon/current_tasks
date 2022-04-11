@@ -1,1 +1,0 @@
-cmd_/home/rusekon/kernelDevelop/Module.symvers := sed 's/\.ko$$/\.o/' /home/rusekon/kernelDevelop/modules.order | scripts/mod/modpost  -a  -o /home/rusekon/kernelDevelop/Module.symvers -e -i Module.symvers  -N -T -
