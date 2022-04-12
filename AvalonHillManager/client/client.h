@@ -15,9 +15,9 @@ enum constants {
 };
 
 static const char g_QuitMsg[] {"quit"};
-static const char g_HelpMsgFlag[] {"help"};
+static const char g_HelpMsgFlag[] {"helpMe"};
 static const char g_HelpMsg[] {""
-"		Used commands:		\n\n"
+"\n		Used commands:		\n\n"
 "market - recieving the info about current market condition"
 								" (without parametrs);\n\n"
 "player - recieving the info about another player"
@@ -29,7 +29,7 @@ static const char g_HelpMsg[] {""
 "build - construction of a new factory (without parametrs);\n\n"
 "turn - confirmation of readiness for the auction"
 								" (without parametrs);\n\n"
-"help - information about available commands (without parametrs);\n\n"};
+"help - information about available commands (without parametrs);\n\nENTER: "};
 
 enum SizeOfStrings
 {
@@ -37,7 +37,7 @@ enum SizeOfStrings
 	g_HelpMsgFlagSize = 4,
 	g_HelpMsgSize = 586,
 
-}
+};
 
 class ServerForClient : public IFdHandler {
 	char m_Buffer[256];

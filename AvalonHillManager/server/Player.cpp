@@ -67,16 +67,16 @@ void Player::VProcessing(bool r, bool w)
 			}
 			m_Name = new char[strlen(req.GetText())];
 			strcpy(m_Name, req.GetText());
-			std::unique_ptr<char> res(new char[g_WelcomeMsgSize]);
-			sprintf(res.get(), g_WelcomeMsg, m_Name, m_PlayerNumber);
-			Send(res.get());
+			std::unique_ptr<char> msg(new char[g_WelcomeMsgSize]);
+			sprintf(msg.get(), g_WelcomeMsg, m_Name, m_PlayerNumber);
+			Send(msg.get());
 			return;
 		}
-		else if(!m_pTheGame->GameBegun())
+	/*	else if(!m_pTheGame->GameBegun())
 		{
 			Send(g_GameNotBegunMsg);
 			return;
-		}
+		} */
 		else
 		{	
 			m_pTheGame->RequestProc(this, req);
@@ -97,7 +97,7 @@ void Player::Send(const char *message)
 
 Request Player::ParseRequest()
 {
-	int arr[3];
+	int arr[2]{0, 0};
 	std::string tmp;
 
 	for(int i=0, b=0; i < m_BufUsed; i++) //Parse

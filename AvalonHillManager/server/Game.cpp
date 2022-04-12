@@ -69,6 +69,7 @@ void Game::RemovePlayer(Player *s)
 		{
 			m_pSelector->Remove(s);
 			delete s;
+			m_pList[i] = nullptr;
 			break;
 		}
 	}
@@ -125,7 +126,10 @@ void Game::RequestProc(Player* plr, Request& req)
 	for(int i=0; i < 8; i++) 
 	{
 		if(!strcmp(req.GetText(), g_CommandList[i].c_str()))
+		{
 			res = i+1;
+			break;
+		}
 	}
 	switch(res)
 	{
@@ -176,7 +180,7 @@ void Game::MarketCondition(Player* plr)
 void Game::GetInfo(Player* plr, Request& req)
 {
 	int res = req.GetParam(1);
-	if(res <= 0 || res > g_MaxGamerNumber)
+	if(res <= 0 || res > m_Players)
 	{
 		plr->Send(g_BadRequestMsg);
 		return;
@@ -193,10 +197,10 @@ void Game::GetInfo(Player* plr, Request& req)
 			}
 		}
 		std::unique_ptr<char> msg(new char[g_GetInfoMsgSize]);
-    	sprintf(msg.get(), g_GetInfoMsg, tmp->m_PlayerNumber, 
-						   tmp->m_Name, tmp->m_Resources["Money"],
+    	sprintf(msg.get(), g_GetInfoMsg, tmp->m_Name, 
+						   tmp->m_PlayerNumber, tmp->m_Resources["Money"],
 						   tmp->m_Resources["Raw"], tmp->m_Resources["Products"],
-						   std::static_cast<int>(tmp->m_ConstrFactories.size()), 
+						   static_cast<int>(tmp->m_ConstrFactories.size()), 
 						   tmp->m_Resources["Factories"]);
     	plr->Send(msg.get());
 	}
@@ -219,7 +223,7 @@ void Game::Enterprise(Player* plr, Request& arg)
 // Stupid
 void Game::AuctionReq(Player* plr, Request& req, int res) 
 {
-	if(!req.GetParam(1) || !req.GetParam(2))
+	if(req.GetParam(1) == 0 || !req.GetParam(2) == 0)
 	{
 		plr->Send(g_BadRequestMsg);
 		return;
