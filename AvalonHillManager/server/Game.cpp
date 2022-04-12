@@ -272,6 +272,7 @@ void Game::BuildFactory(Player* plr)
 		plr->Send("Low money");
 		return;
 	}
+	plr->m_Resources["Money"] -= 2500;
 	plr->m_ConstrFactories.push_back(m_Month); //List value is month of start construction
 }
 
