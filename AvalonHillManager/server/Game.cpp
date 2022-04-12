@@ -14,7 +14,7 @@
 Game::Game(EventSelector *sel, int fd) : IFdHandler(fd), m_pSelector(sel),
 										 m_GameBegun(false), m_Month(1),
 										 m_Players(0), m_pList(nullptr),
-										 m_BankerRaw(0, 0), m_BankerProd(0, 0)
+										 m_BankerRaw{0, 0}, m_BankerProd{0, 0}
 {
 	m_pSelector->Add(this);
 	m_pList = new Player*[g_MaxGamerNumber];
@@ -156,7 +156,7 @@ void Game::RequestProc(Player* plr, Request& req)
 				plr->m_End = true;
 				break;
 		case Help:
-				Send(g_HelpMsg);	
+				plr->Send(g_HelpMsg);	
 				break;
 		default:
 				plr->Send(g_UnknownReqMsg);
@@ -196,7 +196,7 @@ void Game::GetInfo(Player* plr, Request& req)
     	sprintf(msg.get(), g_GetInfoMsg, tmp->m_PlayerNumber, 
 						   tmp->m_Name, tmp->m_Resources["Money"],
 						   tmp->m_Resources["Raw"], tmp->m_Resources["Products"],
-						   tmp->m_ConstrFactories.size(), 
+						   std::static_cast<int>(tmp->m_ConstrFactories.size()), 
 						   tmp->m_Resources["Factories"]);
     	plr->Send(msg.get());
 	}
@@ -241,13 +241,13 @@ void Game::AuctionReq(Player* plr, Request& req, int res)
 
 	if(req.GetParam(1) > quantity)
 	{
-			m_pSession->SendMsg("The amount of raw materials" // need check for res == Buy
+			plr->Send("The amount of raw materials" // need check for res == Buy
 										" sold by the market is less\n");
 			return;
 	}
 	else if(req.GetParam(2) < cost)
 	{
-			m_pSession->SendMsg("Your cost is less than market\n");
+			plr->Send("Your cost is less than market\n");
 			return;
 	}
 	

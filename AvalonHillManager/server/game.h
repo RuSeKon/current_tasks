@@ -4,6 +4,7 @@
 
 #include <unordered_map>
 #include <list>
+#include <vector>
 #include "application.h"
 
 #ifndef MAXGAMERNUMBER
@@ -27,7 +28,7 @@ static const char g_InvalidArgumentMsg[] = {"Invalid argument, please try again!
 											" Or type help:)\n"};
 static const char g_BadRequestMsg[] = {"Bad request, please try again! Or type"
 									   " help:)\n"};
-static const char g_UnknownReqMsg[] = {"Unknown request, please try help!\n"};
+static const char g_UnknownReqMsg[] = {"Unknown request, please enter help!\n"};
 static const char g_MarketCondMsg[] = {"            In the current month:  "
 										"            \nQuantity of materials sold:"
 										" %d, by min price $%d /unit.\nQuantity "
@@ -36,6 +37,16 @@ static const char g_MarketCondMsg[] = {"            In the current month:  "
 static const char g_GetInfoMsg[] = {"The state of affairs(%d.%s):\n"
 								"Money: %d;\nMaterials: %d;\nProducts: %d;\n"
 								"Build factorie: %d;\nRegular factorie: %d;\n"};
+
+static const char g_HelpMsg[] = {"
+"		Used commands:		\n"
+"market - current market condition (without parametrs);\n"
+"player - info about another player (one parametr - number of player);\n"
+"buy - ;\n"
+"sell - ;\n"
+"build - ;\n"
+"turn - ;\n"
+"help - ;\n"};
 
 
 static const std::vector<std::string> g_CommandList{"market\0", "player\0", "prod\0",
