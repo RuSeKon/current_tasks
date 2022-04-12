@@ -67,7 +67,7 @@ void Player::VProcessing(bool r, bool w)
 			}
 			m_Name = new char[strlen(req.GetText())];
 			strcpy(m_Name, req.GetText());
-			std::unique_ptr<char> res(new char[strlen(g_WelcomeMsg)+g_MaxName+3]);
+			std::unique_ptr<char> res(new char[g_WelcomeMsgSize]);
 			sprintf(res.get(), g_WelcomeMsg, m_Name, m_PlayerNumber);
 			Send(res.get());
 			return;

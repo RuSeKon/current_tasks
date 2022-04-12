@@ -14,7 +14,30 @@ enum constants {
 		g_ValidPort = 1000
 };
 
-static const char g_Quit[] = "quit";
+static const char g_QuitMsg[] {"quit"};
+static const char g_HelpMsgFlag[] {"help"};
+static const char g_HelpMsg[] {""
+"		Used commands:		\n\n"
+"market - recieving the info about current market condition"
+								" (without parametrs);\n\n"
+"player - recieving the info about another player"
+								" (one parametr - number of player);\n\n"
+"buy - submitting an application for the purchase of raw materials"
+" (two parameters - quantity and cost);\n\n"
+"sell - submitting an application for the sale of products"
+" (two parameters - quantity and cost);\n\n"
+"build - construction of a new factory (without parametrs);\n\n"
+"turn - confirmation of readiness for the auction"
+								" (without parametrs);\n\n"
+"help - information about available commands (without parametrs);\n\n"};
+
+enum SizeOfStrings
+{
+	g_QuitMsgSize = 4,
+	g_HelpMsgFlagSize = 4,
+	g_HelpMsgSize = 586,
+
+}
 
 class ServerForClient : public IFdHandler {
 	char m_Buffer[256];

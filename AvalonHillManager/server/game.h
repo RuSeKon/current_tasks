@@ -16,7 +16,7 @@
 static const char g_IllegalMsg[] = {"Illegal request, buffer overflow...Goodbye!\n"};
 static const char g_NotNameMsg[] = {"Your name is too long, KISS\n"};
 static const char g_GreetingMsg[] = {"Your welcome! Please enter your name: \n"};
-static const char g_AlreadyPlayingMsg [] = {"Sorry, game is already started." 
+static const char g_AlreadyPlayingMsg[] = {"Sorry, game is already started." 
 						" You can play next one\n"};
 static const char g_WelcomeMsg[] = {"Welcome to the game %s, " 
 													"you play-number: %d\n"};
@@ -34,20 +34,28 @@ static const char g_MarketCondMsg[] = {"            In the current month:  "
 										" %d, by min price $%d /unit.\nQuantity "
 										"of purchaced products: %d, by max price "
 										"$%d /unit.\n"};
-static const char g_GetInfoMsg[] = {"The state of affairs(%d.%s):\n"
+static const char g_GetInfoMsg[] = {"%s's state of affairs(num: %d):\n"
 								"Money: %d;\nMaterials: %d;\nProducts: %d;\n"
 								"Build factorie: %d;\nRegular factorie: %d;\n"};
+static const char g_HelpMsg[] = {"help\n"};
 
-static const char g_HelpMsg[] = {"
-"		Used commands:		\n"
-"market - current market condition (without parametrs);\n"
-"player - info about another player (one parametr - number of player);\n"
-"buy - ;\n"
-"sell - ;\n"
-"build - ;\n"
-"turn - ;\n"
-"help - ;\n"};
-
+enum StringsSize
+{
+	g_IllegalMsgSize = 45,
+	g_NotNameMsgSize = 29,
+	g_GreetingMsgSize = 40,
+	g_AlreadyPlayingMsgSize = 55,
+	g_WelcomeMsgSize = 60,
+	g_WelcomeAllMsgSize = 49,
+	g_GameNotBegunMsgSize = 45,
+	g_GameStartSoonMsgSize = 29,
+	g_InvalidArgumentMsgSize = 52,
+	g_BadRequestMsgSize = 47,
+	g_UnknownReqMsgSize = 37,
+	g_MarketCondMsgSize = 178,
+	g_GetInfoMsgSize = 147, 
+	g_HelpMsgSize = 6
+}
 
 static const std::vector<std::string> g_CommandList{"market\0", "player\0", "prod\0",
 					"buy\0", "sell\0", "build\0", "turn\0", "help\0"};

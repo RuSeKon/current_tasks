@@ -166,7 +166,7 @@ void Game::RequestProc(Player* plr, Request& req)
 
 void Game::MarketCondition(Player* plr)
 {
-	std::unique_ptr<char> msg(new char[strlen(g_MarketCondMsg)+20]);
+	std::unique_ptr<char> msg(new char[g_MarketCondMsgSize]);
     sprintf(msg.get(), g_MarketCondMsg, 
 						m_BankerRaw[0], m_BankerRaw[1],
 						m_BankerProd[0], m_BankerProd[1]);
@@ -192,7 +192,7 @@ void Game::GetInfo(Player* plr, Request& req)
 				break;
 			}
 		}
-		std::unique_ptr<char> msg(new char[strlen(g_GetInfoMsg)+20]);
+		std::unique_ptr<char> msg(new char[g_GetInfoMsgSize]);
     	sprintf(msg.get(), g_GetInfoMsg, tmp->m_PlayerNumber, 
 						   tmp->m_Name, tmp->m_Resources["Money"],
 						   tmp->m_Resources["Raw"], tmp->m_Resources["Products"],

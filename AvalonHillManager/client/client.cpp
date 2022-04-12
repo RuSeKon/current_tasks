@@ -83,7 +83,7 @@ void ServerForClient::VProcessing(bool r, bool w)
 	if(r) 
 	{
 		m_BufUsed = recv(GetFd(), m_Buffer, g_BufSize, 0);
-		if(m_BufUsed == -1 || m_BufUsed == 0)
+		if(m_BufUsed == -1)
 		{
 			std::cout << "Error server doesn't respond:(\n";
 			exit(EXIT_FAILURE);
@@ -93,6 +93,14 @@ void ServerForClient::VProcessing(bool r, bool w)
 			std::cerr << "Error buffer overflow\n";
 			exit(EXIT_FAILURE);
 		}
+		else if(strstr(m_Buffer, g_HelpMsgFlag))
+		{
+			Write(STDOUT_FILENO, g_HelpMsg, g_HelpMsgSize);
+			m_BufUsed = 0;
+			return;
+		}
+		else if(m_BUfUsed == 0)
+			return;
 
 		for(int i=0; m_Buffer[i]; i++)
 		{
