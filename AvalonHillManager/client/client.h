@@ -34,8 +34,8 @@ static const char g_HelpMsg[] {""
 enum SizeOfStrings
 {
 	g_QuitMsgSize = 4,
-	g_HelpMsgFlagSize = 4,
-	g_HelpMsgSize = 586,
+	g_HelpMsgFlagSize = 6,
+	g_HelpMsgSize = 594,
 
 };
 
