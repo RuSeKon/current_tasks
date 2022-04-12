@@ -1,12 +1,9 @@
-/* 
-----Game Logic implementation----
-*/
+/* ----Game Logic implementation---- */
 #ifndef SERVERHPPSENTRY
 #define SERVERHPPSENTRY
 
-#include <vector>
-#include <string>
 #include <unordered_map>
+#include <list>
 #include "application.h"
 
 #ifndef MAXGAMERNUMBER
@@ -14,7 +11,7 @@
 #endif
 
 
-/* Section for const messages */
+/* SECTION FOR CONSTANTS OF GAME */
 static const char g_IllegalMsg[] = {"Illegal request, buffer overflow...Goodbye!\n"};
 static const char g_NotNameMsg[] = {"Your name is too long, KISS\n"};
 static const char g_GreetingMsg[] = {"Your welcome! Please enter your name: \n"};
@@ -38,14 +35,13 @@ static const char g_MarketCondMsg[] = {"            In the current month:  "
 										"$%d /unit.\n"};
 static const char g_GetInfoMsg[] = {"The state of affairs(%d.%s):\n"
 								"Money: %d;\nMaterials: %d;\nProducts: %d;\n"
-								"Build factorie: %d;\nRegular factorie: %d;\n"
-								"Automatic factorie: %d.\n"};
+								"Build factorie: %d;\nRegular factorie: %d;\n"};
 
 
 static const std::vector<std::string> g_CommandList{"market\0", "player\0", "prod\0",
 					"buy\0", "sell\0", "build\0", "turn\0", "help\0"};
 
-enum RequestConst {
+enum RequestConstants {
 	
 	Market= 1,
 	AnotherPlayer = 2,
@@ -56,7 +52,6 @@ enum RequestConst {
 	Turn = 7,
 	Help = 8,
 };
-/////////////////////////////////////////////////////////////////////////////
 
 enum ConstantsForGame { 
 	g_MaxGamerNumber = MAXGAMERNUMBER,
@@ -65,6 +60,7 @@ enum ConstantsForGame {
 	g_MaxParams = 3
 };
 
+/////////////////////////////////////////////////////////////////////////////
 class Game;
 class Request;
 
@@ -81,6 +77,11 @@ class Player : public IFdHandler
 
 	std::unordered_map<std::string, int> m_Resources;
     bool m_End;
+	int m_Enterpise;
+	std::list<int> m_ConstrFactories;
+	
+	int m_PlayerRaw[2];
+	int m_PlayerProd[2];
 
 	Player(Game *a_master, int fd, int num);
 	~Player() noexcept;
@@ -90,25 +91,23 @@ class Player : public IFdHandler
 	Request ParseRequest();
 };
 
-struct Item
-{
-	Player* plr;
-	int Raw[2];
-	int Prod[2];
-};
 
+//////////////////////////////////////////////////////////////////////
 
 class Game : public IFdHandler 
 {
 	EventSelector *m_pSelector;
 	bool m_GameBegun;
-	int m_Cycle;
+	//Number of in-game months elapsed
+	int m_Month;  
 	int m_Players;
 
-	Item **m_pList;
+	Player **m_pList;
+
+	//Auction state
 	int m_BankerRaw[2]; //[0] quantity, [1] cost
 	int m_BankerProd[2];//[0] quantity, [1] cost
-    
+
 public:
 	Game() = delete;
 	~Game() noexcept;
@@ -116,20 +115,31 @@ public:
 
 	bool GameBegun() const {return m_GameBegun;}
 	void RemovePlayer(Player *s);
-	void VProcessing(bool r, bool w) override;
+	void VProcessing(bool r, bool w) final;
 	void RequestProc(Player* plr, Request& req);
     void SendAll(const char* message, Player* except);
-
-    void MarketCondition(Player* plr);
-    void GetInfo(Player* plr, Request& arg);
-    //void Enterprise(Player* plr, Request& arg);
-    //void Build(Player* plr);
 	void SetMarketLvl(int num);
-    //void Cycle();
+
+			/*PROCESSIN PLAYER REQUESTS*/
+	//Information about the state of the market in the current month
+    void MarketCondition(Player* plr); 
+    //Information about the resources of another player
+	void GetInfo(Player* plr, Request& arg); 
+    //Processing of applications for the production of products in factories 
+	void Enterprise(Player* plr, Request& arg);
+	//Processing applications for participation in the auction 
+	void AuctionReq(Player* plr, Request& arg, int res);
+	//Processing of applications for the construction of factories
+    void BuildFactory(Player* plr);
+	//To change current quantity/cost resources sold by the bank
+	
+    
+	void Cycle();
 private:
-	Game(EventSelector *sel, int fd); 
+	Game(EventSelector *sel, int fd); //Use GameStart!
 };
 
+/*Type to work with player requests*/
 class Request
 {
 	char* m_pText;

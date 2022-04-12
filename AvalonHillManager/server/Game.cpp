@@ -12,11 +12,12 @@
 /////////////////////////////////////////GAME//////////////////////////////////////
 
 Game::Game(EventSelector *sel, int fd) : IFdHandler(fd), m_pSelector(sel),
-										 m_GameBegun(false), m_Cycle(0),
-										 m_Players(0), m_pList(nullptr)
+										 m_GameBegun(false), m_Month(1),
+										 m_Players(0), m_pList(nullptr),
+										 m_BankerRaw(0, 0), m_BankerProd(0, 0)
 {
 	m_pSelector->Add(this);
-	m_pList = new Item*[g_MaxGamerNumber];
+	m_pList = new Player*[g_MaxGamerNumber];
 	//SetMarketLvl(3); Exactly here?
 }
 
@@ -26,8 +27,7 @@ Game::~Game()
 	{
 		if(m_pList[i])
 		{
-			m_pSelector->Remove(m_pList[i]->plr);
-			delete m_pList[i]->plr;
+			m_pSelector->Remove(m_pList[i]);
 			delete m_pList[i];
 		} 
 	}
@@ -65,11 +65,10 @@ void Game::RemovePlayer(Player *s)
 {
 	for(size_t i=0; i < g_MaxGamerNumber; i++)
 	{
-		if(m_pList[i]->plr == s)
+		if(m_pList[i] == s)
 		{
 			m_pSelector->Remove(s);
 			delete s;
-			delete m_pList[i];
 			break;
 		}
 	}
@@ -104,21 +103,19 @@ void Game::VProcessing(bool r, bool w)
 	}
 	else
 	{
-		Item *tmp = new Item;
-		tmp->plr = p;
 		m_pSelector->Add(p);
 		
 		m_Players++; // NEED TO START GAME
 		if(m_Players == g_MaxGamerNumber) m_GameBegun = true;
-		m_pList[num] = tmp;
+		m_pList[num] = p;
 	}
 }
 
 void Game::SendAll(const char* message, Player* except)
 {
 	for(size_t i=0; i < g_MaxGamerNumber; i++)
-		if(m_pList[i]->plr != except)
-			m_pList[i]->plr->Send(message);
+		if(m_pList[i] != except)
+			m_pList[i]->Send(message);
 }
 
 
@@ -127,7 +124,7 @@ void Game::RequestProc(Player* plr, Request& req)
 	int res{0};
 	for(int i=0; i < 8; i++) 
 	{
-		if(req.GetText() == g_CommandList[i])
+		if(!strcmp(req.GetText(), g_CommandList[i].c_str()))
 			res = i+1;
 	}
 	switch(res)
@@ -138,51 +135,30 @@ void Game::RequestProc(Player* plr, Request& req)
 		case AnotherPlayer:
 				GetInfo(plr, req);
 				break;
-/*		case Production:
+		case Production:
 				Enterprise(plr, req);
 				break;
 		case Buy:
-				
-				if(std::get<0>(t) > std::get<0>(m_pBanker->Raw))
-				{
-					m_pSession->SendMsg("The amount of raw materials"
-										" sold by the market is less\n");
-					break;
-				}
-				else if(std::get<1>(t) < std::get<1>(m_pBanker->Raw))
-				{
-					m_pSession->SendMsg("Your cost is less than market\n");
-					break;
-				} 
-			
-				//m_BuyApply = t;
-				break;
 		case Sell:
+				/*
 				
-				if(std::get<0>(t) > s)
-				{
-					m_pSession->SendMsg("You don't have that many"
+					"You don't have that many"
 										" products\n");
-					break;
-				}
-				//Maybe it's not need
-				else if(std::get<1>(t) > std::get<1>(m_pBanker->Raw))
-				{
-					m_pSession->SendMsg("Your cost is larger than market\n");
-					break;
-				} 
-				//m_SellApply = t;
+
+					"Your cost is larger than market\n");
+				*/
+				AuctionReq(plr, req, res);
 				break;
 		case Build:
-				Build(plr);
+				BuildFactory(plr);
 				break;
 		case Turn:
-				m_End = true;
+				plr->m_End = true;
 				break;
 		case Help:
 				Send(g_HelpMsg);	
 				break;
-*/		default:
+		default:
 				plr->Send(g_UnknownReqMsg);
 	}
 	return;
@@ -210,9 +186,9 @@ void Game::GetInfo(Player* plr, Request& req)
 		Player* tmp;
 		for(size_t i=0; i < g_MaxGamerNumber; i++)
 		{
-			if(res == m_pList[i]->plr->m_PlayerNumber)
+			if(res == m_pList[i]->m_PlayerNumber)
 			{
-				tmp = m_pList[i]->plr;
+				tmp = m_pList[i];
 				break;
 			}
 		}
@@ -220,9 +196,79 @@ void Game::GetInfo(Player* plr, Request& req)
     	sprintf(msg.get(), g_GetInfoMsg, tmp->m_PlayerNumber, 
 						   tmp->m_Name, tmp->m_Resources["Money"],
 						   tmp->m_Resources["Raw"], tmp->m_Resources["Products"],
-						   0, tmp->m_Resources["Factories"],  0);
+						   tmp->m_ConstrFactories.size(), 
+						   tmp->m_Resources["Factories"]);
     	plr->Send(msg.get());
 	}
+}
+
+void Game::Enterprise(Player* plr, Request& arg)
+{
+	int quantity = plr->m_Enterpise + arg.GetParam(1);
+	if(quantity > plr->m_Resources["Factories"])
+	{
+		plr->Send("You don't have as many factories to produce.\n");
+	}
+	else
+	{
+		plr->m_Enterpise = quantity;
+	}
+
+}
+
+// Stupid
+void Game::AuctionReq(Player* plr, Request& req, int res) 
+{
+	if(!req.GetParam(1) || !req.GetParam(2))
+	{
+		plr->Send(g_BadRequestMsg);
+		return;
+	}
+
+	int quantity;
+	int cost;
+
+	if(res == Buy)
+	{	
+		quantity = m_BankerRaw[0];
+		cost = m_BankerRaw[0];	
+	}
+	else
+	{
+		quantity = m_BankerProd[0];
+		cost = m_BankerProd[1];
+	}
+
+	if(req.GetParam(1) > quantity)
+	{
+			m_pSession->SendMsg("The amount of raw materials" // need check for res == Buy
+										" sold by the market is less\n");
+			return;
+	}
+	else if(req.GetParam(2) < cost)
+	{
+			m_pSession->SendMsg("Your cost is less than market\n");
+			return;
+	}
+	
+	for(int i=0; i < 2; i++)
+	{
+		if(res == Buy)
+			plr->m_PlayerRaw[i] = req.GetParam(i+1);
+		else
+			plr->m_PlayerProd[i] = req.GetParam(i+1);
+		
+	}
+}
+
+void Game::BuildFactory(Player* plr)
+{
+	if(plr->m_Resources["Money"] < 2500)
+	{
+		plr->Send("Low money");
+		return;
+	}
+	plr->m_ConstrFactories.push_back(m_Month); //List value is month of start construction
 }
 
 void Game::SetMarketLvl(int num)

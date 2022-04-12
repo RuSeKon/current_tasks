@@ -14,7 +14,7 @@
 
 Player::Player(Game *a_master, int fd, int num)
 		: IFdHandler(fd), m_pTheGame(a_master), m_BufUsed(0),
-		 m_Name(0), m_PlayerNumber(num), m_End(false)
+		 m_Name(0), m_PlayerNumber(num), m_End(false), m_Enterpise(0)
 {
 	m_Resources["Factory"] = 2;
 	m_Resources["Raw"] = 4;
