@@ -20,7 +20,7 @@ static const char g_AlreadyPlayingMsg[]={"\nSorry, game is already started."
 						" You can play next one\n"};
 static const char g_WelcomeMsg[]={"\nWelcome to the game %s, " 
 													"you play-number: %d\n"};
-static const char g_WelcomeAllMsg[]={"\n%s number %d joined to the game!\n"};
+static const char g_WelcomeAllMsg[]={"\nPlayer number %d joined to the game!\n"};
 static const char g_GameNotBegunMsg[]={"\nThe game haven't started yet. " 
 														   "Please wait:)\n"};
 static const char g_GameStartSoonMsg[]={"\nThe game will start soon!:)\n"};
@@ -38,6 +38,7 @@ static const char g_GetInfoMsg[]={"\n%s's state of affairs (num: %d):\n"
 								"Money: %d;\nMaterials: %d;\nProducts: %d;\n"
 								"Regular factorie: %d;\nBuild factorie: %d;\n"};
 static const char g_HelpMsg[]={"helpMe\n"};
+static const char g_PlayerListMsg[]={"%d. %s;\n"};
 
 enum StringsSize
 {
@@ -46,7 +47,7 @@ enum StringsSize
 	g_GreetingMsgSize = 41,
 	g_AlreadyPlayingMsgSize = 56,
 	g_WelcomeMsgSize = 58,
-	g_WelcomeAllMsgSize = 48,
+	g_WelcomeAllMsgSize = 42,
 	g_GameNotBegunMsgSize = 46,
 	g_GameStartSoonMsgSize = 30,
 	g_InvalidArgumentMsgSize = 53,
@@ -54,11 +55,12 @@ enum StringsSize
 	g_UnknownReqMsgSize = 38,
 	g_MarketCondMsgSize = 179,
 	g_GetInfoMsgSize = 149, 
-	g_HelpMsgSize = 8
+	g_HelpMsgSize = 8,
+	g_PlayerListMsgSize = 18
 };
 
 static const std::vector<std::string> g_CommandList{"market\0", "player\0", "prod\0",
-					"buy\0", "sell\0", "build\0", "turn\0", "help\0"};
+					"buy\0", "sell\0", "build\0", "turn\0", "help\0", "player_lst\0"};
 
 enum RequestConstants {
 	
@@ -70,6 +72,7 @@ enum RequestConstants {
 	Build = 6,
 	Turn = 7,
 	Help = 8,
+	PlayerAll = 9,
 };
 
 enum ConstantsForGame { 
@@ -143,7 +146,7 @@ public:
 	//Information about the state of the market in the current month
     void MarketCondition(Player* plr); 
     //Information about the resources of another player
-	void GetInfo(Player* plr, Request& arg); 
+	void GetInfo(Player* plr, Request& arg, int res); 
     //Processing of applications for the production of products in factories 
 	void Enterprise(Player* plr, Request& arg);
 	//Processing applications for participation in the auction 

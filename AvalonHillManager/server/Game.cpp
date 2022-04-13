@@ -105,10 +105,15 @@ void Game::VProcessing(bool r, bool w)
 	else
 	{
 		m_pSelector->Add(p);
-		
+
 		m_Players++; // NEED TO START GAME
+		
 		if(m_Players == g_MaxGamerNumber) m_GameBegun = true;
 		m_pList[num] = p;
+
+		std::unique_ptr<char> msg(new char[g_WelcomeAllMsgSize]);
+		sprintf(msg.get(), g_WelcomeAllMsg, p->m_PlayerNumber);
+		SendAll(msg.get(), p);
 	}
 }
 
@@ -123,7 +128,7 @@ void Game::SendAll(const char* message, Player* except)
 void Game::RequestProc(Player* plr, Request& req)
 {
 	int res{0};
-	for(int i=0; i < 8; i++) 
+	for(int i=0; i < g_CommandList.size(); i++) 
 	{
 		if(!strcmp(req.GetText(), g_CommandList[i].c_str()))
 		{
@@ -136,8 +141,9 @@ void Game::RequestProc(Player* plr, Request& req)
 		case Market:
 			MarketCondition(plr);
 			break;
+		case PlayerAll:		
 		case AnotherPlayer:
-				GetInfo(plr, req);
+				GetInfo(plr, req, res);
 				break;
 		case Production:
 				Enterprise(plr, req);
@@ -162,6 +168,7 @@ void Game::RequestProc(Player* plr, Request& req)
 		case Help:
 				plr->Send(g_HelpMsg);	
 				break;
+		
 		default:
 				plr->Send(g_UnknownReqMsg);
 	}
@@ -177,13 +184,31 @@ void Game::MarketCondition(Player* plr)
     plr->Send(msg.get());
 }
 
-void Game::GetInfo(Player* plr, Request& req)
+void Game::GetInfo(Player* plr, Request& req, int all)
 {
 	int res = req.GetParam(1);
 	if(res <= 0 || res > m_Players)
 	{
 		plr->Send(g_BadRequestMsg);
 		return;
+	}
+	else if(all == PlayerAll)
+	{
+		std::unique_ptr<char> msg(new char[g_PlayerListMsg*g_MaxGamerNumber]);
+		
+		char* ptr = msg.get();
+		for(int i=0, b=0; i < g_MaxGamerNumber; i++)
+		{
+			if(m_pList[i])
+			{
+				b = sprintf(ptr, g_PlayerListMsg, 
+								   m_pList[i]->m_PlayerNumber,
+								   m_pList[i]->m_Name);
+				ptr += b;
+				b=0;
+			}
+		}
+		plr->Send(msg.get());
 	}
 	else
 	{
