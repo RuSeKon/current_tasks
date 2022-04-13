@@ -8,7 +8,7 @@
 #include "application.h"
 
 #ifndef MAXGAMERNUMBER
-#define MAXGAMERNUMBER 10
+#define MAXGAMERNUMBER 4
 #endif
 
 
@@ -38,29 +38,37 @@ static const char g_GetInfoMsg[]={"\n%s's state of affairs (num: %d):\n"
 								"Money: %d;\nMaterials: %d;\nProducts: %d;\n"
 								"Regular factorie: %d;\nBuild factorie: %d;\n"};
 static const char g_HelpMsg[]={"helpMe\n"};
-static const char g_PlayerListMsg[]={"%d. %s\n"};
+static const char g_PlayerListMsg[]={"\n%d. %s\n"};
+static const char g_BadRawQuantMsg[]={"\nThe amount of raw materials sold by the market is less.\n"};
+static const char g_BadRawCostMsg[]={"\nYour cost is less than market.\n"};
+static const char g_BadProdQuantMsg[]={"\nYou don't have that many products.\n"};
+static const char g_BadProdCostMsg[]={"\nYour cost is larger than market.\n"};
+static const char g_TooFewFactoryes[]={"\nYou don't have as many factories to produce.\n"};
+static const char g_InsufficientFunds[]={"\nInsufficient funds to build so many factoryes.\n"}
 
+/*
 enum StringsSize
 {
 	g_IllegalMsgSize = 46,
 	g_NotNameMsgSize = 30,
 	g_GreetingMsgSize = 41,
 	g_AlreadyPlayingMsgSize = 56,
-	g_WelcomeMsgSize = 58,
-	g_WelcomeAllMsgSize = 42,
+	//g_WelcomeMsgSize = 58,
+	//g_WelcomeAllMsgSize = 42,
 	g_GameNotBegunMsgSize = 46,
 	g_GameStartSoonMsgSize = 30,
 	g_InvalidArgumentMsgSize = 53,
 	g_BadRequestMsgSize = 48,
 	g_UnknownReqMsgSize = 38,
-	g_MarketCondMsgSize = 179,
-	g_GetInfoMsgSize = 149, 
+	//g_MarketCondMsgSize = 179,
+	//g_GetInfoMsgSize = 149, 
 	g_HelpMsgSize = 8,
-	g_PlayerListMsgSize = 17
+	//g_PlayerListMsgSize = 18
 };
+*/
 
-static const std::vector<std::string> g_CommandList{"market\0", "player\0", "prod\0",
-					"buy\0", "sell\0", "build\0", "turn\0", "help\0", "playerLst\0"};
+static const std::vector<std::string> g_CommandList{"market\0", "info\0", "prod\0",
+					"buy\0", "sell\0", "build\0", "turn\0", "help\0", "infoLst\0"};
 
 enum RequestConstants {
 	
@@ -81,6 +89,15 @@ enum ConstantsForGame {
 	g_BufSize = 256,
 	g_MaxParams = 2
 };
+
+static const int g_MarketLevels[5][5] = {
+	{4, 4, 2, 1, 1}, 
+	{3, 4, 4, 1, 1},
+	{1, 3, 4, 3, 1},
+	{1, 1, 3, 4, 3},
+	{1, 1, 2, 4, 4}
+};
+
 
 /////////////////////////////////////////////////////////////////////////////
 class Game;
@@ -123,8 +140,9 @@ class Game : public IFdHandler
 	//Number of in-game months elapsed
 	int m_Month;  
 	int m_Players;
+	int m_MarketLevel;
 
-	Player **m_pList;
+	Player **m_pList; //Think about unordered_map
 
 	//Auction state
 	int m_BankerRaw[2]; //[0] quantity, [1] cost
@@ -140,12 +158,12 @@ public:
 	void VProcessing(bool r, bool w) final;
 	void RequestProc(Player* plr, Request& req);
     void SendAll(const char* message, Player* except);
+	void ChangeMarketLvl();
 	void SetMarketLvl(int num);
 
 			/*PROCESSIN PLAYER REQUESTS*/
-	//Information about the state of the market in the current month
-    void MarketCondition(Player* plr); 
-    //Information about the resources of another player
+	
+    //Get information
 	void GetInfo(Player* plr, Request& arg, int res); 
     //Processing of applications for the production of products in factories 
 	void Enterprise(Player* plr, Request& arg);
@@ -157,6 +175,7 @@ public:
 	
     
 	void Cycle();
+	void Auction();
 private:
 	Game(EventSelector *sel, int fd); //Use GameStart!
 };

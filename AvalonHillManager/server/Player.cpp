@@ -18,7 +18,7 @@ Player::Player(Game *a_master, int fd, int num)
 {
 	m_Resources["Factory"] = 2;
 	m_Resources["Raw"] = 4;
-	m_Resources["Products"] = 2;
+	m_Resources["Prod"] = 2;
 	m_Resources["Money"] = 10000;
 	Send(g_GreetingMsg);
 }
@@ -74,15 +74,15 @@ void Player::VProcessing(bool r, bool w)
 			
 			return;
 		}
-	/*	else if(!m_pTheGame->GameBegun())
+		else if(!m_pTheGame->GameBegun())
 		{
 			Send(g_GameNotBegunMsg);
 			return;
-		} */
+		}
 		else
 		{	
 			m_pTheGame->RequestProc(this, req);
-
+			//m_pTheGame->Cycle();
 		}
 	}
 }
