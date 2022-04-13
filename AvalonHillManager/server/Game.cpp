@@ -128,7 +128,7 @@ void Game::SendAll(const char* message, Player* except)
 void Game::RequestProc(Player* plr, Request& req)
 {
 	int res{0};
-	for(int i=0; i < g_CommandList.size(); i++) 
+	for(size_t i=0; i < g_CommandList.size(); i++) 
 	{
 		if(!strcmp(req.GetText(), g_CommandList[i].c_str()))
 		{
@@ -186,15 +186,10 @@ void Game::MarketCondition(Player* plr)
 
 void Game::GetInfo(Player* plr, Request& req, int all)
 {
-	int res = req.GetParam(1);
-	if(res <= 0 || res > m_Players)
+	
+	if(all == PlayerAll)
 	{
-		plr->Send(g_BadRequestMsg);
-		return;
-	}
-	else if(all == PlayerAll)
-	{
-		std::unique_ptr<char> msg(new char[g_PlayerListMsg*g_MaxGamerNumber]);
+		std::unique_ptr<char> msg(new char[g_PlayerListMsgSize*g_MaxGamerNumber]);
 		
 		char* ptr = msg.get();
 		for(int i=0, b=0; i < g_MaxGamerNumber; i++)
@@ -212,6 +207,13 @@ void Game::GetInfo(Player* plr, Request& req, int all)
 	}
 	else
 	{
+		int res = req.GetParam(1);
+		if(res <= 0 || res > m_Players)
+		{
+			plr->Send(g_BadRequestMsg);
+			return;
+		}
+
 		Player* tmp;
 		for(size_t i=0; i < g_MaxGamerNumber; i++)
 		{

@@ -22,6 +22,7 @@ static const char g_HelpMsg[] {""
 								" (without parametrs);\n\n"
 "player - recieving the info about another player"
 								" (one parametr - number of player);\n\n"
+"playerLst - list of all remaining players (without parametrs);\n\n"
 "buy - submitting an application for the purchase of raw materials"
 " (two parameters - quantity and cost);\n\n"
 "sell - submitting an application for the sale of products"
@@ -35,7 +36,7 @@ enum SizeOfStrings
 {
 	g_QuitMsgSize = 4,
 	g_HelpMsgFlagSize = 6,
-	g_HelpMsgSize = 594,
+	g_HelpMsgSize = 657,
 
 };
 

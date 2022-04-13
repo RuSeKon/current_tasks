@@ -38,7 +38,7 @@ static const char g_GetInfoMsg[]={"\n%s's state of affairs (num: %d):\n"
 								"Money: %d;\nMaterials: %d;\nProducts: %d;\n"
 								"Regular factorie: %d;\nBuild factorie: %d;\n"};
 static const char g_HelpMsg[]={"helpMe\n"};
-static const char g_PlayerListMsg[]={"%d. %s;\n"};
+static const char g_PlayerListMsg[]={"%d. %s\n"};
 
 enum StringsSize
 {
@@ -56,11 +56,11 @@ enum StringsSize
 	g_MarketCondMsgSize = 179,
 	g_GetInfoMsgSize = 149, 
 	g_HelpMsgSize = 8,
-	g_PlayerListMsgSize = 18
+	g_PlayerListMsgSize = 17
 };
 
 static const std::vector<std::string> g_CommandList{"market\0", "player\0", "prod\0",
-					"buy\0", "sell\0", "build\0", "turn\0", "help\0", "player_lst\0"};
+					"buy\0", "sell\0", "build\0", "turn\0", "help\0", "playerLst\0"};
 
 enum RequestConstants {
 	
