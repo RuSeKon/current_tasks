@@ -103,7 +103,7 @@ void ServerForClient::VProcessing(bool r, bool w)
 			return;
 
 		//Write(STDOUT_FILENO, "FROM SERVER:\n", 13);
-		for(int i=0; m_Buffer[i]; i++)
+		for(int i=0; i < m_BufUsed; i++)
 		{
 			if(m_Buffer[i] == '\n') 
 			{
@@ -143,9 +143,7 @@ void Console::VProcessing(bool r, bool w)
 			exit(0);
 		}
 
-		int i{0};
-
-		for(; m_Buffer[i]; i++)
+		for(int i=0; i < m_BufUsed; i++)
 		{
 			if(m_Buffer[i] == '\n')
 			{
@@ -155,10 +153,12 @@ void Console::VProcessing(bool r, bool w)
 					std::cout << "Error sending message, server doesn't respond:(\n";
 					return;
 				}
+				Memove(m_Buffer, m_Buffer+i+1, m_BufUsed);
 				m_BufUsed -= i+1;
+				i = 0;
 				break;
 			}
 		}
-		Memove(m_Buffer, m_Buffer+i+1, m_BufUsed);
+		
 	}
 };
