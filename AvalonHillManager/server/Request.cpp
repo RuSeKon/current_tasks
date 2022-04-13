@@ -8,9 +8,7 @@ Request::Request(const char* in) : m_Set(0)
 	std::cout << "Request ctr!\n";
 	m_pText = new char[strlen(in)+1];
 	strcpy(m_pText, in);
-	m_pParams = new int[g_MaxParams];
-	for(int i=0; i < g_MaxParams; i++)
-		m_pParams[i] = 0;
+	m_pParams = new int[g_MaxParams]{0};
 }
 
 void Request::swap(Request& src)

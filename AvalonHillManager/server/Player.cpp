@@ -65,11 +65,13 @@ void Player::VProcessing(bool r, bool w)
 				Send(g_NotNameMsg);
 				return;
 			}
-			m_Name = new char[strlen(req.GetText())];
+			m_Name = new char[sizeof(req.GetText())];
 			strcpy(m_Name, req.GetText());
+
 			std::unique_ptr<char> msg(new char[g_WelcomeMsgSize]);
 			sprintf(msg.get(), g_WelcomeMsg, m_Name, m_PlayerNumber);
 			Send(msg.get());
+			
 			return;
 		}
 	/*	else if(!m_pTheGame->GameBegun())

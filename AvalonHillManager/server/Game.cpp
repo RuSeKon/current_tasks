@@ -17,7 +17,7 @@ Game::Game(EventSelector *sel, int fd) : IFdHandler(fd), m_pSelector(sel),
 										 m_BankerRaw{0, 0}, m_BankerProd{0, 0}
 {
 	m_pSelector->Add(this);
-	m_pList = new Player*[g_MaxGamerNumber];
+	m_pList = new Player*[g_MaxGamerNumber]{0};
 	//SetMarketLvl(3); Exactly here?
 }
 
@@ -115,7 +115,7 @@ void Game::VProcessing(bool r, bool w)
 void Game::SendAll(const char* message, Player* except)
 {
 	for(size_t i=0; i < g_MaxGamerNumber; i++)
-		if(m_pList[i] != except)
+		if(m_pList[i] != except && m_pList[i])
 			m_pList[i]->Send(message);
 }
 
