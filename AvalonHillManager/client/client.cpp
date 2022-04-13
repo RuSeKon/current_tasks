@@ -100,7 +100,10 @@ void ServerForClient::VProcessing(bool r, bool w)
 			return;
 		}
 		else if(m_BufUsed == 0)
-			return;
+		{
+			std::cout << "Game over:)\n";
+			exit(EXIT_FAILURE);
+		}
 
 		//Write(STDOUT_FILENO, "FROM SERVER:\n", 13);
 		for(int i=0; i < m_BufUsed; i++)
@@ -110,7 +113,7 @@ void ServerForClient::VProcessing(bool r, bool w)
 				Write(STDOUT_FILENO, m_Buffer, i+1);
 				Memove(m_Buffer, m_Buffer+i+1, m_BufUsed);
 				m_BufUsed -= i+1;
-				i = 0;
+				i = -1;
 			}
 		}
 		Write(STDOUT_FILENO, "\nENTER: ", 8);
@@ -155,8 +158,7 @@ void Console::VProcessing(bool r, bool w)
 				}
 				Memove(m_Buffer, m_Buffer+i+1, m_BufUsed);
 				m_BufUsed -= i+1;
-				i = 0;
-				break;
+				i = -1;
 			}
 		}
 		

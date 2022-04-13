@@ -4,11 +4,12 @@
 
 #include <unordered_map>
 #include <list>
+#include <string>
 #include <vector>
 #include "application.h"
 
 #ifndef MAXGAMERNUMBER
-#define MAXGAMERNUMBER 4
+#define MAXGAMERNUMBER 1
 #endif
 
 
@@ -41,10 +42,10 @@ static const char g_HelpMsg[]={"helpMe\n"};
 static const char g_PlayerListMsg[]={"\n%d. %s\n"};
 static const char g_BadRawQuantMsg[]={"\nThe amount of raw materials sold by the market is less.\n"};
 static const char g_BadRawCostMsg[]={"\nYour cost is less than market.\n"};
-static const char g_BadProdQuantMsg[]={"\nYou don't have that many products.\n"};
+static const char g_BadProdQuantMsg[]={"\nYou don't have that many products,or bank don't buy that quantity.\n"};
 static const char g_BadProdCostMsg[]={"\nYour cost is larger than market.\n"};
 static const char g_TooFewFactoryes[]={"\nYou don't have as many factories to produce.\n"};
-static const char g_InsufficientFunds[]={"\nInsufficient funds to build so many factoryes.\n"}
+static const char g_InsufficientFunds[]={"\nInsufficient funds to build so many factoryes.\n"};
 
 /*
 enum StringsSize
@@ -116,7 +117,7 @@ class Player : public IFdHandler
 
 	std::unordered_map<std::string, int> m_Resources;
     bool m_End;
-	int m_Enterpise;
+	int m_Enterprise;
 	std::list<int> m_ConstrFactories;
 	
 	int m_PlayerRaw[2];
@@ -168,7 +169,9 @@ public:
     //Processing of applications for the production of products in factories 
 	void Enterprise(Player* plr, Request& arg);
 	//Processing applications for participation in the auction 
-	void AuctionReq(Player* plr, Request& arg, int res);
+	void BuyReq(Player* plr, Request& arg);
+
+	void SellReq(Player* plr, Request& arg);
 	//Processing of applications for the construction of factories
     void BuildFactory(Player* plr);
 	//To change current quantity/cost resources sold by the bank

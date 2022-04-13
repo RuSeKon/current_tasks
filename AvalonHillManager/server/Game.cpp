@@ -19,7 +19,6 @@ Game::Game(EventSelector *sel, int fd) : IFdHandler(fd), m_pSelector(sel),
 {
 	m_pSelector->Add(this);
 	m_pList = new Player*[g_MaxGamerNumber]{0};
-	SetMarketLvl(3);
 }
 
 Game::~Game()
@@ -110,7 +109,13 @@ void Game::VProcessing(bool r, bool w)
 		m_Players++; // NEED TO START GAME
 		
 		m_pList[num] = p;
-		if(m_Players == g_MaxGamerNumber) m_GameBegun = true;
+		if(m_Players == g_MaxGamerNumber) 
+		{
+			m_GameBegun = true;
+			SendAll("Game begining!\n", nullptr);
+			SetMarketLvl(3);
+		}
+
 
 		std::unique_ptr<char> msg(new char[strlen(g_WelcomeAllMsg)+3]);
 		sprintf(msg.get(), g_WelcomeAllMsg, p->m_PlayerNumber);
@@ -148,8 +153,10 @@ void Game::RequestProc(Player* plr, Request& req)
 				Enterprise(plr, req);
 				break;
 		case Buy:
+				BuyReq(plr, req);
+				break;
 		case Sell:
-				AuctionReq(plr, req, res);
+				SellReq(plr, req);
 				break;
 		case Build:
 				BuildFactory(plr);
@@ -241,60 +248,73 @@ void Game::GetInfo(Player* plr, Request& req, int all)
 
 void Game::Enterprise(Player* plr, Request& arg)
 {
-	int quantity = plr->m_Enterpise + arg.GetParam(1);
+	int quantity = plr->m_Enterprise + arg.GetParam(1);
 	if(quantity > plr->m_Resources["Factories"])
 	{
 		plr->Send(g_TooFewFactoryes);
 	}
 	else
 	{
-		plr->m_Enterpise = quantity;
+		plr->m_Enterprise = quantity;
 	}
 
 }
 
-// Stupid
-void Game::AuctionReq(Player* plr, Request& req, int res) 
+void Game::BuyReq(Player* plr, Request& arg) 
 {
-	if(req.GetParam(1) == 0 || !req.GetParam(2) == 0)
+	if(arg.GetParam(1) == 0 || arg.GetParam(2) == 0)
 	{
 		plr->Send(g_BadRequestMsg);
 		return;
 	}
 
-	int quantity;
-	int cost;
+	int quantity = m_BankerRaw[0];
+	int cost = m_BankerRaw[1];
 
-	if(res == Buy)
-	{	
-		quantity = m_BankerRaw[0];
-		cost = m_BankerRaw[0];	
-	}
-	else
-	{
-		quantity = m_BankerProd[0];
-		cost = m_BankerProd[1];
-	}
 
-	if(req.GetParam(1) > quantity)
+	if(arg.GetParam(1) > quantity)
 	{
-			plr->Send(res == Buy ? g_BadRawQuantMsg : g_BadProdQuantMsg);
+			plr->Send(g_BadRawQuantMsg);
 			return;
 	}
-	else if(req.GetParam(2) < cost)
+	else if(arg.GetParam(2) < cost)
 	{
-			plr->Send(res == Buy ? g_BadRawCostMsg : g_BadProdCostMsg);
+			plr->Send(g_BadRawCostMsg);
 			return;
 	}
 	
 	for(int i=0; i < 2; i++)
+			plr->m_PlayerRaw[i] = arg.GetParam(i+1);
+	plr->Send("\nApplication apply!\n");
+}
+
+void Game::SellReq(Player* plr, Request& arg)
+{
+	if(arg.GetParam(1) == 0 || arg.GetParam(2) == 0)
 	{
-		if(res == Buy)
-			plr->m_PlayerRaw[i] = req.GetParam(i+1);
-		else
-			plr->m_PlayerProd[i] = req.GetParam(i+1);
-		
+		plr->Send(g_BadRequestMsg);
+		return;
 	}
+
+	int quantity = m_BankerProd[0];
+	int cost = m_BankerProd[1];
+
+
+	if(arg.GetParam(1) > quantity || arg.GetParam(1) < plr->m_Resources["Prod"])
+	{
+			plr->Send(g_BadProdQuantMsg);
+			return;
+	}
+	else if(arg.GetParam(2) > cost)
+	{
+			plr->Send(g_BadProdCostMsg);
+			return;
+	}
+	
+	for(int i=0; i < 2; i++)
+			plr->m_PlayerProd[i] = arg.GetParam(i+1);
+	
+	plr->Send("\nApplication apply!\n");
 }
 
 void Game::BuildFactory(Player* plr)
@@ -371,9 +391,9 @@ void Game::Cycle()
 			//NEED TO SEND MESSAGE
 			tmp->m_Resources["Money"] -= e*2000;
 			tmp->m_Resources["Prod"] += e;
-			tmp->m_Enterpise -= e; ///Not clear m_Enterprise counter
+			tmp->m_Enterprise -= e; ///Not clear m_Enterprise counter
 		}
-		else if(tmp->m_Resources["Raw"] < tmp->m_Enterpise)
+		else if(tmp->m_Resources["Raw"] < tmp->m_Enterprise)
 		{
 			int e = tmp->m_Resources["Raw"];
 			//NEED TO SEND MESSAGE
@@ -383,20 +403,21 @@ void Game::Cycle()
 		}
 		else
 		{
-			tmp->m_Resources["Money"] -= 2000 * tmp->m_Enterpise;
-			tmp->m_Resources["Prod"] += tmp->m_Enterpise;
-			tmp->m_Enterpise = 0;
+			tmp->m_Resources["Money"] -= 2000 * tmp->m_Enterprise;
+			tmp->m_Resources["Prod"] += tmp->m_Enterprise;
+			tmp->m_Enterprise = 0;
 		}
 
 ////////*Factory construction*/
-		for(auto x : tmp->m_ConstrFactories)
+		for(auto x = tmp->m_ConstrFactories.begin(); 
+			x != tmp->m_ConstrFactories.end(); x++)
 		{
-			if(m_Month - x == 4)
+			if(m_Month - *x == 4)
 				tmp->m_Resources["Money"] -= 2500;
-			else if(m_Month - x == 5)
+			else if(m_Month - *x == 5)
 			{
-				tmp->m_Resources["Products"] +=1;
-				tmp->m_Resources.erase(x);
+				tmp->m_Resources["Factory"] +=1;
+				tmp->m_ConstrFactories.erase(x);
 			}
 		}
 
@@ -409,18 +430,6 @@ void Game::Cycle()
 
 ///////*Change of market level*/
 		ChangeMarketLvl();
-		
-		
-
-
-		
-
-
-
-
-
-
-
 	}
 	m_Month++;
 }

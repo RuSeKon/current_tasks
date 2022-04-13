@@ -14,7 +14,7 @@
 
 Player::Player(Game *a_master, int fd, int num)
 		: IFdHandler(fd), m_pTheGame(a_master), m_BufUsed(0),
-		 m_Name(0), m_PlayerNumber(num), m_End(false), m_Enterpise(0)
+		 m_Name(0), m_PlayerNumber(num), m_End(false), m_Enterprise(0)
 {
 	m_Resources["Factory"] = 2;
 	m_Resources["Raw"] = 4;
@@ -68,7 +68,7 @@ void Player::VProcessing(bool r, bool w)
 			m_Name = new char[sizeof(req.GetText())];
 			strcpy(m_Name, req.GetText());
 
-			std::unique_ptr<char> msg(new char[g_WelcomeMsgSize]);
+			std::unique_ptr<char> msg(new char[strlen(g_WelcomeMsg)+13]);
 			sprintf(msg.get(), g_WelcomeMsg, m_Name, m_PlayerNumber);
 			Send(msg.get());
 			
@@ -77,12 +77,12 @@ void Player::VProcessing(bool r, bool w)
 		else if(!m_pTheGame->GameBegun())
 		{
 			Send(g_GameNotBegunMsg);
+			m_pTheGame->RemovePlayer(this);
 			return;
 		}
 		else
 		{	
 			m_pTheGame->RequestProc(this, req);
-			//m_pTheGame->Cycle();
 		}
 	}
 }
@@ -112,7 +112,7 @@ Request Player::ParseRequest()
 			for(c=i; isdigit(m_Buffer[c]) && b < g_MaxParams; c++)
 				arr[b] += arr[b]*10 + (m_Buffer[c]-48);
 			b++;
-			i += c-1;
+			i = c-1;
 		}
 	}
 
