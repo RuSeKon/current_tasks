@@ -9,7 +9,7 @@
 #include "application.h"
 
 #ifndef MAXGAMERNUMBER
-#define MAXGAMERNUMBER 3
+#define MAXGAMERNUMBER 1
 #endif
 
 
@@ -45,7 +45,7 @@ static const char g_BadRawQuantMsg[]={"\nThe amount of raw materials sold by the
 static const char g_BadRawCostMsg[]={"\nYour cost is less than market.\n"};
 static const char g_BadProdQuantMsg[]={"\nYou don't have that many products,or bank don't buy that quantity.\n"};
 static const char g_BadProdCostMsg[]={"\nYour cost is larger than market.\n"};
-static const char g_TooFewFactoryes[]={"\nYou don't have as many factories to produce.\n"};
+static const char g_TooFewFactories[]={"\nYou don't have as many factories to produce.\n"};
 static const char g_InsufficientFunds[]={"\nInsufficient funds to build so many factoryes.\n"};
 
 /*
@@ -75,9 +75,6 @@ enum ConstantsForGame {
 	g_MaxParams = 2,
 	g_CommandListSize = 9
 };
-
-static const char *g_CommandList[]{"market\0", "info\0", "prod\0",
-					"buy\0", "sell\0", "build\0", "turn\0", "help\0", "infoLst\0"};
 
 enum RequestConstants {
 	
