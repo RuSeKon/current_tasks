@@ -16,10 +16,10 @@ Player::Player(Game *a_master, int fd, int num)
 		: IFdHandler(fd), m_pTheGame(a_master), m_BufUsed(0),
 		 m_Name(0), m_PlayerNumber(num), m_End(false), m_Enterprise(0)
 {
-	m_Resources["Factory"] = 2;
-	m_Resources["Raw"] = 4;
-	m_Resources["Prod"] = 2;
-	m_Resources["Money"] = 10000;
+	m_Resources[Factory] = 2;
+	m_Resources[Raw] = 4;
+	m_Resources[Prod] = 2;
+	m_Resources[Money] = 10000;
 	Send(g_GreetingMsg);
 }
 

@@ -9,7 +9,7 @@
 #include "application.h"
 
 #ifndef MAXGAMERNUMBER
-#define MAXGAMERNUMBER 1
+#define MAXGAMERNUMBER 3
 #endif
 
 
@@ -67,8 +67,15 @@ enum StringsSize
 	//g_PlayerListMsgSize = 18
 };
 */
+enum ConstantsForGame { 
+	g_MaxGamerNumber = MAXGAMERNUMBER,
+	g_MaxName = 10,
+	g_BufSize = 256,
+	g_MaxParams = 2,
+	g_CommandListSize = 9
+};
 
-static const std::vector<std::string> g_CommandList{"market\0", "info\0", "prod\0",
+static const char *g_CommandList[]{"market\0", "info\0", "prod\0",
 					"buy\0", "sell\0", "build\0", "turn\0", "help\0", "infoLst\0"};
 
 enum RequestConstants {
@@ -84,13 +91,10 @@ enum RequestConstants {
 	PlayerAll = 9,
 };
 
-enum ConstantsForGame { 
-	g_MaxGamerNumber = MAXGAMERNUMBER,
-	g_MaxName = 10,
-	g_BufSize = 256,
-	g_MaxParams = 2
-};
 
+
+/* Row - current level, Column - next level, value - probability of transition.
+*  Original value (lower 1(100%)) were multiplied by 12*/
 static const int g_MarketLevels[5][5] = {
 	{4, 4, 2, 1, 1}, 
 	{3, 4, 4, 1, 1},
@@ -104,6 +108,12 @@ static const int g_MarketLevels[5][5] = {
 class Game;
 class Request;
 
+enum ConstForResources {
+	Raw = 0,
+	Prod = 1,
+	Factory = 2,
+	Money = 3
+};
 class Player : public IFdHandler 
 {
 	friend class Game;
@@ -115,7 +125,7 @@ class Player : public IFdHandler
 	char* m_Name;
 	int m_PlayerNumber;
 
-	std::unordered_map<std::string, int> m_Resources;
+	std::unordered_map<int, int> m_Resources;
     bool m_End;
 	int m_Enterprise;
 	std::list<int> m_ConstrFactories;
@@ -140,10 +150,9 @@ class Game : public IFdHandler
 	bool m_GameBegun;
 	//Number of in-game months elapsed
 	int m_Month;  
-	int m_Players;
 	int m_MarketLevel;
 
-	Player **m_pList; //Think about unordered_map
+	std::vector<Player*> m_pList; //Think about unordered_map
 
 	//Auction state
 	int m_BankerRaw[2]; //[0] quantity, [1] cost
@@ -159,11 +168,9 @@ public:
 	void VProcessing(bool r, bool w) final;
 	void RequestProc(Player* plr, Request& req);
     void SendAll(const char* message, Player* except);
-	void ChangeMarketLvl();
-	void SetMarketLvl(int num);
-
-			/*PROCESSIN PLAYER REQUESTS*/
 	
+
+			/*PROCESSING PLAYER REQUESTS*/
     //Get information
 	void GetInfo(Player* plr, Request& arg, int res); 
     //Processing of applications for the production of products in factories 
@@ -176,9 +183,11 @@ public:
     void BuildFactory(Player* plr);
 	//To change current quantity/cost resources sold by the bank
 	
-    
+				/* MAIN GAME ACTION */
 	void Cycle();
-	void Auction();
+	//void Auction();
+	void ChangeMarketLvl();
+	void SetMarketLvl(int num);
 private:
 	Game(EventSelector *sel, int fd); //Use GameStart!
 };
