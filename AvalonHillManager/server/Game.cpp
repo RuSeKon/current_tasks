@@ -25,9 +25,9 @@ Game::Game(EventSelector *sel, int fd) : IFdHandler(fd), m_pSelector(sel),
 
 Game::~Game()
 {
-	for(auto x : m_pList)
+	for(auto x = m_pList.begin(); x != m_pList.end(); x++)
 	{
-		m_pSelector->Remove(x);
+		m_pSelector->Remove(*x);
 		delete *x;
 	}
 	m_pSelector->Remove(this);
@@ -61,11 +61,11 @@ Game *Game::GameStart(EventSelector *sel, int port)
 
 void Game::RemovePlayer(Player *s)
 {
-	for(auto x : m_pList)
+	for(auto x = m_pList.begin(); x != m_pList.end(); x++)
 	{
-		if(x == s)
+		if(*x == s)
 		{
-			m_pSelector->Remove(x);
+			m_pSelector->Remove(*x);
 			delete *x;
 			m_pList.erase(x);
 			break;
@@ -125,6 +125,8 @@ void Game::SendAll(const char* message, Player* except)
 			x->Send(message);
 }
 
+static const char *g_CommandList[] = {"market\0", "info\0", "pod\0",
+                     "buy\0", "sell\0", "build\0", "turn\0", "help\0", "infoLst\0"};
 
 void Game::RequestProc(Player* plr, Request& req)
 {
@@ -239,9 +241,9 @@ void Game::GetInfo(Player* plr, Request& req, int all)
 void Game::Enterprise(Player* plr, Request& arg)
 {
 	int quantity = plr->m_Enterprise + arg.GetParam(1);
-	if(quantity > plr->m_Resources[Factories])
+	if(quantity > plr->m_Resources[Factory])
 	{
-		plr->Send(g_TooFewFactoryes);
+		plr->Send(g_TooFewFactories);
 	}
 	else
 	{
@@ -401,7 +403,7 @@ void Game::Auction()
 
 void Game::Cycle()
 {
-	Auction();
+	//Auction();
 
 	Player* tmp;
 	
