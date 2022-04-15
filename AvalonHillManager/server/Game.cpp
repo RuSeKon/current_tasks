@@ -1,12 +1,13 @@
 #include <sys/socket.h>
-#include <cstdio>
+#include <cstdio> 
 #include <ctime>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <memory>
 #include <cstring>
-#include <vector>
+#include <vector> 
 #include <tuple>
+#include <algorithm>
 #include "errproc.h"
 #include "application.h"
 #include "game.h"
@@ -208,7 +209,7 @@ void Game::GetInfo(Player* plr, Request& req, int all)
 	else
 	{
 		int res = req.GetParam(1);
-		if(res < 0 || res > m_pList.size())
+		if(res < 0 || res > static_cast<int>(m_pList.size()))
 		{
 			plr->Send(g_BadRequestMsg);
 			return;
@@ -364,13 +365,13 @@ void Game::Auction()
 
 	int left = m_BankerRaw[0];
 	int pi{0};
-	int it{0};
+	size_t it{0};
 
 	while(left)
 	{	
 		// collect of equal prices
 		for(pi = it; it < m_pList.size() && 
-			m_pList[it]->m_PlayerRaw[1] == m_pList[pi]->m_PlayerRaw[1]; i++) 
+			m_pList[it]->m_PlayerRaw[1] == m_pList[pi]->m_PlayerRaw[1]; it++) 
 		{	
 			tmp.push_back(m_pList[it]);
 		}
@@ -389,7 +390,7 @@ void Game::Auction()
 				std::unique_ptr<char> msg(new char[strlen(g_BoughtResMsg)+8]);
 				sprintf(msg.get(), g_BoughtResMsg, tmp[i]->m_PlayerRaw[0],
 												   tmp[i]->m_PlayerRaw[1]);
-				tmp[i]->Send(msg);
+				tmp[i]->Send(msg.get());
 				left -= tmp[i]->m_PlayerRaw[0];
 			}
 			tmp.clear();
@@ -416,26 +417,23 @@ void Game::Auction()
 
 				std::unique_ptr<char> msg(new char[strlen(g_BoughtResMsg)+8]);
 				sprintf(msg.get(), g_BoughtResMsg, how, tmp[i]->m_PlayerRaw[1]); 
-				tmp[i]->Send(msg);
+				tmp[i]->Send(msg.get());
 				left -= how;
 			}
 			return; //maybe break for left check
 		}
+
 		for(auto x : m_pList)
+		{
 			x->m_PlayerRaw[0] = 0;
-				x->m_PlayerRaw[1] = 0;
+			x->m_PlayerRaw[1] = 0;
+		}
 	}
 }
 
 void Game::Cycle()
 {
-<<<<<<< HEAD
 	Auction();
-=======
-	//Auction();
-
-	Player* tmp;
->>>>>>> refs/remotes/origin/new
 	
 	for(auto x : m_pList)
 	{
@@ -502,5 +500,3 @@ void Game::Cycle()
 	}
 	m_Month++;
 }
-	
-

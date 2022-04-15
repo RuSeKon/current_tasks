@@ -110,7 +110,7 @@ Request Player::ParseRequest()
 		{
 			int c;
 			for(c=i; isdigit(m_Buffer[c]) && b < g_MaxParams; c++)
-				arr[b] += arr[b]*10 + (m_Buffer[c]-48);
+				arr[b] = arr[b]*10 + (static_cast<int>(m_Buffer[c])-48);
 			b++;
 			i = c-1;
 		}
