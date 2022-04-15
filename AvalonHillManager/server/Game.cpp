@@ -171,7 +171,7 @@ void Game::RequestProc(Player* plr, Request& req)
 		if(!x->m_End)
 			return;
 	
-	Cycle(); //////////////////////////////////////////////////////
+	Cycle();
 	return;
 }
 
@@ -352,119 +352,139 @@ void Game::ChangeMarketLvl()
 	SetMarketLvl(i);
 }
 
-/*
+
 void Game::Auction()
 {
 	auto compare = [](Player* a, Player* b){return a->m_PlayerRaw[0] > b->m_PlayerRaw[0];};
 
-	std::sort(contain.begin(), contain.end(), compare);
+	std::vector<Player*> tmp;
+	std::sort(m_pList.begin(), m_pList.end(), compare);
 
-	std::vector<Player*> contain;
-	
 	int left = m_BankerRaw[0];
 	int pi{0};
-	int i{0};
+	int it{0};
 
 	while(left)
 	{	
 		// collect of equal prices
-		for(pi = i; i < m_pList.size() && 
-			m_pList[i]->m_PlayerRaw[1] == m_pList[pi]->m_PlayerRaw[1]; i++) 
+		for(pi = it; it < m_pList.size() && 
+			m_pList[it]->m_PlayerRaw[1] == m_pList[pi]->m_PlayerRaw[1]; i++) 
 		{	
-			contain.push_back(m_pList[i]);
+			tmp.push_back(m_pList[it]);
 		}
 		
 		int sum{0};
-		for(auto x : contain)
+		for(auto x : tmp)
 			sum += x->m_PlayerRaw[0];
 
 		if(sum <= left)
 		{
-			//All applications are satisfied
-			//Change player resources
-			contain.clear();
-			left -= sum;
+			for(size_t i=0; i < tmp.size(); i++)
+			{
+				tmp[i]->m_Resources[Raw] += tmp[i]->m_PlayerRaw[0];
+				tmp[i]->m_Resources[Money] -= tmp[i]->m_PlayerRaw[0] 
+											* tmp[i]->m_PlayerRaw[1];
+				std::unique_ptr<char> msg(new char[strlen(g_BoughtResMsg)+8]);
+				sprintf(msg.get(), g_BoughtResMsg, tmp[i]->m_PlayerRaw[0],
+												   tmp[i]->m_PlayerRaw[1]);
+				tmp[i]->Send(msg);
+				left -= tmp[i]->m_PlayerRaw[0];
+			}
+			tmp.clear();
 			break;
 		}
 		else
 		{
-			//Random choise 
+			
+			int how{0};
+
+			for(size_t i=0; i < tmp.size(); i++)
+			{
+				if(i == tmp.size()-1)
+				{
+					how = left;
+				}
+				else
+				{
+					srand(time(NULL));
+					how = rand()%left;
+				}	
+				tmp[i]->m_Resources[Raw] += how;
+				tmp[i]->m_Resources[Money] -= how * tmp[i]->m_PlayerRaw[1];
+
+				std::unique_ptr<char> msg(new char[strlen(g_BoughtResMsg)+8]);
+				sprintf(msg.get(), g_BoughtResMsg, how, tmp[i]->m_PlayerRaw[1]); 
+				tmp[i]->Send(msg);
+				left -= how;
+			}
 			return; //maybe break for left check
 		}
-
+		for(auto x : m_pList)
+			x->m_PlayerRaw[0] = 0;
+				x->m_PlayerRaw[1] = 0;
 	}
-
-
 }
-
-*/
 
 void Game::Cycle()
 {
 	Auction();
-
-	Player* tmp;
 	
 	for(auto x : m_pList)
-	{ 
-		tmp = x;
-
-		
-
+	{
 ////////*Cost write-off*/
-		tmp->m_Resources[Money] -= (300*tmp->m_Resources[Raw]) +
-									 (500*tmp->m_Resources[Prod]) +
-									 (1000*tmp->m_Resources[Factory]);
+		x->m_Resources[Money] -= (300*x->m_Resources[Raw]) +
+									 (500*x->m_Resources[Prod]) +
+									 (1000*x->m_Resources[Factory]);
 		
-		if(tmp->m_Resources[Money] < 0)
+		if(x->m_Resources[Money] < 0)
 		{
-			RemovePlayer(tmp);
+			RemovePlayer(x);
 			//NEED TO SEND MESSAGE
 			continue;
 		}
 
 ////////*Product enterprise*/
-		if(tmp->m_Enterprise*2000 > tmp->m_Resources[Money])
+		if(x->m_Enterprise*2000 > x->m_Resources[Money])
 		{
-			int e = tmp->m_Resources[Money]/2000;
-			e = tmp->m_Resources[Raw] >= e ? e : tmp->m_Resources[Raw];
+			int e = x->m_Resources[Money]/2000;
+			e = x->m_Resources[Raw] >= e ? e : x->m_Resources[Raw];
 			
 			//NEED TO SEND MESSAGE
-			tmp->m_Resources[Money] -= e*2000;
-			tmp->m_Resources[Prod] += e;
-			tmp->m_Enterprise -= e; ///Not clear m_Enterprise counter
+			x->m_Resources[Money] -= e*2000;
+			x->m_Resources[Prod] += e;
+			x->m_Enterprise -= e; ///Not clear m_Enterprise counter
 		}
-		else if(tmp->m_Resources[Raw] < tmp->m_Enterprise)
+		else if(x->m_Resources[Raw] < x->m_Enterprise)
 		{
-			int e = tmp->m_Resources[Raw];
+			int e = x->m_Resources[Raw];
 			//NEED TO SEND MESSAGE
-			tmp->m_Resources[Money] -= e*2000;
-			tmp->m_Resources[Prod] += e;
-			tmp->m_Enterprise -= e;
+			x->m_Resources[Money] -= e*2000;
+			x->m_Resources[Prod] += e;
+			x->m_Enterprise -= e;
 		}
 		else
 		{
-			tmp->m_Resources[Money] -= 2000 * tmp->m_Enterprise;
-			tmp->m_Resources[Prod] += tmp->m_Enterprise;
-			tmp->m_Enterprise = 0;
+			x->m_Resources[Money] -= 2000 * x->m_Enterprise;
+			x->m_Resources[Prod] += x->m_Enterprise;
+			x->m_Enterprise = 0;
 		}
 
 ////////*Factory construction*/
-		for(auto x = tmp->m_ConstrFactories.begin(); 
-			x != tmp->m_ConstrFactories.end(); x++)
+		for(auto a = x->m_ConstrFactories.begin(); 
+			a != x->m_ConstrFactories.end(); a++)
 		{
-			if(m_Month - *x == 4)
-				tmp->m_Resources[Money] -= 2500;
-			else if(m_Month - *x == 5)
+			if(m_Month - *a == 4)
+				x->m_Resources[Money] -= 2500;
+			else if(m_Month - *a == 5)
 			{
-				tmp->m_Resources[Factory] +=1;
-				tmp->m_ConstrFactories.erase(x);
+				x->m_Resources[Factory] +=1;
+				x->m_ConstrFactories.erase(a);
 			}
 		}
 
-		if(tmp->m_Resources[Money] < 0)
+		if(x->m_Resources[Money] < 0)
 		{
-			RemovePlayer(tmp);
+			RemovePlayer(x);
 			//NEED TO SEND MESSAGE
 			continue;
 		}

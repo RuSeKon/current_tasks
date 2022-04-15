@@ -19,6 +19,7 @@ static const char g_NotNameMsg[]={"\nYour name is too long, KISS\n"};
 static const char g_GreetingMsg[]={"\nYour welcome! Please enter your name: \n"};
 static const char g_AlreadyPlayingMsg[]={"\nSorry, game is already started." 
 						" You can play next one\n"};
+static const char g_BoughtResMsg[]={"\nYour bought %d units of resources at a price of %d $.\n"};
 static const char g_WelcomeMsg[]={"\nWelcome to the game %s, " 
 													"you play-number: %d\n"};
 static const char g_WelcomeAllMsg[]={"\nPlayer number %d joined to the game!\n"};
@@ -185,7 +186,7 @@ public:
 	
 				/* MAIN GAME ACTION */
 	void Cycle();
-	//void Auction();
+	void Auction();
 	void ChangeMarketLvl();
 	void SetMarketLvl(int num);
 private:
