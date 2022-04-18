@@ -9,6 +9,16 @@
 #include "game.h"
 
 
+/* SECTION FOR CONSTANT MESSAGES */
+static const char g_GreetingMsg[]={"\nYour welcome! Please enter your name: \n"};
+static const char g_IllegalMsg[]={"\nIllegal request, buffer overflow...Goodbye!\n"};
+static const char g_BadRequestMsg[]={"\nBad request, please try again! Or type"
+									   " help:)\n"};
+static const char g_WelcomeMsg[]={"\nWelcome to the game %s, " 
+													"you play-number: %d\n"};
+static const char g_GameNotBegunMsg[]={"\nThe game haven't started yet. " 
+														   "Please wait:)\n"};
+static const char g_NotNameMsg[]={"\nYour name is too long, KISS\n"};
 
 ////////////////////////////PLAYER/////////////////////////////////////////////////////
 
