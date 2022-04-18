@@ -9,44 +9,9 @@
 #include "application.h"
 
 #ifndef MAXGAMERNUMBER
-#define MAXGAMERNUMBER 1
+#define MAXGAMERNUMBER 3
 #endif
 
-
-/* SECTION FOR CONSTANTS OF GAME */
-static const char g_IllegalMsg[]={"\nIllegal request, buffer overflow...Goodbye!\n"};
-static const char g_NotNameMsg[]={"\nYour name is too long, KISS\n"};
-static const char g_GreetingMsg[]={"\nYour welcome! Please enter your name: \n"};
-static const char g_AlreadyPlayingMsg[]={"\nSorry, game is already started." 
-						" You can play next one\n"};
-static const char g_BoughtResMsg[]={"\nYour bought %d units of resources at a price of %d $.\n"};
-static const char g_WelcomeMsg[]={"\nWelcome to the game %s, " 
-													"you play-number: %d\n"};
-static const char g_WelcomeAllMsg[]={"\nPlayer number %d joined to the game!\n"};
-static const char g_GameNotBegunMsg[]={"\nThe game haven't started yet. " 
-														   "Please wait:)\n"};
-static const char g_GameStartSoonMsg[]={"\nThe game will start soon!:)\n"};
-static const char g_InvalidArgumentMsg[]={"\nInvalid argument, please try again!"
-											" Or type help:)\n"};
-static const char g_BadRequestMsg[]={"\nBad request, please try again! Or type"
-									   " help:)\n"};
-static const char g_UnknownReqMsg[]={"\nUnknown request, please enter help!\n"};
-static const char g_MarketCondMsg[]={"\n            In the current month:  "
-										"            \nQuantity of materials sold:"
-										" %d, by min price $%d /unit.\nQuantity "
-										"of purchaced products: %d, by max price "
-										"$%d /unit.\n"};
-static const char g_GetInfoMsg[]={"\n%s's state of affairs (num: %d):\n"
-								"Money: %d;\nMaterials: %d;\nProducts: %d;\n"
-								"Regular factorie: %d;\nBuild factorie: %d;\n"};
-static const char g_HelpMsg[]={"helpMe\n"};
-static const char g_PlayerListMsg[]={"\n%d. %s\n"};
-static const char g_BadRawQuantMsg[]={"\nThe amount of raw materials sold by the market is less.\n"};
-static const char g_BadRawCostMsg[]={"\nYour cost is less than market.\n"};
-static const char g_BadProdQuantMsg[]={"\nYou don't have that many products,or bank don't buy that quantity.\n"};
-static const char g_BadProdCostMsg[]={"\nYour cost is larger than market.\n"};
-static const char g_TooFewFactories[]={"\nYou don't have as many factories to produce.\n"};
-static const char g_InsufficientFunds[]={"\nInsufficient funds to build so many factoryes.\n"};
 
 /*
 enum StringsSize
@@ -91,8 +56,10 @@ enum RequestConstants {
 
 
 
-/* Row - current level, Column - next level, value - probability of transition.
-*  Original value (lower 1(100%)) were multiplied by 12*/
+/* 					MARKET LEVEL CHANGE TABLE
+*	Row - current level, Column - next level, value - probability of transition.
+*  Original values n (0 < n < 1) were multiplied by 12.
+*  In this contecst probability value 12 = 100% */
 static const int g_MarketLevels[5][5] = {
 	{4, 4, 2, 1, 1}, 
 	{3, 4, 4, 1, 1},
@@ -117,20 +84,23 @@ class Player : public IFdHandler
 	friend class Game;
 
 	Game *m_pTheGame;
-	char m_Buffer[g_BufSize];
+	char m_Buffer[g_BufSize];// how to hide it lowlevel implementation?
 	int m_BufUsed;
 
 	char* m_Name;
 	int m_PlayerNumber;
 
 	std::unordered_map<int, int> m_Resources;
-    bool m_End;
-	int m_Enterprise;
+    
 	std::list<int> m_ConstrFactories;
-	
+
+	//The number of products produced in the current month
+	int m_Enterprise;
 	int m_PlayerRaw[2];
 	int m_PlayerProd[2];
 
+	bool m_End;
+public:
 	Player(Game *a_master, int fd, int num);
 	~Player() noexcept;
 
@@ -146,11 +116,14 @@ class Game : public IFdHandler
 {
 	EventSelector *m_pSelector;
 	bool m_GameBegun;
+
 	//Number of in-game months elapsed
-	int m_Month;  
+	int m_Month;
+	//Current market level
 	int m_MarketLevel;
 
-	std::vector<Player*> m_pList; //Think about unordered_map
+	std::vector<Player*> m_List;
+	std::vector<int> m_Numbers;
 
 	//Auction state
 	int m_BankerRaw[2]; //[0] quantity, [1] cost
@@ -164,26 +137,26 @@ public:
 	bool GameBegun() const {return m_GameBegun;}
 	void RemovePlayer(Player *s);
 	void VProcessing(bool r, bool w) final;
-	void RequestProc(Player* plr, Request& req);
+	void RequestProc(Player* plr, const Request& req);
     void SendAll(const char* message, Player* except);
 	
 
 			/*PROCESSING PLAYER REQUESTS*/
     //Get information
-	void GetInfo(Player* plr, Request& arg, int res); 
+	void GetInfo(Player* plr, const Request& arg, int res); 
     //Processing of applications for the production of products in factories 
-	void Enterprise(Player* plr, Request& arg);
-	//Processing applications for participation in the auction 
-	void BuyReq(Player* plr, Request& arg);
-
-	void SellReq(Player* plr, Request& arg);
+	void Enterprise(Player* plr, const Request& arg);
+	//Processing applications for participation in the auction of raw resources
+	void BuyReq(Player* plr, const Request& arg);
+	//Processing applications for participation in the auction of products
+	void SellReq(Player* plr, const Request& arg);
 	//Processing of applications for the construction of factories
     void BuildFactory(Player* plr);
-	//To change current quantity/cost resources sold by the bank
 	
 				/* MAIN GAME ACTION */
-	void Cycle();
-	void Auction();
+	void NextMonth();
+	void AuctionRaw();
+	void AuctionProd();
 	void ChangeMarketLvl();
 	void SetMarketLvl(int num);
 private:

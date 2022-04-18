@@ -5,7 +5,6 @@
 
 Request::Request(const char* in) : m_Set(0)
 {
-	std::cout << "Request ctr!\n";
 	m_pText = new char[strlen(in)+1];
 	strcpy(m_pText, in);
 	m_pParams = new int[g_MaxParams]{0};
@@ -19,14 +18,12 @@ void Request::swap(Request& src)
 
 Request::~Request()
 {
-	std::cout << "Destructor Request!\n";
 	delete[] m_pText;
 	delete[] m_pParams;
 }
 
 Request::Request(Request&& src)
 {
-	std::cout << "Move constructor!\n";
 	m_pText = src.m_pText;
 	src.m_pText = nullptr;
 
@@ -39,7 +36,6 @@ Request::Request(Request&& src)
 
 Request::Request(const Request& src)
 {
-	std::cout << "Copy constructor!\n";
 	size_t len = strlen(src.m_pText)+1;
 	m_pText = new char[len];
 	size_t i;
@@ -53,15 +49,12 @@ Request::Request(const Request& src)
 
 Request& Request::operator=(Request in)
 {
-	std::cout << "Assignment operator!\n";
-	swap(in);
 	m_Set = in.m_Set;
 	return *this;
 }
 
 Request& Request::operator=(Request&& in)
 {
-	std::cout << "Move assignment operator!\n";
 	if(&in == this)
 		return *this;
 	delete[] m_pText;

@@ -13,6 +13,44 @@
 #include "game.h"
  
 
+/* SECTION FOR CONSTANT MESSAGES */
+static const char g_AlreadyPlayingMsg[]={"\nSorry, game is already started." 
+						" You can play next one\n"};
+static const char g_BadRequestMsg[]={"\nBad request, please try again! Or type"
+									   " help:)\n"};
+static const char g_BoughtResMsg[]={"\nYour bought %d units of resources at a "
+								"price of %d $.\n"};
+static const char g_SellResMsg[]={"\nYour sell %d units of products at a price "
+								"of %d $.\n"};
+
+static const char g_WelcomeAllMsg[]={"\nPlayer number %d joined to the game!\n"};
+
+static const char g_GameStartSoonMsg[]={"\nThe game will start soon!:)\n"};
+static const char g_InvalidArgumentMsg[]={"\nInvalid argument, please try again!"
+											" Or type help:)\n"};
+
+static const char g_UnknownReqMsg[]={"\nUnknown request, please enter help!\n"};
+static const char g_MarketCondMsg[]={"\n            In the current month:  "
+										"            \nQuantity of materials sold:"
+										" %d, by min price $%d /unit.\nQuantity "
+										"of purchaced products: %d, by max price "
+										"$%d /unit.\n"};
+static const char g_GetInfoMsg[]={"\n%s's state of affairs (num: %d):\n"
+								"Money: %d;\nMaterials: %d;\nProducts: %d;\n"
+								"Regular factorie: %d;\nBuild factorie: %d;\n"};
+static const char g_HelpMsg[]={"helpMe\n"};
+static const char g_PlayerListMsg[]={"\n%d. %s\n"};
+static const char g_BadRawQuantMsg[]={"\nThe amount of raw materials sold by the market is less.\n"};
+static const char g_BadRawCostMsg[]={"\nYour cost is less than market.\n"};
+static const char g_BadProdQuantMsg[]={"\nYou don't have that many products,or bank don't buy that quantity.\n"};
+static const char g_BadProdCostMsg[]={"\nYour cost is larger than market.\n"};
+static const char g_TooFewFactories[]={"\nYou don't have as many factories to produce.\n"};
+static const char g_InsufficientFunds[]={"\nInsufficient funds to build so many factoryes.\n"};
+
+
+static const char *g_CommandList[] = {"market\0", "info\0", "pod\0",
+                     "buy\0", "sell\0", "build\0", "turn\0", "help\0", "infoLst\0"};
+
 /////////////////////////////////////////GAME//////////////////////////////////////
 
 Game::Game(EventSelector *sel, int fd) : IFdHandler(fd), m_pSelector(sel),
@@ -21,12 +59,15 @@ Game::Game(EventSelector *sel, int fd) : IFdHandler(fd), m_pSelector(sel),
 										 m_BankerProd{0, 0}					 
 {
 	m_pSelector->Add(this);
-	m_pList.reserve(g_MaxGamerNumber);
+	m_List.reserve(g_MaxGamerNumber);
+	m_Numbers.reserve(g_MaxGamerNumber);
+	for(size_t i=0; i < g_MaxGamerNumber; i++)
+		m_Numbers.push_back(0);
 }
 
 Game::~Game()
 {
-	for(auto x = m_pList.begin(); x != m_pList.end(); x++)
+	for(auto x = m_List.begin(); x != m_List.end(); x++)
 	{
 		m_pSelector->Remove(*x);
 		delete *x;
@@ -62,13 +103,14 @@ Game *Game::GameStart(EventSelector *sel, int port)
 
 void Game::RemovePlayer(Player *s)
 {
-	for(auto x = m_pList.begin(); x != m_pList.end(); x++)
+	for(auto x = m_List.begin(); x != m_List.end(); x++)
 	{
 		if(*x == s)
 		{
 			m_pSelector->Remove(*x);
 			delete *x;
-			m_pList.erase(x);
+			m_List.erase(x);
+			m_Numbers[(*x)->m_PlayerNumber -1] = 0;
 			break;
 		}
 	}
@@ -85,14 +127,14 @@ void Game::VProcessing(bool r, bool w)
 	session_descriptor = accept(GetFd(), (struct sockaddr*) &addr, &len);
 	if(session_descriptor == -1)
 		return;
-	/////////////////////////////////////////////////
+	
 	size_t num;
-    for(num = 0; num < g_MaxGamerNumber; num++)///////////////////////////////
+    for(num = 0; num < g_MaxGamerNumber; num++)
 	{
-        if(!m_pList[num])
+        if(!m_Numbers[num])
             break;	
 	}
-	////////////////////////////////////////		
+			
 	Player *p = new Player(this, session_descriptor, num+1);
 	
 	if(m_GameBegun)
@@ -104,8 +146,9 @@ void Game::VProcessing(bool r, bool w)
 	{
 		m_pSelector->Add(p);
 		
-		m_pList.push_back(p);
-		if(m_pList.size() == g_MaxGamerNumber) 
+		m_List.push_back(p);
+		m_Numbers[num] = 1;
+		if(m_List.size() == g_MaxGamerNumber) 
 		{
 			m_GameBegun = true;
 			SendAll("Game begining!\n", nullptr);
@@ -121,17 +164,18 @@ void Game::VProcessing(bool r, bool w)
 
 void Game::SendAll(const char* message, Player* except)
 {
-	for(auto x : m_pList)
+	for(auto x : m_List)
 		if(x != except)
 			x->Send(message);
 }
 
-static const char *g_CommandList[] = {"market\0", "info\0", "pod\0",
-                     "buy\0", "sell\0", "build\0", "turn\0", "help\0", "infoLst\0"};
 
-void Game::RequestProc(Player* plr, Request& req)
+
+void Game::RequestProc(Player* plr, const Request& req)
 {
 	int res{0};
+
+
 	for(size_t i=0; i < g_CommandListSize; i++) 
 	{
 		if(!strcmp(req.GetText(), g_CommandList[i]))
@@ -170,15 +214,15 @@ void Game::RequestProc(Player* plr, Request& req)
 				plr->Send(g_UnknownReqMsg);
 	}
 
-	for(auto x : m_pList)
+	for(auto x : m_List)
 		if(!x->m_End)
 			return;
 	
-	Cycle();
+	NextMonth();
 	return;
 }
 
-void Game::GetInfo(Player* plr, Request& req, int all)
+void Game::GetInfo(Player* plr, const Request& req, int all)
 {
 	
 	if(all == PlayerAll)
@@ -188,7 +232,7 @@ void Game::GetInfo(Player* plr, Request& req, int all)
 		char* ptr = msg.get();
 		int b{0};
 
-		for(auto x : m_pList)
+		for(auto x : m_List)
 		{
 				b = sprintf(ptr, g_PlayerListMsg, 
 								   x->m_PlayerNumber,
@@ -209,14 +253,14 @@ void Game::GetInfo(Player* plr, Request& req, int all)
 	else
 	{
 		int res = req.GetParam(1);
-		if(res < 0 || res > static_cast<int>(m_pList.size()))
+		if(res < 0 || res > static_cast<int>(m_List.size()))
 		{
 			plr->Send(g_BadRequestMsg);
 			return;
 		}
 
 		Player* tmp;
-		for(auto x : m_pList)
+		for(auto x : m_List)
 		{
 			if(res == 0)
 			{
@@ -239,7 +283,7 @@ void Game::GetInfo(Player* plr, Request& req, int all)
 	}
 }
 
-void Game::Enterprise(Player* plr, Request& arg)
+void Game::Enterprise(Player* plr, const Request& arg)
 {
 	int quantity = plr->m_Enterprise + arg.GetParam(1);
 	if(quantity > plr->m_Resources[Factory])
@@ -253,7 +297,7 @@ void Game::Enterprise(Player* plr, Request& arg)
 
 }
 
-void Game::BuyReq(Player* plr, Request& arg) 
+void Game::BuyReq(Player* plr, const Request& arg) 
 {
 	if(arg.GetParam(1) == 0 || arg.GetParam(2) == 0)
 	{
@@ -281,7 +325,7 @@ void Game::BuyReq(Player* plr, Request& arg)
 	plr->Send("\nApplication apply!\n");
 }
 
-void Game::SellReq(Player* plr, Request& arg)
+void Game::SellReq(Player* plr, const Request& arg)
 {
 	if(arg.GetParam(1) == 0 || arg.GetParam(2) == 0)
 	{
@@ -323,7 +367,7 @@ void Game::BuildFactory(Player* plr)
 
 void Game::SetMarketLvl(int num)
 {
-	int PlayerCount = m_pList.size();
+	int PlayerCount = m_List.size();
 	float multi{0};
 	multi = 1+((num-1)*0.5);
 	m_BankerRaw[0] = multi*PlayerCount;
@@ -349,19 +393,19 @@ void Game::ChangeMarketLvl()
 	int rnd = 1 + (int)(12.0*rand()/(RAND_MAX+1.0)); //1 <= rnd <= 12
 	int i{0};
 
-	/* probability value 12 = 100% */
+	
 	for(int res=0; res < rnd; i++)
 		res += g_MarketLevels[m_MarketLevel][i];
 	SetMarketLvl(i);
 }
 
 
-void Game::Auction()
+void Game::AuctionRaw()
 {
 	auto compare = [](Player* a, Player* b){return a->m_PlayerRaw[0] > b->m_PlayerRaw[0];};
 
 	std::vector<Player*> tmp;
-	std::sort(m_pList.begin(), m_pList.end(), compare);
+	std::sort(m_List.begin(), m_List.end(), compare);
 
 	int left = m_BankerRaw[0];
 	int pi{0};
@@ -370,10 +414,10 @@ void Game::Auction()
 	while(left)
 	{	
 		// collect of equal prices
-		for(pi = it; it < m_pList.size() && 
-			m_pList[it]->m_PlayerRaw[1] == m_pList[pi]->m_PlayerRaw[1]; it++) 
+		for(pi = it; it < m_List.size() && 
+			m_List[it]->m_PlayerRaw[1] == m_List[pi]->m_PlayerRaw[1]; it++) 
 		{	
-			tmp.push_back(m_pList[it]);
+			tmp.push_back(m_List[it]);
 		}
 		
 		int sum{0};
@@ -398,10 +442,9 @@ void Game::Auction()
 		}
 		else
 		{
-			
 			int how{0};
 
-			for(size_t i=0; i < tmp.size(); i++)
+			for(size_t i=0; i < tmp.size() && left; i++)
 			{
 				if(i == tmp.size()-1)
 				{
@@ -423,7 +466,7 @@ void Game::Auction()
 			return; //maybe break for left check
 		}
 
-		for(auto x : m_pList)
+		for(auto x : m_List)
 		{
 			x->m_PlayerRaw[0] = 0;
 			x->m_PlayerRaw[1] = 0;
@@ -431,11 +474,86 @@ void Game::Auction()
 	}
 }
 
-void Game::Cycle()
+void Game::AuctionProd()
 {
-	Auction();
+	auto compare = [](Player* a, Player* b){return a->m_PlayerProd[0] < b->m_PlayerProd[0];};
+
+	std::vector<Player*> tmp;
+	std::sort(m_List.begin(), m_List.end(), compare);
+
+	int left = m_BankerProd[0];
+	int pi{0};
+	size_t it{0};
+
+	while(left)
+	{	
+		// collect of equal prices
+		for(pi = it; it < m_List.size() && 
+			m_List[it]->m_PlayerProd[1] == m_List[pi]->m_PlayerProd[1]; it++) 
+		{	
+			tmp.push_back(m_List[it]);
+		}
+		
+		int sum{0};
+		for(auto x : tmp)
+			sum += x->m_PlayerProd[0];
+
+		if(sum <= left)
+		{
+			for(size_t i=0; i < tmp.size(); i++)
+			{
+				tmp[i]->m_Resources[Prod] -= tmp[i]->m_PlayerProd[0];
+				tmp[i]->m_Resources[Money] += tmp[i]->m_PlayerProd[0] 
+											* tmp[i]->m_PlayerProd[1];
+				std::unique_ptr<char> msg(new char[strlen(g_SellResMsg)+8]);
+				sprintf(msg.get(), g_SellResMsg, tmp[i]->m_PlayerProd[0],
+												   tmp[i]->m_PlayerProd[1]);
+				tmp[i]->Send(msg.get());
+				left -= tmp[i]->m_PlayerProd[0];
+			}
+			tmp.clear();
+			break;
+		}
+		else
+		{
+			int how{0};
+
+			for(size_t i=0; i < tmp.size() && left; i++)
+			{
+				if(i == tmp.size()-1)
+				{
+					how = left;
+				}
+				else
+				{
+					srand(time(NULL));
+					how = rand()%left;
+				}	
+				tmp[i]->m_Resources[Prod] -= how;
+				tmp[i]->m_Resources[Money] += how * tmp[i]->m_PlayerProd[1];
+
+				std::unique_ptr<char> msg(new char[strlen(g_SellResMsg)+8]);
+				sprintf(msg.get(), g_SellResMsg, how, tmp[i]->m_PlayerProd[1]); 
+				tmp[i]->Send(msg.get());
+				left -= how;
+			}
+			return; //maybe break for left check
+		}
+
+		for(auto x : m_List)
+		{
+			x->m_PlayerProd[0] = 0;
+			x->m_PlayerProd[1] = 0;
+		}
+	}
+}
+
+void Game::NextMonth()
+{
+	AuctionRaw();
+	AuctionProd();
 	
-	for(auto x : m_pList)
+	for(auto x : m_List)
 	{
 ////////*Cost write-off*/
 		x->m_Resources[Money] -= (300*x->m_Resources[Raw]) +
@@ -497,6 +615,7 @@ void Game::Cycle()
 
 ///////*Change of market level*/
 		ChangeMarketLvl();
+		x->m_End = false;
 	}
 	m_Month++;
 }
