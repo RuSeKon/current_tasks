@@ -550,6 +550,83 @@ void Game::AuctionProd()
 
 void Game::NextMonth()
 {
+=======
+{
+	auto compare = [](Player* a, Player* b){return a->m_PlayerProd[0] < b->m_PlayerProd[0];};
+
+	std::vector<Player*> tmp;
+	std::sort(m_List.begin(), m_List.end(), compare);
+
+	int left = m_BankerProd[0];
+	int pi{0};
+	size_t it{0};
+
+	while(left)
+	{	
+		// collect of equal prices
+		for(pi = it; it < m_List.size() && 
+			m_List[it]->m_PlayerProd[1] == m_List[pi]->m_PlayerProd[1]; it++) 
+		{	
+			tmp.push_back(m_List[it]);
+		}
+		
+		int sum{0};
+		for(auto x : tmp)
+			sum += x->m_PlayerProd[0];
+
+		if(sum <= left)
+		{
+			for(size_t i=0; i < tmp.size(); i++)
+			{
+				tmp[i]->m_Resources[Prod] -= tmp[i]->m_PlayerProd[0];
+				tmp[i]->m_Resources[Money] += tmp[i]->m_PlayerProd[0] 
+											* tmp[i]->m_PlayerProd[1];
+				std::unique_ptr<char> msg(new char[strlen(g_SellResMsg)+8]);
+				sprintf(msg.get(), g_SellResMsg, tmp[i]->m_PlayerProd[0],
+												   tmp[i]->m_PlayerProd[1]);
+				tmp[i]->Send(msg.get());
+				left -= tmp[i]->m_PlayerProd[0];
+			}
+			tmp.clear();
+			break;
+		}
+		else
+		{
+			int how{0};
+
+			for(size_t i=0; i < tmp.size() && left; i++)
+			{
+				if(i == tmp.size()-1)
+				{
+					how = left;
+				}
+				else
+				{
+					srand(time(NULL));
+					how = rand()%left;
+				}	
+				tmp[i]->m_Resources[Prod] -= how;
+				tmp[i]->m_Resources[Money] += how * tmp[i]->m_PlayerProd[1];
+
+				std::unique_ptr<char> msg(new char[strlen(g_SellResMsg)+8]);
+				sprintf(msg.get(), g_SellResMsg, how, tmp[i]->m_PlayerProd[1]); 
+				tmp[i]->Send(msg.get());
+				left -= how;
+			}
+			return; //maybe break for left check
+		}
+
+		for(auto x : m_List)
+		{
+			x->m_PlayerProd[0] = 0;
+			x->m_PlayerProd[1] = 0;
+		}
+	}
+}
+
+void Game::NextMonth()
+{
+>>>>>>> refs/remotes/origin/new
 	AuctionRaw();
 	AuctionProd();
 	
