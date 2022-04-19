@@ -105,7 +105,7 @@ void ServerForClient::VProcessing(bool r, bool w)
 			exit(EXIT_FAILURE);
 		}
 
-		//Write(STDOUT_FILENO, "FROM SERVER:\n", 13);
+		Write(STDOUT_FILENO, "SERVER: ", 8);
 		for(int i=0; i < m_BufUsed; i++)
 		{
 			if(m_Buffer[i] == '\n') 
@@ -116,7 +116,6 @@ void ServerForClient::VProcessing(bool r, bool w)
 				i = -1;
 			}
 		}
-		Write(STDOUT_FILENO, "\nENTER: ", 8);
 	}
 };
 

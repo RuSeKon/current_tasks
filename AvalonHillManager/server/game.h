@@ -86,6 +86,17 @@ public:
 
 //////////////////////////////////////////////////////////////////////
 
+/*Struct for handling applications in Auction method*/
+struct Application
+{
+	Player* plr;
+	int m_ResrsAmount;
+	int m_ResrsCost;
+	Application(Player* src, int q, int c) : plr(src),
+											 m_ResrsAmount(q),
+											 m_ResrsCost(c) {}
+};
+
 
 class Game : public IFdHandler 
 {

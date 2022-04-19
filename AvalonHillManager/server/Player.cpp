@@ -10,8 +10,8 @@
 
 
 /* SECTION FOR CONSTANT MESSAGES */
-static const char g_GreetingMsg[]={"\nYour welcome! Please enter your name: \n"};
-static const char g_IllegalMsg[]={"\nIllegal request, buffer overflow...Goodbye!\n"};
+static const char g_GreetingMsg[]={"Your welcome! Please enter your name: \n"};
+static const char g_IllegalMsg[]={"Illegal request, buffer overflow...Goodbye!\n"};
 
 
 
@@ -108,14 +108,14 @@ int Player::ApplicationAccepted(int how, int flag)
 	{
 		int amount{0};
 		if(how == 0 || how > m_PlayerRaw[0])
-			amount = m_PlayerRaw[0]
+			amount = m_PlayerRaw[0];
 		else
 			amount = how;
 
 		m_Resources[resRaw] += amount;
 		m_Resources[resMoney] -= amount * m_PlayerRaw[1];
 		std::unique_ptr<char> msg(new char[strlen(g_BoughtResMsg)+8]);
-		sprintf(msg.get(), g_BoughtResMsg, how, m_PlayerRaw[1]);
+		sprintf(msg.get(), g_BoughtResMsg, amount, m_PlayerRaw[1]);
 		Send(msg.get());
 		m_PlayerRaw[0] -= amount;
 		return amount;
@@ -124,14 +124,14 @@ int Player::ApplicationAccepted(int how, int flag)
 	{
 		int amount{0};
 		if(how == 0 || how > m_PlayerProd[0])
-			amount = m_PlayerProd[0]
+			amount = m_PlayerProd[0];
 		else
 			amount = how;
 
-		m_Resources[Prod] -= amount;
-		m_Resources[Money] += amount * m_PlayerProd[1];
+		m_Resources[resProd] -= amount;
+		m_Resources[resMoney] += amount * m_PlayerProd[1];
 		std::unique_ptr<char> msg(new char[strlen(g_SellResMsg)+8]);
-		sprintf(msg.get(), g_SellResMsg, how, m_PlayerProd[1]);
+		sprintf(msg.get(), g_SellResMsg, amount, m_PlayerProd[1]);
 		Send(msg.get());
 		m_PlayerProd[0] -= amount;
 		return amount;

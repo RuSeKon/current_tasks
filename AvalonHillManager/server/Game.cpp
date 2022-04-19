@@ -14,19 +14,19 @@
  
 
 /* SECTION FOR CONSTANT MESSAGES */
-static const char g_AlreadyPlayingMsg[]={"\nSorry, game is already started." 
+static const char g_AlreadyPlayingMsg[]={"Sorry, game is already started." 
 						" You can play next one\n"};
-static const char g_NotNameMsg[]={"\nYour name is too long, KISS\n"};
-static const char g_BadRequestMsg[]={"\nBad request, please try again! Or type"
+static const char g_NotNameMsg[]={"Your name is too long, KISS\n"};
+static const char g_BadRequestMsg[]={"Bad request, please try again! Or type"
 									   " help:)\n"};
-static const char g_WelcomeMsg[]={"\nWelcome to the game %s, " 
+static const char g_WelcomeMsg[]={"Welcome to the game %s, " 
 						   "you play-number: %d\n"};
-static const char g_WelcomeAllMsg[]={"\nPlayer number %d"
+static const char g_WelcomeAllMsg[]={"Player number %d"
 												" joined to the game!\n"};
-static const char g_GameStartSoonMsg[]={"\nThe game will start soon!:)\n"};
-static const char g_InvalidArgumentMsg[]={"\nInvalid argument, please try "
+static const char g_GameStartSoonMsg[]={"The game will start soon!:)\n"};
+static const char g_InvalidArgumentMsg[]={"Invalid argument, please try "
 										 "again! Or type help:)\n"};
-static const char g_UnknownReqMsg[]={"\nUnknown request, please enter"
+static const char g_UnknownReqMsg[]={"Unknown request, please enter"
 																" help!\n"};
 static const char g_MarketCondMsg[]={"\n            In the current month:  "
 									"            \nQuantity of materials sold:"
@@ -38,17 +38,17 @@ static const char g_GetInfoMsg[]={"\n%s's state of affairs (num: %d):\n"
 							"Regular factorie: %d;\nBuild factorie: %d;\n"};
 static const char g_HelpMsg[]={"helpMe\n"};
 static const char g_PlayerListMsg[]={"\n%d. %s\n"};
-static const char g_BadRawQuantMsg[]={"\nThe amount of raw materials sold by"
+static const char g_BadRawQuantMsg[]={"The amount of raw materials sold by"
 													" the market is less.\n"};
-static const char g_BadRawCostMsg[]={"\nYour cost is less than market.\n"};
-static const char g_BadProdQuantMsg[]={"\nYou don't have that many products,"
+static const char g_BadRawCostMsg[]={"Your cost is less than market.\n"};
+static const char g_BadProdQuantMsg[]={"You don't have that many products,"
 										" or bank don't buy that quantity.\n"};
-static const char g_BadProdCostMsg[]={"\nYour cost is larger than market.\n"};
-static const char g_TooFewFactories[]={"\nYou don't have as many factories to"
+static const char g_BadProdCostMsg[]={"Your cost is larger than market.\n"};
+static const char g_TooFewFactories[]={"You don't have as many factories to"
 																" produce.\n"};
-static const char g_InsufficientFunds[]={"\nInsufficient funds to build so "
+static const char g_InsufficientFunds[]={"Insufficient funds to build so "
 														  "many factoryes.\n"};
-static const char g_GameNotBegunMsg[]={"\nThe game haven't started yet. " 
+static const char g_GameNotBegunMsg[]={"The game haven't started yet. " 
 														    "Please wait:)\n"};
 
 
@@ -67,17 +67,6 @@ enum RequestConstants { //for request processing
 	reqHelp = 8,
 	reqPlayerAll = 9,
 };
-
-/*Struct for handling applications in Auction method*/
-struct Application
-{
-	Player* plr;
-	int m_ResrsAmount;
-	int m_ResrsCost;
-	Application(Player* src, int q, int c) : plr(src),
-											 m_ResrsAmount(q),
-											 m_ResrsCost(c) {}
-}
 
 /////////////////////////////////////////GAME//////////////////////////////////////
 
@@ -202,7 +191,7 @@ void Game::RequestProc(Player* plr, const Request& req)
 	
 	if(!req.GetText())
 	{
-		Send(g_BadRequestMsg);
+		plr->Send(g_BadRequestMsg);
 		return;
 	}
 	else if(!plr->m_Name)
@@ -217,11 +206,11 @@ void Game::RequestProc(Player* plr, const Request& req)
 
 		std::unique_ptr<char> msg(new char[strlen(g_WelcomeMsg)+13]);
 		sprintf(msg.get(), g_WelcomeMsg, plr->m_Name, plr->m_PlayerNumber);
-		Send(msg.get());
+		plr->Send(msg.get());
 		return;
 	}
 
-	if(!m_pTheGame->GameBegun())
+	if(!GameBegun())
 	{
 		plr->Send(g_GameNotBegunMsg);
 		return;
@@ -258,6 +247,7 @@ void Game::RequestProc(Player* plr, const Request& req)
 				break;
 		case reqTurn:
 				plr->m_End = true;
+				plr->Send("\nWait for other players to finish their turn.\n");
 				break;
 		case reqHelp:
 				plr->Send(g_HelpMsg);	
@@ -332,7 +322,7 @@ void Game::GetInfo(Player* plr, const Request& req, int all)
 		std::unique_ptr<char> msg(new char[strlen(g_GetInfoMsg)+32]);
     	sprintf(msg.get(), g_GetInfoMsg, tmp->m_Name, 
 						   tmp->m_PlayerNumber, tmp->m_Resources[resMoney],
-						   tmp->m_Resources[Raw], tmp->m_Resources[resProd],
+						   tmp->m_Resources[resRaw], tmp->m_Resources[resProd],
 						   static_cast<int>(tmp->m_ConstrFactories.size()), 
 						   tmp->m_Resources[resFactory]);
     	plr->Send(msg.get());
@@ -392,7 +382,7 @@ void Game::SellReq(Player* plr, const Request& arg)
 	int cost = m_BankerProd[1];
 
 
-	if(arg.GetParam(1) > amount || arg.GetParam(1) < plr->m_Resources[resProd])
+	if(arg.GetParam(1) > amount || arg.GetParam(1) > plr->m_Resources[resProd])
 	{
 			plr->Send(g_BadProdQuantMsg);
 			return;
@@ -502,7 +492,7 @@ void Game::Auction(std::vector<Application>& src, int flag)
 				left -= tmp[i].plr->ApplicationAccepted(Full, flag);
 			}
 			tmp.clear();
-			break;
+			continue;
 		}
 		else
 		{
@@ -522,13 +512,15 @@ void Game::Auction(std::vector<Application>& src, int flag)
 				}
 				left -= tmp[i].plr->ApplicationAccepted(how, flag);
 			}
-			return; //maybe break for left check
+			continue; //maybe break for left check
 		}
 	}
+	return;
 }
 
 void Game::NextMonth()
 {
+	SendAll("\nAuction starting!\n", 0);
 	std::vector<Application> RawContainer;
 	std::vector<Application> ProdContainer;
 
@@ -546,11 +538,11 @@ void Game::NextMonth()
 	for(auto x : m_List)
 	{
 ////////*Cost write-off*/
-		x->m_Resources[Money] -= (300*x->m_Resources[Raw]) +
-									 (500*x->m_Resources[Prod]) +
-									 (1000*x->m_Resources[Factory]);
+		x->m_Resources[resMoney] -= (300*x->m_Resources[resRaw]) +
+									 (500*x->m_Resources[resProd]) +
+									 (1000*x->m_Resources[resFactory]);
 		
-		if(x->m_Resources[Money] < 0)
+		if(x->m_Resources[resMoney] < 0)
 		{
 			RemovePlayer(x);
 			//NEED TO SEND MESSAGE
@@ -558,10 +550,10 @@ void Game::NextMonth()
 		}
 
 ////////*Product enterprise*/
-		if(x->m_Enterprise*2000 > x->m_Resources[Money])
+		if(x->m_Enterprise*2000 > x->m_Resources[resMoney])
 		{
 			int e = x->m_Resources[resMoney]/2000;
-			e = x->m_Resources[resRaw] >= e ? e : x->m_Resources[Raw];
+			e = x->m_Resources[resRaw] >= e ? e : x->m_Resources[resRaw];
 			
 			//NEED TO SEND MESSAGE
 			x->m_Resources[resMoney] -= e*2000;
@@ -578,8 +570,8 @@ void Game::NextMonth()
 		}
 		else
 		{
-			x->m_Resources[Money] -= 2000 * x->m_Enterprise;
-			x->m_Resources[Prod] += x->m_Enterprise;
+			x->m_Resources[resMoney] -= 2000 * x->m_Enterprise;
+			x->m_Resources[resProd] += x->m_Enterprise;
 			x->m_Enterprise = 0;
 		}
 
@@ -588,15 +580,15 @@ void Game::NextMonth()
 			a != x->m_ConstrFactories.end(); a++)
 		{
 			if(m_Month - *a == 4)
-				x->m_Resources[Money] -= 2500;
+				x->m_Resources[resMoney] -= 2500;
 			else if(m_Month - *a == 5)
 			{
-				x->m_Resources[Factory] +=1;
+				x->m_Resources[resFactory] +=1;
 				x->m_ConstrFactories.erase(a);
 			}
 		}
 
-		if(x->m_Resources[Money] < 0)
+		if(x->m_Resources[resMoney] < 0)
 		{
 			RemovePlayer(x);
 			//NEED TO SEND MESSAGE
