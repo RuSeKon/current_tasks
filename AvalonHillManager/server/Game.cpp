@@ -16,53 +16,80 @@
 /* SECTION FOR CONSTANT MESSAGES */
 static const char g_AlreadyPlayingMsg[]={"\nSorry, game is already started." 
 						" You can play next one\n"};
+static const char g_NotNameMsg[]={"\nYour name is too long, KISS\n"};
 static const char g_BadRequestMsg[]={"\nBad request, please try again! Or type"
 									   " help:)\n"};
-static const char g_BoughtResMsg[]={"\nYour bought %d units of resources at a "
-								"price of %d $.\n"};
-static const char g_SellResMsg[]={"\nYour sell %d units of products at a price "
-								"of %d $.\n"};
-
-static const char g_WelcomeAllMsg[]={"\nPlayer number %d joined to the game!\n"};
-
+static const char g_WelcomeMsg[]={"\nWelcome to the game %s, " 
+						   "you play-number: %d\n"};
+static const char g_WelcomeAllMsg[]={"\nPlayer number %d"
+												" joined to the game!\n"};
 static const char g_GameStartSoonMsg[]={"\nThe game will start soon!:)\n"};
-static const char g_InvalidArgumentMsg[]={"\nInvalid argument, please try again!"
-											" Or type help:)\n"};
-
-static const char g_UnknownReqMsg[]={"\nUnknown request, please enter help!\n"};
+static const char g_InvalidArgumentMsg[]={"\nInvalid argument, please try "
+										 "again! Or type help:)\n"};
+static const char g_UnknownReqMsg[]={"\nUnknown request, please enter"
+																" help!\n"};
 static const char g_MarketCondMsg[]={"\n            In the current month:  "
-										"            \nQuantity of materials sold:"
-										" %d, by min price $%d /unit.\nQuantity "
-										"of purchaced products: %d, by max price "
-										"$%d /unit.\n"};
+									"            \nQuantity of materials sold:"
+									" %d, by min price $%d /unit.\nQuantity "
+									"of purchaced products: %d, by max price "
+									"$%d /unit.\n"};
 static const char g_GetInfoMsg[]={"\n%s's state of affairs (num: %d):\n"
-								"Money: %d;\nMaterials: %d;\nProducts: %d;\n"
-								"Regular factorie: %d;\nBuild factorie: %d;\n"};
+							"Money: %d;\nMaterials: %d;\nProducts: %d;\n"
+							"Regular factorie: %d;\nBuild factorie: %d;\n"};
 static const char g_HelpMsg[]={"helpMe\n"};
 static const char g_PlayerListMsg[]={"\n%d. %s\n"};
-static const char g_BadRawQuantMsg[]={"\nThe amount of raw materials sold by the market is less.\n"};
+static const char g_BadRawQuantMsg[]={"\nThe amount of raw materials sold by"
+													" the market is less.\n"};
 static const char g_BadRawCostMsg[]={"\nYour cost is less than market.\n"};
-static const char g_BadProdQuantMsg[]={"\nYou don't have that many products,or bank don't buy that quantity.\n"};
+static const char g_BadProdQuantMsg[]={"\nYou don't have that many products,"
+										" or bank don't buy that quantity.\n"};
 static const char g_BadProdCostMsg[]={"\nYour cost is larger than market.\n"};
-static const char g_TooFewFactories[]={"\nYou don't have as many factories to produce.\n"};
-static const char g_InsufficientFunds[]={"\nInsufficient funds to build so many factoryes.\n"};
+static const char g_TooFewFactories[]={"\nYou don't have as many factories to"
+																" produce.\n"};
+static const char g_InsufficientFunds[]={"\nInsufficient funds to build so "
+														  "many factoryes.\n"};
+static const char g_GameNotBegunMsg[]={"\nThe game haven't started yet. " 
+														    "Please wait:)\n"};
 
 
 static const char *g_CommandList[] = {"market\0", "info\0", "pod\0",
-                     "buy\0", "sell\0", "build\0", "turn\0", "help\0", "infoLst\0"};
+                "buy\0", "sell\0", "build\0", "turn\0", "help\0", "infoLst\0"};
+
+enum RequestConstants { //for request processing
+	
+	reqMarket= 1,
+	reqAnotherPlayer = 2,
+	reqProduction = 3,
+	reqBuy = 4,
+	reqSell = 5,
+	reqBuild = 6,
+	reqTurn = 7,
+	reqHelp = 8,
+	reqPlayerAll = 9,
+};
+
+/*Struct for handling applications in Auction method*/
+struct Application
+{
+	Player* plr;
+	int m_ResrsAmount;
+	int m_ResrsCost;
+	Application(Player* src, int q, int c) : plr(src),
+											 m_ResrsAmount(q),
+											 m_ResrsCost(c) {}
+}
 
 /////////////////////////////////////////GAME//////////////////////////////////////
 
 Game::Game(EventSelector *sel, int fd) : IFdHandler(fd), m_pSelector(sel),
 										 m_GameBegun(false), m_Month(1),
-										 m_MarketLevel(0), m_BankerRaw{0, 0},
-										 m_BankerProd{0, 0}					 
+										 m_MarketLevel(0), m_List(), 
+										 m_Numbers(nullptr), 
+										 m_BankerRaw{0, 0}, m_BankerProd{0, 0}					 
 {
 	m_pSelector->Add(this);
 	m_List.reserve(g_MaxGamerNumber);
-	m_Numbers.reserve(g_MaxGamerNumber);
-	for(size_t i=0; i < g_MaxGamerNumber; i++)
-		m_Numbers.push_back(0);
+	m_Numbers = new int[g_MaxGamerNumber]{0};
 }
 
 Game::~Game()
@@ -155,7 +182,6 @@ void Game::VProcessing(bool r, bool w)
 			SetMarketLvl(3);
 		}
 
-
 		std::unique_ptr<char> msg(new char[strlen(g_WelcomeAllMsg)+3]);
 		sprintf(msg.get(), g_WelcomeAllMsg, p->m_PlayerNumber);
 		SendAll(msg.get(), p);
@@ -173,9 +199,36 @@ void Game::SendAll(const char* message, Player* except)
 
 void Game::RequestProc(Player* plr, const Request& req)
 {
+	
+	if(!req.GetText())
+	{
+		Send(g_BadRequestMsg);
+		return;
+	}
+	else if(!plr->m_Name)
+	{
+		if(strlen(req.GetText()) > g_MaxName)
+		{
+			plr->Send(g_NotNameMsg);
+			return;
+		}
+		plr->m_Name = new char[sizeof(req.GetText())];
+		strcpy(plr->m_Name, req.GetText());
+
+		std::unique_ptr<char> msg(new char[strlen(g_WelcomeMsg)+13]);
+		sprintf(msg.get(), g_WelcomeMsg, plr->m_Name, plr->m_PlayerNumber);
+		Send(msg.get());
+		return;
+	}
+
+	if(!m_pTheGame->GameBegun())
+	{
+		plr->Send(g_GameNotBegunMsg);
+		return;
+	}
+
 	int res{0};
-
-
+	
 	for(size_t i=0; i < g_CommandListSize; i++) 
 	{
 		if(!strcmp(req.GetText(), g_CommandList[i]))
@@ -186,27 +239,27 @@ void Game::RequestProc(Player* plr, const Request& req)
 	}
 	switch(res)
 	{
-		case Market:
-		case PlayerAll:		
-		case AnotherPlayer:
+		case reqMarket:
+		case reqPlayerAll:		
+		case reqAnotherPlayer:
 				GetInfo(plr, req, res);
 				break;
-		case Production:
+		case reqProduction:
 				Enterprise(plr, req);
 				break;
-		case Buy:
+		case reqBuy:
 				BuyReq(plr, req);
 				break;
-		case Sell:
+		case reqSell:
 				SellReq(plr, req);
 				break;
-		case Build:
+		case reqBuild:
 				BuildFactory(plr);
 				break;
-		case Turn:
+		case reqTurn:
 				plr->m_End = true;
 				break;
-		case Help:
+		case reqHelp:
 				plr->Send(g_HelpMsg);	
 				break;
 		
@@ -225,12 +278,13 @@ void Game::RequestProc(Player* plr, const Request& req)
 void Game::GetInfo(Player* plr, const Request& req, int all)
 {
 	
-	if(all == PlayerAll)
+	if(all == reqPlayerAll)
 	{
-		std::unique_ptr<char> msg(new char[(strlen(g_PlayerListMsg)+9)*g_MaxGamerNumber]);
+		std::unique_ptr<char> msg(new char[(strlen(g_PlayerListMsg)+9)*
+													 g_MaxGamerNumber]);
 		
 		char* ptr = msg.get();
-		int b{0};
+		size_t b{0};
 
 		for(auto x : m_List)
 		{
@@ -242,7 +296,7 @@ void Game::GetInfo(Player* plr, const Request& req, int all)
 		}
 		plr->Send(msg.get());
 	}
-	else if(all == Market)
+	else if(all == reqMarket)
 	{
 		std::unique_ptr<char> msg(new char[strlen(g_MarketCondMsg) + 13]);
     	sprintf(msg.get(), g_MarketCondMsg, 
@@ -260,41 +314,42 @@ void Game::GetInfo(Player* plr, const Request& req, int all)
 		}
 
 		Player* tmp;
-		for(auto x : m_List)
+		if(res == 0)
 		{
-			if(res == 0)
+			tmp = plr;
+		}
+		else
+		{
+			for(auto x : m_List)
 			{
-				tmp = plr;
-				break;
-			}
-			else if(res == x->m_PlayerNumber)
-			{
-				tmp = x;
-				break;
+				if(res == x->m_PlayerNumber)
+				{	
+					tmp = x;
+					break;
+				}
 			}
 		}
 		std::unique_ptr<char> msg(new char[strlen(g_GetInfoMsg)+32]);
     	sprintf(msg.get(), g_GetInfoMsg, tmp->m_Name, 
-						   tmp->m_PlayerNumber, tmp->m_Resources[Money],
-						   tmp->m_Resources[Raw], tmp->m_Resources[Prod],
+						   tmp->m_PlayerNumber, tmp->m_Resources[resMoney],
+						   tmp->m_Resources[Raw], tmp->m_Resources[resProd],
 						   static_cast<int>(tmp->m_ConstrFactories.size()), 
-						   tmp->m_Resources[Factory]);
+						   tmp->m_Resources[resFactory]);
     	plr->Send(msg.get());
 	}
 }
 
 void Game::Enterprise(Player* plr, const Request& arg)
 {
-	int quantity = plr->m_Enterprise + arg.GetParam(1);
-	if(quantity > plr->m_Resources[Factory])
+	int amount = plr->m_Enterprise + arg.GetParam(1);
+	if(amount > plr->m_Resources[resFactory])
 	{
 		plr->Send(g_TooFewFactories);
 	}
 	else
 	{
-		plr->m_Enterprise = quantity;
+		plr->m_Enterprise = amount;
 	}
-
 }
 
 void Game::BuyReq(Player* plr, const Request& arg) 
@@ -305,14 +360,14 @@ void Game::BuyReq(Player* plr, const Request& arg)
 		return;
 	}
 
-	int quantity = m_BankerRaw[0];
+	int amount = m_BankerRaw[0];
 	int cost = m_BankerRaw[1];
 
 
-	if(arg.GetParam(1) > quantity)
+	if(arg.GetParam(1) > amount)
 	{
-			plr->Send(g_BadRawQuantMsg);
-			return;
+		plr->Send(g_BadRawQuantMsg);
+		return;
 	}
 	else if(arg.GetParam(2) < cost)
 	{
@@ -333,11 +388,11 @@ void Game::SellReq(Player* plr, const Request& arg)
 		return;
 	}
 
-	int quantity = m_BankerProd[0];
+	int amount = m_BankerProd[0];
 	int cost = m_BankerProd[1];
 
 
-	if(arg.GetParam(1) > quantity || arg.GetParam(1) < plr->m_Resources[Prod])
+	if(arg.GetParam(1) > amount || arg.GetParam(1) < plr->m_Resources[resProd])
 	{
 			plr->Send(g_BadProdQuantMsg);
 			return;
@@ -356,13 +411,14 @@ void Game::SellReq(Player* plr, const Request& arg)
 
 void Game::BuildFactory(Player* plr)
 {
-	if(plr->m_Resources[Money] < 2500)
+	if(plr->m_Resources[resMoney] < 2500)
 	{
 		plr->Send(g_InsufficientFunds);
 		return;
 	}
-	plr->m_Resources[Money] -= 2500;
-	plr->m_ConstrFactories.push_back(m_Month); //List value is month of start construction
+	plr->m_Resources[resMoney] -= 2500;
+	//List value is month of start construction
+	plr->m_ConstrFactories.push_back(m_Month); 
 }
 
 void Game::SetMarketLvl(int num)
@@ -400,116 +456,50 @@ void Game::ChangeMarketLvl()
 }
 
 
-void Game::AuctionRaw()
+void Game::Auction(std::vector<Application>& src, int flag)
 {
-	auto compare = [](Player* a, Player* b){return a->m_PlayerRaw[0] > b->m_PlayerRaw[0];};
+	int left{0};
 
-	std::vector<Player*> tmp;
-	std::sort(m_List.begin(), m_List.end(), compare);
-
-	int left = m_BankerRaw[0];
-	int pi{0};
-	size_t it{0};
-
-	while(left)
-	{	
-		// collect of equal prices
-		for(pi = it; it < m_List.size() && 
-			m_List[it]->m_PlayerRaw[1] == m_List[pi]->m_PlayerRaw[1]; it++) 
-		{	
-			tmp.push_back(m_List[it]);
-		}
-		
-		int sum{0};
-		for(auto x : tmp)
-			sum += x->m_PlayerRaw[0];
-
-		if(sum <= left)
-		{
-			for(size_t i=0; i < tmp.size(); i++)
-			{
-				tmp[i]->m_Resources[Raw] += tmp[i]->m_PlayerRaw[0];
-				tmp[i]->m_Resources[Money] -= tmp[i]->m_PlayerRaw[0] 
-											* tmp[i]->m_PlayerRaw[1];
-				std::unique_ptr<char> msg(new char[strlen(g_BoughtResMsg)+8]);
-				sprintf(msg.get(), g_BoughtResMsg, tmp[i]->m_PlayerRaw[0],
-												   tmp[i]->m_PlayerRaw[1]);
-				tmp[i]->Send(msg.get());
-				left -= tmp[i]->m_PlayerRaw[0];
-			}
-			tmp.clear();
-			break;
-		}
-		else
-		{
-			int how{0};
-
-			for(size_t i=0; i < tmp.size() && left; i++)
-			{
-				if(i == tmp.size()-1)
-				{
-					how = left;
-				}
-				else
-				{
-					srand(time(NULL));
-					how = rand()%left;
-				}	
-				tmp[i]->m_Resources[Raw] += how;
-				tmp[i]->m_Resources[Money] -= how * tmp[i]->m_PlayerRaw[1];
-
-				std::unique_ptr<char> msg(new char[strlen(g_BoughtResMsg)+8]);
-				sprintf(msg.get(), g_BoughtResMsg, how, tmp[i]->m_PlayerRaw[1]); 
-				tmp[i]->Send(msg.get());
-				left -= how;
-			}
-			return; //maybe break for left check
-		}
-
-		for(auto x : m_List)
-		{
-			x->m_PlayerRaw[0] = 0;
-			x->m_PlayerRaw[1] = 0;
-		}
+	if(flag == Raw)
+	{
+		std::sort(src.begin(), src.end(), 
+				 [](const Application& a, const Application& b)
+				 {return a.m_ResrsCost > b.m_ResrsCost;});
+		left = m_BankerRaw[0];
 	}
-}
+	else if(flag == Prod)
+	{
+		std::sort(src.begin(), src.end(), 
+				 [](const Application& a, const Application& b)
+				 {return a.m_ResrsCost < b.m_ResrsCost;});
+		left = m_BankerProd[0];
+	}
+	else
+		return;
 
-void Game::AuctionProd()
-{
-	auto compare = [](Player* a, Player* b){return a->m_PlayerProd[0] < b->m_PlayerProd[0];};
-
-	std::vector<Player*> tmp;
-	std::sort(m_List.begin(), m_List.end(), compare);
-
-	int left = m_BankerProd[0];
+	std::vector<Application> tmp;
+	
 	int pi{0};
 	size_t it{0};
 
 	while(left)
 	{	
 		// collect of equal prices
-		for(pi = it; it < m_List.size() && 
-			m_List[it]->m_PlayerProd[1] == m_List[pi]->m_PlayerProd[1]; it++) 
+		for(pi = it; it < src.size() && 
+			src[it].m_ResrsCost == src[pi].m_ResrsCost; it++) 
 		{	
-			tmp.push_back(m_List[it]);
+			tmp.push_back(src[it]);
 		}
 		
 		int sum{0};
 		for(auto x : tmp)
-			sum += x->m_PlayerProd[0];
+			sum += x.m_ResrsAmount;
 
 		if(sum <= left)
 		{
 			for(size_t i=0; i < tmp.size(); i++)
 			{
-				tmp[i]->m_Resources[Prod] -= tmp[i]->m_PlayerProd[0];
-				tmp[i]->m_Resources[Money] += tmp[i]->m_PlayerProd[0] 
-											* tmp[i]->m_PlayerProd[1];
-				std::unique_ptr<char> msg(new char[strlen(g_SellResMsg)+8]);
-				sprintf(msg.get(), g_SellResMsg, tmp[i]->m_PlayerProd[0],
-												   tmp[i]->m_PlayerProd[1]);
-				tmp[i]->Send(msg.get());
-				left -= tmp[i]->m_PlayerProd[0];
+				left -= tmp[i].plr->ApplicationAccepted(Full, flag);
 			}
 			tmp.clear();
 			break;
@@ -518,117 +508,40 @@ void Game::AuctionProd()
 		{
 			int how{0};
 
-			for(size_t i=0; i < tmp.size() && left; i++)
+			for(size_t i=0; left && i < tmp.size(); i++)
 			{
 				if(i == tmp.size()-1)
-				{
+				{	
 					how = left;
+					i = -1;
 				}
 				else
 				{
 					srand(time(NULL));
 					how = rand()%left;
-				}	
-				tmp[i]->m_Resources[Prod] -= how;
-				tmp[i]->m_Resources[Money] += how * tmp[i]->m_PlayerProd[1];
-
-				std::unique_ptr<char> msg(new char[strlen(g_SellResMsg)+8]);
-				sprintf(msg.get(), g_SellResMsg, how, tmp[i]->m_PlayerProd[1]); 
-				tmp[i]->Send(msg.get());
-				left -= how;
+				}
+				left -= tmp[i].plr->ApplicationAccepted(how, flag);
 			}
 			return; //maybe break for left check
-		}
-
-		for(auto x : m_List)
-		{
-			x->m_PlayerProd[0] = 0;
-			x->m_PlayerProd[1] = 0;
 		}
 	}
 }
 
 void Game::NextMonth()
 {
-=======
-{
-	auto compare = [](Player* a, Player* b){return a->m_PlayerProd[0] < b->m_PlayerProd[0];};
+	std::vector<Application> RawContainer;
+	std::vector<Application> ProdContainer;
 
-	std::vector<Player*> tmp;
-	std::sort(m_List.begin(), m_List.end(), compare);
-
-	int left = m_BankerProd[0];
-	int pi{0};
-	size_t it{0};
-
-	while(left)
-	{	
-		// collect of equal prices
-		for(pi = it; it < m_List.size() && 
-			m_List[it]->m_PlayerProd[1] == m_List[pi]->m_PlayerProd[1]; it++) 
-		{	
-			tmp.push_back(m_List[it]);
-		}
-		
-		int sum{0};
-		for(auto x : tmp)
-			sum += x->m_PlayerProd[0];
-
-		if(sum <= left)
-		{
-			for(size_t i=0; i < tmp.size(); i++)
-			{
-				tmp[i]->m_Resources[Prod] -= tmp[i]->m_PlayerProd[0];
-				tmp[i]->m_Resources[Money] += tmp[i]->m_PlayerProd[0] 
-											* tmp[i]->m_PlayerProd[1];
-				std::unique_ptr<char> msg(new char[strlen(g_SellResMsg)+8]);
-				sprintf(msg.get(), g_SellResMsg, tmp[i]->m_PlayerProd[0],
-												   tmp[i]->m_PlayerProd[1]);
-				tmp[i]->Send(msg.get());
-				left -= tmp[i]->m_PlayerProd[0];
-			}
-			tmp.clear();
-			break;
-		}
-		else
-		{
-			int how{0};
-
-			for(size_t i=0; i < tmp.size() && left; i++)
-			{
-				if(i == tmp.size()-1)
-				{
-					how = left;
-				}
-				else
-				{
-					srand(time(NULL));
-					how = rand()%left;
-				}	
-				tmp[i]->m_Resources[Prod] -= how;
-				tmp[i]->m_Resources[Money] += how * tmp[i]->m_PlayerProd[1];
-
-				std::unique_ptr<char> msg(new char[strlen(g_SellResMsg)+8]);
-				sprintf(msg.get(), g_SellResMsg, how, tmp[i]->m_PlayerProd[1]); 
-				tmp[i]->Send(msg.get());
-				left -= how;
-			}
-			return; //maybe break for left check
-		}
-
-		for(auto x : m_List)
-		{
-			x->m_PlayerProd[0] = 0;
-			x->m_PlayerProd[1] = 0;
-		}
+	for(auto x : m_List)
+	{
+		RawContainer.push_back(Application(x, x->m_PlayerRaw[0], 
+											x->m_PlayerRaw[1]));
+		ProdContainer.push_back(Application(x, x->m_PlayerProd[0], 
+											x->m_PlayerProd[1]));
 	}
-}
 
-void Game::NextMonth()
-{
->>>>>>> refs/remotes/origin/new
-	AuctionRaw();
-	AuctionProd();
+	Auction(RawContainer, Raw);
+	Auction(ProdContainer, Prod);
 	
 	for(auto x : m_List)
 	{
@@ -647,20 +560,20 @@ void Game::NextMonth()
 ////////*Product enterprise*/
 		if(x->m_Enterprise*2000 > x->m_Resources[Money])
 		{
-			int e = x->m_Resources[Money]/2000;
-			e = x->m_Resources[Raw] >= e ? e : x->m_Resources[Raw];
+			int e = x->m_Resources[resMoney]/2000;
+			e = x->m_Resources[resRaw] >= e ? e : x->m_Resources[Raw];
 			
 			//NEED TO SEND MESSAGE
-			x->m_Resources[Money] -= e*2000;
-			x->m_Resources[Prod] += e;
+			x->m_Resources[resMoney] -= e*2000;
+			x->m_Resources[resProd] += e;
 			x->m_Enterprise -= e; ///Not clear m_Enterprise counter
 		}
-		else if(x->m_Resources[Raw] < x->m_Enterprise)
+		else if(x->m_Resources[resRaw] < x->m_Enterprise)
 		{
-			int e = x->m_Resources[Raw];
+			int e = x->m_Resources[resRaw];
 			//NEED TO SEND MESSAGE
-			x->m_Resources[Money] -= e*2000;
-			x->m_Resources[Prod] += e;
+			x->m_Resources[resMoney] -= e*2000;
+			x->m_Resources[resProd] += e;
 			x->m_Enterprise -= e;
 		}
 		else

@@ -12,13 +12,13 @@
 /* SECTION FOR CONSTANT MESSAGES */
 static const char g_GreetingMsg[]={"\nYour welcome! Please enter your name: \n"};
 static const char g_IllegalMsg[]={"\nIllegal request, buffer overflow...Goodbye!\n"};
-static const char g_BadRequestMsg[]={"\nBad request, please try again! Or type"
-									   " help:)\n"};
-static const char g_WelcomeMsg[]={"\nWelcome to the game %s, " 
-													"you play-number: %d\n"};
-static const char g_GameNotBegunMsg[]={"\nThe game haven't started yet. " 
-														   "Please wait:)\n"};
-static const char g_NotNameMsg[]={"\nYour name is too long, KISS\n"};
+
+
+
+static const char g_BoughtResMsg[]={"\nYour bought %d units of resources at a "
+								"price of %d $.\n"};
+static const char g_SellResMsg[]={"\nYour sell %d units of products at a price "
+								"of %d $.\n"};
 
 ////////////////////////////PLAYER/////////////////////////////////////////////////////
 
@@ -26,10 +26,10 @@ Player::Player(Game *a_master, int fd, int num)
 		: IFdHandler(fd), m_pTheGame(a_master), m_BufUsed(0),
 		 m_Name(0), m_PlayerNumber(num), m_Enterprise(0), m_End(false)
 {
-	m_Resources[Factory] = 2;
-	m_Resources[Raw] = 4;
-	m_Resources[Prod] = 2;
-	m_Resources[Money] = 10000;
+	m_Resources[resFactory] = 2;
+	m_Resources[resRaw] = 4;
+	m_Resources[resProd] = 2;
+	m_Resources[resMoney] = 10000;
 	Send(g_GreetingMsg);
 }
 
@@ -62,38 +62,7 @@ void Player::VProcessing(bool r, bool w)
 	else	
 	{
 		Request req = ParseRequest();
-		if(!req.GetText())
-		{
-			Send(g_BadRequestMsg);
-			return;
-		}
-	
-		if(!m_Name)
-		{
-			if(strlen(req.GetText()) > g_MaxName)
-			{
-				Send(g_NotNameMsg);
-				return;
-			}
-			m_Name = new char[sizeof(req.GetText())];
-			strcpy(m_Name, req.GetText());
-
-			std::unique_ptr<char> msg(new char[strlen(g_WelcomeMsg)+13]);
-			sprintf(msg.get(), g_WelcomeMsg, m_Name, m_PlayerNumber);
-			Send(msg.get());
-			
-			return;
-		}
-		else if(!m_pTheGame->GameBegun())
-		{
-			Send(g_GameNotBegunMsg);
-			m_pTheGame->RemovePlayer(this);
-			return;
-		}
-		else
-		{	
-			m_pTheGame->RequestProc(this, req);
-		}
+		m_pTheGame->RequestProc(this, req);
 	}
 }
 
@@ -131,4 +100,42 @@ Request Player::ParseRequest()
 		rq.AddParam(arr[i]);
 	
 	return rq; //Rvalue ctor or NRVO optimization
+}
+
+int Player::ApplicationAccepted(int how, int flag)
+{ 
+	if(flag == Raw)
+	{
+		int amount{0};
+		if(how == 0 || how > m_PlayerRaw[0])
+			amount = m_PlayerRaw[0]
+		else
+			amount = how;
+
+		m_Resources[resRaw] += amount;
+		m_Resources[resMoney] -= amount * m_PlayerRaw[1];
+		std::unique_ptr<char> msg(new char[strlen(g_BoughtResMsg)+8]);
+		sprintf(msg.get(), g_BoughtResMsg, how, m_PlayerRaw[1]);
+		Send(msg.get());
+		m_PlayerRaw[0] -= amount;
+		return amount;
+	}
+	else if(flag == Prod)
+	{
+		int amount{0};
+		if(how == 0 || how > m_PlayerProd[0])
+			amount = m_PlayerProd[0]
+		else
+			amount = how;
+
+		m_Resources[Prod] -= amount;
+		m_Resources[Money] += amount * m_PlayerProd[1];
+		std::unique_ptr<char> msg(new char[strlen(g_SellResMsg)+8]);
+		sprintf(msg.get(), g_SellResMsg, how, m_PlayerProd[1]);
+		Send(msg.get());
+		m_PlayerProd[0] -= amount;
+		return amount;
+	}
+	else
+		return 0;
 }

@@ -12,27 +12,6 @@
 #define MAXGAMERNUMBER 3
 #endif
 
-
-/*
-enum StringsSize
-{
-	g_IllegalMsgSize = 46,
-	g_NotNameMsgSize = 30,
-	g_GreetingMsgSize = 41,
-	g_AlreadyPlayingMsgSize = 56,
-	//g_WelcomeMsgSize = 58,
-	//g_WelcomeAllMsgSize = 42,
-	g_GameNotBegunMsgSize = 46,
-	g_GameStartSoonMsgSize = 30,
-	g_InvalidArgumentMsgSize = 53,
-	g_BadRequestMsgSize = 48,
-	g_UnknownReqMsgSize = 38,
-	//g_MarketCondMsgSize = 179,
-	//g_GetInfoMsgSize = 149, 
-	g_HelpMsgSize = 8,
-	//g_PlayerListMsgSize = 18
-};
-*/
 enum ConstantsForGame { 
 	g_MaxGamerNumber = MAXGAMERNUMBER,
 	g_MaxName = 10,
@@ -41,20 +20,11 @@ enum ConstantsForGame {
 	g_CommandListSize = 9
 };
 
-enum RequestConstants {
-	
-	Market= 1,
-	AnotherPlayer = 2,
-	Production = 3,
-	Buy = 4,
-	Sell = 5,
-	Build = 6,
-	Turn = 7,
-	Help = 8,
-	PlayerAll = 9,
+enum ApplicationConstants { //for auction
+	Full = 0, //Full amount in application accepted
+	Raw = 1,
+	Prod = 2
 };
-
-
 
 /* 					MARKET LEVEL CHANGE TABLE
 *	Row - current level, Column - next level, value - probability of transition.
@@ -73,12 +43,13 @@ static const int g_MarketLevels[5][5] = {
 class Game;
 class Request;
 
-enum ConstForResources {
-	Raw = 0,
-	Prod = 1,
-	Factory = 2,
-	Money = 3
+enum ConstantsForPlayerResources {
+	resRaw = 0,
+	resProd = 1,
+	resFactory = 2,
+	resMoney = 3
 };
+
 class Player : public IFdHandler 
 {
 	friend class Game;
@@ -91,11 +62,13 @@ class Player : public IFdHandler
 	int m_PlayerNumber;
 
 	std::unordered_map<int, int> m_Resources;
-    
+
+    //list for memorizing the month when the factory was started built 
 	std::list<int> m_ConstrFactories;
 
 	//The number of products produced in the current month
 	int m_Enterprise;
+
 	int m_PlayerRaw[2];
 	int m_PlayerProd[2];
 
@@ -107,10 +80,12 @@ public:
 	void VProcessing(bool r, bool w) override;
 	void Send(const char *message);
 	Request ParseRequest();
+	int ApplicationAccepted(int how, int flag);
 };
 
 
 //////////////////////////////////////////////////////////////////////
+
 
 class Game : public IFdHandler 
 {
@@ -123,11 +98,13 @@ class Game : public IFdHandler
 	int m_MarketLevel;
 
 	std::vector<Player*> m_List;
-	std::vector<int> m_Numbers;
+
+	//array with free Player numbers
+	int* m_Numbers;
 
 	//Auction state
-	int m_BankerRaw[2]; //[0] quantity, [1] cost
-	int m_BankerProd[2];//[0] quantity, [1] cost
+	int m_BankerRaw[2]; //[0] amount, [1] cost
+	int m_BankerProd[2];//[0] amount, [1] cost
 
 public:
 	Game() = delete;
@@ -155,8 +132,7 @@ public:
 	
 				/* MAIN GAME ACTION */
 	void NextMonth();
-	void AuctionRaw();
-	void AuctionProd();
+	void Auction(std::vector<Application>& src, int flag);
 	void ChangeMarketLvl();
 	void SetMarketLvl(int num);
 private:
