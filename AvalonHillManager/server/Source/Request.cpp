@@ -1,7 +1,7 @@
 #include <utility>
 #include <cstring>
 #include <iostream>
-#include "game.h"
+#include "share/game.h"
 
 Request::Request(const char* in) : m_Set(0)
 {

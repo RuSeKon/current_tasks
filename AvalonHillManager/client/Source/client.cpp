@@ -5,9 +5,9 @@
 #include <iostream>
 #include <tuple>
 #include <cstring>
-#include "client.h"
-#include "application.h"
-#include "errproc.h"
+#include "share/client.h"
+#include "share/application.h"
+#include "share/errproc.h"
 
 
 /* Client Object-oriented design implementation */

@@ -4,9 +4,9 @@
 #include <arpa/inet.h>
 #include <cstring>
 #include <memory>
-#include "errproc.h"
-#include "application.h"
-#include "game.h"
+#include "share/errproc.h"
+#include "share/application.h"
+#include "share/game.h"
 
 
 /* SECTION FOR CONSTANT MESSAGES */

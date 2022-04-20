@@ -6,11 +6,10 @@
 #include <memory>
 #include <cstring>
 #include <vector> 
-#include <tuple>
 #include <algorithm>
-#include "errproc.h"
-#include "application.h"
-#include "game.h"
+#include "share/errproc.h"
+#include "share/application.h"
+#include "share/game.h"
  
 
 /* SECTION FOR CONSTANT MESSAGES */
@@ -50,6 +49,7 @@ static const char g_InsufficientFunds[]={"Insufficient funds to build so "
 														  "many factoryes.\n"};
 static const char g_GameNotBegunMsg[]={"The game haven't started yet. " 
 														    "Please wait:)\n"};
+static const char g_AplApplyMsg[] = {"\nApplication apply!\n"};
 
 
 static const char *g_CommandList[] = {"market\0", "info\0", "pod\0",
@@ -125,7 +125,6 @@ void Game::RemovePlayer(Player *s)
 		{
 			m_pSelector->Remove(*x);
 			delete *x;
-			m_List.erase(x);
 			m_Numbers[(*x)->m_PlayerNumber -1] = 0;
 			break;
 		}
@@ -396,7 +395,7 @@ void Game::SellReq(Player* plr, const Request& arg)
 	for(int i=0; i < 2; i++)
 			plr->m_PlayerProd[i] = arg.GetParam(i+1);
 	
-	plr->Send("\nApplication apply!\n");
+	plr->Send(g_AplApplyMsg);
 }
 
 void Game::BuildFactory(Player* plr)

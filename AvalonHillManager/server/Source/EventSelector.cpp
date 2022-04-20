@@ -5,7 +5,7 @@ sockets and file descriptors directly */
 #include <cerrno>
 #include <unistd.h>
 
-#include "application.h"
+#include "share/application.h"
 
 EventSelector::~EventSelector()
 {
