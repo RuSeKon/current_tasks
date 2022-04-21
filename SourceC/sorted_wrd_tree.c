@@ -1,8 +1,9 @@
-/* print all words of file by sorted of count their meetings */
+/* print all words of file by sorted of count their using */
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define MAXWORD 100
 #define STATEON 1
@@ -12,15 +13,15 @@
 #define MNGSIZ 6
 #endif
 
-struct tnode {
+struct tnode 
+{
 	char *word;
 	int count;
 	struct tnode *left;
 	struct tnode *right;
 };
 
-struct tnode *addtree(struct tnode *, char *);
-/*void treeprint(struct tnode *); */
+struct tnode *add_to_tree(struct tnode *, char *);
 int getword(char *, int);
 void sort_tree(struct tnode *);
 
@@ -31,7 +32,7 @@ main()
 
 	root = NULL;
 	while(getword(word, MAXWORD) != EOF)
-		root = addtree(root, word);
+		root = add_to_tree(root, word);
 	sort_tree(root);
 	return 0;
 }
@@ -39,10 +40,11 @@ main()
 struct tnode *talloc(void);
 char *Strdup(char *);
 
-struct tnode *addtree(struct tnode *p, char *w)
+struct tnode *add_to_tree(struct tnode *p, char *w)
 {
 	int cond;
-	if(p == NULL) {
+	if(p == NULL) 
+	{
 		p = talloc();
 		p->word = Strdup(w);
 		p->count = 1;
@@ -50,15 +52,19 @@ struct tnode *addtree(struct tnode *p, char *w)
 	} else if((cond = strcmp(w, p->word)) == 0)
 		p->count++;
 	else if(cond < 0)
-		p->left = addtree(p->left, w);
+		p->left = add_to_tree(p->left, w);
 	else
-		p->right = addtree(p->right, w);
+		p->right = add_to_tree(p->right, w);
 	return p;
 }
 
 struct tnode *talloc(void)
 {
-	return (struct tnode*)malloc(sizeof(struct tnode));
+	struct tnode* tmp;
+	tmp = (struct tnode*)malloc(sizeof(struct tnode));
+	if(tmp == NULL)
+		exit(EXIT_FAILURE);
+	return tmp;
 }
 
 char *Strdup(char *s)
@@ -67,6 +73,8 @@ char *Strdup(char *s)
 	p = (char *)malloc(strlen(s)+1);
 	if(p != NULL)
 		strcpy(p, s);
+	else
+		exit(EXIT_FAILURE);
 	return p;
 }
 
@@ -74,13 +82,18 @@ int getword(char *src, int max)
 {
 	int i=0, c;
 	int state = STATEOFF;
-	while(i < max && (c = getchar()) != EOF) {
-		if((isalpha(c) || c == '_')) {
+	while(i < max && (c = getchar()) != EOF)
+	{
+		if((isalpha(c) || c == '_'))
+		{
 			state = STATEON;
 			*src++ = c;
 			i++;
-		} else {
-			if(state) {
+		}
+		else
+		{
+			if(state)
+			{
 				*src = '\0';
 				return i;
 			}
@@ -91,7 +104,6 @@ int getword(char *src, int max)
 		return c;
 	return -1;
 }
-
 
 #define MAXARR 1000
 
@@ -112,9 +124,10 @@ void sort_tree(struct tnode *p)
 	return;
 }
 
-void tree_to_array(struct tnode *p) //form string from tree tnode
+void tree_to_array(struct tnode *p) //form array from tree tnode
 {
-	if(p != NULL) {			
+	if(p != NULL)
+	{			
 		tree_to_array(p->left);
 		if((ptr-tree_arr) < MAXARR)
 			*ptr++ = p;
@@ -130,12 +143,14 @@ void swap(struct tnode *[], int, int);
 void sort_arr(struct tnode *arr[], int n)
 {
 	int i, last;
-       	if(n == 0)
+    if(n == 0)
 		return;
+	srand(time(NULL));
 	swap(arr, 0, rand() % n);
 	last = 0;
-	for(i = 1; i < n; i++) {
-		if((arr[i])->count < (arr[0])->count)
+	for(i = 1; i < n; i++)
+	{
+		if(arr[i]->count < arr[0]->count)
 			swap(arr, ++last, i);
 	}
 	swap(arr, 0, last);
@@ -153,23 +168,11 @@ void swap(struct tnode *arr[], int l, int h)
 
 void arr_print()
 {
-	struct tnode **pointr = tree_arr;
-	while(*pointr) {
-		if((*pointr)->count > MNGSIZ)
-			printf("%4d   %s\n", (*pointr)->count, (*pointr)->word);
-		pointr++;
+	struct tnode **ptr = tree_arr;
+	while(*ptr)
+	{
+		if((*ptr)->count > MNGSIZ)
+			printf("%4d   %s\n", (*ptr)->count, (*ptr)->word);
+		ptr++;
 	}
 }
-
-
-/*
-void treeprint(struct tnode *p)
-{
-	if(p != NULL) {
-		treeprint(p->left);
-		if(p->count > MNGSIZ)
-			printf("%4d %s\n", p->count, p->word);
-		treeprint(p->right);
-	}
-}
-*/

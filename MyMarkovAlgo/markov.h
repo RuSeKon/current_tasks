@@ -22,6 +22,7 @@ class Prefix{
     std::string m_Container[NPREF];
 public:
     Prefix() = delete;
+	~Prefix() = default;
     Prefix(std::string& src);
     Prefix(const Prefix& src);
     const std::string& operator[](int indx) const;
@@ -56,6 +57,8 @@ public:
 class Tab{
     Point* m_Table[TABSIZE];
 public:
+	Tab() = default;
+	~Tab() = default;
     Point& operator[](const Prefix& indx);
 private:
     unsigned Hash(const Prefix& src);

@@ -1,5 +1,4 @@
-/* this program is about tools for 
- * work with lists */
+/* this program is implementation of  tools for work with lists */
 
 #include <stdlib.h>
 

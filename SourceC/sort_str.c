@@ -1,5 +1,4 @@
-/* this programm can sort input massive of
- * \n separated strings */
+/* this programm can sort input massive of separated strings */
 
 #include <stdio.h>
 #include <stdlib.h>

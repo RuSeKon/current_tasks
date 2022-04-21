@@ -61,7 +61,7 @@ main(int argc, char **argv)
 			else
 			{
 	   		fputs(np->defn, outp_f);	//if name is in table put define val
-	   		fputc(char(res), outp_f);
+	   		fputc((char)res, outp_f);
 			}
 	   }
 	fclose(inp_f);
@@ -106,7 +106,7 @@ struct nlist *install(char *name, char *defn)
 
 	if((np = lookup(name, 0)) == NULL) 
 	{
-		np = (struct nlist *)malloc(sizeof(np));
+		np = (struct nlist *)malloc(sizeof(*np));
 		if(np == NULL || (np->name = strdup(name)) == NULL)
 			return NULL;
 		hashval = hash(name);
@@ -126,10 +126,10 @@ int del_node(char *nm)
     /* search node with field.name = nm in hashtable */
     for(np = &hashtab[hash(nm)]; *np; np = &((*np)->next)) 
 	{
-		if(!strcmp((*p)->name, nm))
+		if(!strcmp((*np)->name, nm))
 		{
-			tmp = *p;
-			*p = tmp->next;
+			tmp = *np;
+			*np = tmp->next;
 			/*
 			free(tmp->name);
 			free(tmp->defn);
@@ -146,11 +146,12 @@ int getchr(FILE *out, FILE *in,  char *nm, char *dfn, int max_nm, int max_dfn)
     int i;
     char c;
     while((c = fgetc(in)) != EOF) {
-		if(c == '#') {
+		if(c == '#') 
+		{
 	     	fputc(c, out);
 	     	while((c = fgetc(in)) != SPACE)
 		 		fputc(c, out);
-	     	for(i = 0; i < max_nm && (c=fgetc(in)) != SPACE; i++) {
+	     	for(i = 0; i < max_nm && (c=fgetc(in)) != SPACE; i++)
 			{
 		    	fputc(c, out);
 		    	nm[i] = c;

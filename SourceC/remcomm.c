@@ -2,37 +2,37 @@
 
 #include <stdio.h>
 
-int main(int argc, char **argv)
+main(int argc, char **argv)
 {
 	int c;
-	FILE *d;
-	if(argc != 2) {
+	FILE *dscr;
+	if(argc != 2)
+	{
 		printf("Invalid input\n");
 		return 1;
 	}
-	if((d = fopen(argv[1], "r+")))
+	if((dscr = fopen(argv[1], "r+")))
 		printf("File open!\n");
-	else {
+	else 
+	{
 		printf("Error open file\n");
 		return 2;
 	}
-	while((c = fgetc(d)) != EOF) {
-		if(c == '/') {
-			if((c = fgetc(d)) == '/') {
-				fseek(d, -2, SEEK_CUR);
-				while((c = fgetc(d)) != '\n') {
-					fseek(d, -1, SEEK_CUR);
-					fputc(32, d);
+	while((c = fgetc(dscr)) != EOF) 
+	{
+		if(c == '/')
+		{
+			if((c = fgetc(dscr)) == '/')
+			{
+				fseek(dscr, -2, SEEK_CUR);
+				while((c = fgetc(dscr)) != '\n') //current position is after c
+				{
+					fseek(dscr, -1, SEEK_CUR);
+					fputc(32, dscr);
 				}
 			}
 		}
-		else
-		{}
 	}
 	printf("Deleted successful!");
 	return 0;	
 }
-	
-	
-
-	

@@ -1,8 +1,7 @@
 #include <sys/socket.h>
 #include <cstdio> 
 #include <ctime>
-#include <unistd.h>
-#include <arpa/inet.h>
+#include <unistd.h> #include <arpa/inet.h>
 #include <memory>
 #include <cstring>
 #include <vector> 
@@ -511,7 +510,7 @@ void Game::Auction(std::vector<Application>& src, int flag)
 				}
 				left -= tmp[i].plr->ApplicationAccepted(how, flag);
 			}
-			continue; //maybe break for left check
+			continue;
 		}
 	}
 	return;
@@ -519,21 +518,9 @@ void Game::Auction(std::vector<Application>& src, int flag)
 
 void Game::NextMonth()
 {
-	SendAll("\nAuction starting!\n", 0);
 	std::vector<Application> RawContainer;
 	std::vector<Application> ProdContainer;
 
-	for(auto x : m_List)
-	{
-		RawContainer.push_back(Application(x, x->m_PlayerRaw[0], 
-											x->m_PlayerRaw[1]));
-		ProdContainer.push_back(Application(x, x->m_PlayerProd[0], 
-											x->m_PlayerProd[1]));
-	}
-
-	Auction(RawContainer, Raw);
-	Auction(ProdContainer, Prod);
-	
 	for(auto x : m_List)
 	{
 ////////*Cost write-off*/
@@ -597,6 +584,15 @@ void Game::NextMonth()
 ///////*Change of market level*/
 		ChangeMarketLvl();
 		x->m_End = false;
+		RawContainer.push_back(Application(x, x->m_PlayerRaw[0], 
+											x->m_PlayerRaw[1]));
+		ProdContainer.push_back(Application(x, x->m_PlayerProd[0], 
+											x->m_PlayerProd[1]));
 	}
+
+	SendAll("\nAuction starting!\n", 0);
+	Auction(RawContainer, Raw);
+	Auction(ProdContainer, Prod);
+	
 	m_Month++;
 }

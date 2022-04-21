@@ -51,9 +51,10 @@ Nameval *lookup(Nameval *root, char *name)
 Nameval *nvlookup(Nameval *root, char *name)
 {	
 	int cmp;
-	while(root != NULL) {
+	while(root != NULL)
+	{
 		cmp = strcmp(name, root->name);
-       		if(cmp == 0)
+       	if(cmp == 0)
 			return root;
 		else if(cmp < 0)
 			root = root->left;
@@ -62,4 +63,3 @@ Nameval *nvlookup(Nameval *root, char *name)
 	}
 	return NULL;
 }	
-

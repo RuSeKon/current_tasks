@@ -1,8 +1,8 @@
 CXX = g++
-CXXFLAGS = -WAll -g 
+CXXFLAGS = -Wall -g 
 
-server : main.cpp markov.cpp
+markov : main.cpp markov.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 clean :
-	rm -f *.o server
+	rm -f  markov 

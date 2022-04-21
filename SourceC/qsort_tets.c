@@ -1,4 +1,4 @@
-/* this program is tester of quicksort time O */
+/* this program is tester of quicksort time */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,10 +30,13 @@ main(int argc, char **argv)
 	srand(time(0));
 	
 	//parce command line and form initial data
-	if(argc < 2) {
+	if(argc < 2)
+	{
 		strcpy(init_data, "direct order ");
 		opt[0] = '\0';
-	} else if(argv[1][0] == '-') {
+	} 
+	else if(argv[1][0] == '-')
+	{
 		if(strchr(argv[1], 'o')) //form in direct order 
 			opt[p++] = 'o';
 		if(strchr(argv[1], 'O')) //form in reverse order
@@ -48,13 +51,15 @@ main(int argc, char **argv)
 	else 
 		max = 10;
 	
-	if((arr = form_arr(opt, max, init_data)) == NULL) {
+	if((arr = form_arr(opt, max, init_data)) == NULL) 
+	{
 		printf("Error by create array\n");
 		return 3;
 	}
 
 	/*main part, sorted array*/
-	for(i = NUMOFITER; i > 0; i--) {
+	for(i = NUMOFITER; i > 0; i--) 
+	{
 		cl_beg = clock();
 		qusort(arr, max-1);
 		cl_end = clock();
@@ -80,9 +85,11 @@ void qusort(double *arr, int peak)
 	int last, i;
 	if(peak <= 0)
 		return;
+	srand(time(NULL));
 	swap(arr, 0, (rand()%peak));
 	last = 0;
-	for(i = 1; i < peak; i++) {
+	for(i = 1; i < peak; i++) 
+	{
 		if(arr[i] < arr[0])
 			swap(arr, ++last, i);
 	}
@@ -95,7 +102,7 @@ void swap(double *arr, int a1, int a2)
 {
 	double tmp;
 	tmp = arr[a1];
-       	arr[a1] = arr[a2];
+    arr[a1] = arr[a2];
 	arr[a2] = tmp;
 }
 
@@ -109,7 +116,10 @@ double *form_arr(char *param, int m, char *message)
 		for(i = 0; i < m/3; i++)
 			tmp[i] = i;
 		for(n = i; n < 2*(m/3); n++)
+		{
+			srand(time(NULL));
 			tmp[n] = rand()/m;
+		}
 		for(p = n; p < m; p++)
 			tmp[p] = m - p;
 		strcat(message, "combine data ");

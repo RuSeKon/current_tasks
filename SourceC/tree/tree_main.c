@@ -1,6 +1,5 @@
 /* some test for tree_tools */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,27 +12,31 @@
 #endif
 
 Nameval *form_tree(char **, int);
-int creat_name(char **, int);
+int create_name(char **, int);
 
 main(int argc, char **argv)
 {
 	int indx;
-	if(argc > 1 && isdigit(argv[1][1])) {
-		if((indx = atoi(argv[1])) > NAMENUM) {
+	if(argc > 1 && isdigit(argv[1][1]))
+	{
+		if((indx = atoi(argv[1])) > NAMENUM)
+		{
 			printf("Argument %s is too more\n", argv[1]);
 			return -1;
 		}
-	} else
+	}
+	else
 		indx = NAMENUM/2; 
 
 	char *name[NAMENUM];
 	int len;
 	
 	srand(time(0));
-	if(!(len = creat_name(name, 0))) { //thero is a non mode(standart) creation
-		printf("Cannot creat initial name\n");
+	if(!(len = create_name(name, 0))) //zero is a non mode(standart) creation
+	{
+		printf("Cannot create initial name\n");
 		return -1;
-	}	
+	}
 
 	char *point = name[indx];
 
@@ -46,7 +49,8 @@ main(int argc, char **argv)
 
 	//time test for lookup functions
 	begin = clock();
-	if((res = nvlookup(tmp, point)) == NULL) {
+	if((res = nvlookup(tmp, point)) == NULL)
+	{
 		printf("Cannot find name (%s) on tree\n", point);
 		return -1;
 	}
@@ -66,24 +70,26 @@ main(int argc, char **argv)
 Nameval *form_tree(char **src, int len)
 {
 	Nameval *tmp, *root = NULL;
-	while(len > 0) {
+	while(len > 0)
+	{
 		tmp = (Nameval *)malloc(sizeof(Nameval));
+		if(tmp == NULL)
+			exit(EXIT_FAILURE);
 		tmp->name = (char *)malloc(strlen(*src)+1);
 		tmp->value = (NAMENUM+1)-len;
 		strcpy(tmp->name, *src);
 		root = insert(root, tmp);
 		src++;
-	       	len--;
+	    len--;
 	}
 	return root;
 }	
 
 
 #define MAXNAME 6
-#define ISLETTER(s) ((s > 64 && s < 91) || (s > 96 && s < 123))
 
 
-int creat_name(char **src, int mod)
+int create_name(char **src, int mod)
 {
 	int i;
 	int rnd;
@@ -93,9 +99,11 @@ int creat_name(char **src, int mod)
 			perror(tmp);
 			return -1;
 		}
-		for(int b=0; b < MAXNAME; b++) {
+		for(int b=0; b < MAXNAME; b++)
+		{
 			rnd += 4;
-			while(!ISLETTER(rnd)) {
+			while(!isalpha(rnd))
+			{
 				rnd = rand()%123;
 				if(rnd < 64)
 					rnd += 58;
