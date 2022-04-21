@@ -1,4 +1,4 @@
-/* this program is tester of quicksort time */
+/* this program is simple tester of quicksort time */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,10 +11,11 @@
 #endif
 
 #define MESSAGE 20 
-#define OPTSZE 4
+#define OPTSZE 3
+
 
 void qusort(double *, int);
-double *form_arr(char *, int, char *);
+void form_arr(double *, char *, int, char *);
 
 main(int argc, char **argv)
 {
@@ -27,8 +28,6 @@ main(int argc, char **argv)
 	char init_data[MESSAGE];
 	char opt[OPTSZE];
 
-	srand(time(0));
-	
 	//parce command line and form initial data
 	if(argc < 2)
 	{
@@ -38,12 +37,17 @@ main(int argc, char **argv)
 	else if(argv[1][0] == '-')
 	{
 		if(strchr(argv[1], 'o')) //form in direct order 
+		{
 			opt[p++] = 'o';
+			strcpy(init_data, "direct order ");
+		}
 		if(strchr(argv[1], 'O')) //form in reverse order
+		{
 			opt[p++] = 'O';
-		if(strchr(argv[1], 'r')) //form by random
-			opt[p++] = 'r';
-		opt[3] = '\0';		
+			strcpy(init_data, "reverse order ");
+		}
+
+		opt[OPTSZE-1] = '\0';		
 	}
 
 	if(argc > 2 && isdigit(argv[2][0]))	//size of sorted array
@@ -51,15 +55,18 @@ main(int argc, char **argv)
 	else 
 		max = 10;
 	
-	if((arr = form_arr(opt, max, init_data)) == NULL) 
+	if((arr = (double*)malloc(sizeof(double)*max)) == NULL)
 	{
-		printf("Error by create array\n");
-		return 3;
+		printf("Error memory allocating!\n");
+		return -1;
 	}
 
-	/*main part, sorted array*/
-	for(i = NUMOFITER; i > 0; i--) 
+
+	/*main part, sorting array*/
+	for(i = 0; i < NUMOFITER; i++) 
 	{
+		form_arr(arr, opt, max, init_data);
+
 		cl_beg = clock();
 		qusort(arr, max-1);
 		cl_end = clock();
@@ -71,22 +78,25 @@ main(int argc, char **argv)
 		middle += time_spent;
 		
 	}
+
+	free(arr); //arr is no longer needed in this context
+
 	middle /= (double)NUMOFITER;
-	printf("For %d elem of %selapsed time:\n"
-		       	"Max = %.8f, Mid = %.8f\n", 
+	printf("For %d elem of %s elapsed time:\n"
+		       	"Max = %.6f, Mid = %.6f.\n", 
 				max, init_data, max_time, middle);
 	return 0;
 }
 
-void swap(double *, int, int);
+void swap(double *, size_t, size_t);
 
 void qusort(double *arr, int peak)
 {
-	int last, i;
+	size_t last, i;
 	if(peak <= 0)
 		return;
 	srand(time(NULL));
-	swap(arr, 0, (rand()%peak));
+	swap(arr, 0, (size_t)(rand()%peak));
 	last = 0;
 	for(i = 1; i < peak; i++) 
 	{
@@ -98,7 +108,7 @@ void qusort(double *arr, int peak)
 	qusort(arr+last+1, peak-last-1);
 }
 
-void swap(double *arr, int a1, int a2)
+void swap(double *arr, size_t a1, size_t a2)
 {
 	double tmp;
 	tmp = arr[a1];
@@ -106,41 +116,31 @@ void swap(double *arr, int a1, int a2)
 	arr[a2] = tmp;
 }
 
-double *form_arr(char *param, int m, char *message)
+void form_arr(double *tmp, char *param, int m, char *message)
 {
-	int i;
-	double *tmp = (double *)malloc(sizeof(double) * m);
+	size_t i=0;
 
+	srand(time(NULL));
 	if(strchr(param, 'o') && strchr(param, 'O') && strchr(param, 'r')) {
-		int n, p;
+		size_t n, p;
 		for(i = 0; i < m/3; i++)
-			tmp[i] = i;
+			tmp[i] = (double)i;
 		for(n = i; n < 2*(m/3); n++)
-		{
-			srand(time(NULL));
-			tmp[n] = rand()/m;
-		}
+			tmp[n] = (double)rand()/m;
 		for(p = n; p < m; p++)
-			tmp[p] = m - p;
-		strcat(message, "combine data ");
-		return tmp;
+			tmp[p] = (double)m - p;
+		return;
 	}
 
-	if(strchr(param, 'o')) {
+	if(strchr(param, 'o')) 
 		for(i = 0; i < m; i++)
-			tmp[i] = i;
-		strcat(message, "direct order data ");
-	} else if(strchr(param, 'O')) {
+			tmp[i] = (double)i;
+	else if(strchr(param, 'O')) 
 		for(i = 0; i < m; i++)
-			tmp[i] = m - i;
-		strcat(message, "reverse order data ");
-	} else if(strchr(param, 'r')) {
+			tmp[i] = (double)(m - i);
+	else 
 		for(i = 0; i < m; i++) 
-			tmp[i] = rand()/m;
-		strcat(message, "random init data ");
-	}
-	tmp[i] = '\0';
-	return tmp;
+			tmp[i] = (double)(rand()%m);
 }
 
 

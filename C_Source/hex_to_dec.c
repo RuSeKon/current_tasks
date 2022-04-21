@@ -1,4 +1,4 @@
-/* This function can chnge hex digit */
+/* This function can convert hex digit to decimal*/
 
 #include <stdio.h>
 
@@ -7,7 +7,8 @@
 
 int makestr(int src[], int max)
 {
-	int i, c;
+	int i;
+	char c;
 	for(i = 0; i < max && (c = getchar()) != EOF && c != '\n'; i++) 
 	{
 		if(c >= 'A' && c <= 'F')
@@ -20,7 +21,7 @@ int makestr(int src[], int max)
 			return 0;
 	}
 	if(c == '\n')
-		src[i + 1] = '\0';
+		src[i] = '\0';
 	return i;
 }
 
@@ -58,7 +59,7 @@ int main()
 	}
 	if(is_str(array)) 
 	{
-		printf("Not a hex digits\n");
+		printf("Not a hex digits (example: 0x234A)\n");
 		return 1;
 	}
 

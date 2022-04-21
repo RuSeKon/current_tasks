@@ -1,3 +1,5 @@
+/* this program can replace #define WORDS to its value, like simple  C preprocessor */ 
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
