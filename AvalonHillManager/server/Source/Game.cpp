@@ -1,7 +1,8 @@
 #include <sys/socket.h>
 #include <cstdio> 
 #include <ctime>
-#include <unistd.h> #include <arpa/inet.h>
+#include <arpa/inet.h>
+#include <unistd.h> 
 #include <memory>
 #include <cstring>
 #include <vector> 
@@ -12,43 +13,63 @@
  
 
 /* SECTION FOR CONSTANT MESSAGES */
-static const char g_AlreadyPlayingMsg[]={"Sorry, game is already started." 
-						" You can play next one\n"};
-static const char g_NotNameMsg[]={"Your name is too long, KISS\n"};
-static const char g_BadRequestMsg[]={"Bad request, please try again! Or type"
-									   " help:)\n"};
+static const char g_AlreadyPlayingMsg[]={"Game is already started.\n"};
+
+static const char g_NotNameMsg[]={"Enter only first name (not more ten symbols).\n"};
+
+static const char g_BadRequestMsg[]={"Bad request, try again or type help:)\n"};
+
 static const char g_WelcomeMsg[]={"Welcome to the game %s, " 
-						   "you play-number: %d\n"};
-static const char g_WelcomeAllMsg[]={"Player number %d"
+						   "your play-number: %d\n"};
+
+static const char g_WelcomeAllMsg[]={"%s number %d"
 												" joined to the game!\n"};
-static const char g_GameStartSoonMsg[]={"The game will start soon!:)\n"};
-static const char g_InvalidArgumentMsg[]={"Invalid argument, please try "
-										 "again! Or type help:)\n"};
-static const char g_UnknownReqMsg[]={"Unknown request, please enter"
-																" help!\n"};
-static const char g_MarketCondMsg[]={"\n            In the current month:  "
-									"            \nQuantity of materials sold:"
-									" %d, by min price $%d /unit.\nQuantity "
-									"of purchaced products: %d, by max price "
-									"$%d /unit.\n"};
+//static const char g_GameStartSoonMsg[]={"The game will start soon!:)\n"};
+static const char g_InvalidArgumentMsg[]={"Invalid argument, try "
+										  "again or type help.\n"};
+
+static const char g_UnknownReqMsg[]={"Unknown request, enter help!\n"};
+
+static const char g_MarketCondMsg[]={"\nCurrent month is %dth\n"
+									"_________________________"
+									"Players still active:\n"
+									"%			    %d\n"
+									"Bank sells:  items   min.price\n"
+									"%				%d		  %d\n"
+									"Bank buys:   items	  max.price\n"
+									"%				%d		  %d\n"};
+
 static const char g_GetInfoMsg[]={"\n%s's state of affairs (num: %d):\n"
-							"Money: %d;\nMaterials: %d;\nProducts: %d;\n"
-							"Regular factorie: %d;\nBuild factorie: %d;\n"};
+							"_________________________________"
+							"Money: %d\n"
+							"Materials: %d\n"
+							"Products: %d\n"
+							"Regular factorie: %d;\n"
+							"Build factorie: %d;\n"};
+
 static const char g_HelpMsg[]={"helpMe\n"};
+
 static const char g_PlayerListMsg[]={"\n%d. %s\n"};
-static const char g_BadRawQuantMsg[]={"The amount of raw materials sold by"
-													" the market is less.\n"};
+
+static const char g_BadRawQuantMsg[]={"The bank does not sell that amount.\n"};
+
 static const char g_BadRawCostMsg[]={"Your cost is less than market.\n"};
-static const char g_BadProdQuantMsg[]={"You don't have that many products,"
-										" or bank don't buy that quantity.\n"};
+
+static const char g_BadProdQuantMsg[]={"Сheck the number of products in the "
+															"application.\n"};
+
 static const char g_BadProdCostMsg[]={"Your cost is larger than market.\n"};
+
 static const char g_TooFewFactories[]={"You don't have as many factories to"
 																" produce.\n"};
+
 static const char g_InsufficientFunds[]={"Insufficient funds to build so "
 														  "many factoryes.\n"};
+
 static const char g_GameNotBegunMsg[]={"The game haven't started yet. " 
-														    "Please wait:)\n"};
-static const char g_AplApplyMsg[] = {"\nApplication apply!\n"};
+														    "Please wait!\n"};
+
+static const char g_AplApplyMsg[] = {"Application apply!\n"};
 
 
 static const char *g_CommandList[] = {"market\0", "info\0", "pod\0",
@@ -168,10 +189,6 @@ void Game::VProcessing(bool r, bool w)
 			SendAll("Game begining!\n", nullptr);
 			SetMarketLvl(3);
 		}
-
-		std::unique_ptr<char> msg(new char[strlen(g_WelcomeAllMsg)+3]);
-		sprintf(msg.get(), g_WelcomeAllMsg, p->m_PlayerNumber);
-		SendAll(msg.get(), p);
 	}
 }
 
@@ -202,9 +219,12 @@ void Game::RequestProc(Player* plr, const Request& req)
 		plr->m_Name = new char[sizeof(req.GetText())];
 		strcpy(plr->m_Name, req.GetText());
 
-		std::unique_ptr<char> msg(new char[strlen(g_WelcomeMsg)+13]);
+		std::unique_ptr<char> msg(new char[58/*strlen(g_WelcomeMsg)+13*/]);
 		sprintf(msg.get(), g_WelcomeMsg, plr->m_Name, plr->m_PlayerNumber);
 		plr->Send(msg.get());
+		
+		sprintf(msg.get(), g_WelcomeAllMsg, p->m_Name, p->m_PlayerNumber);
+		SendAll(msg.get(), plr);
 		return;
 	}
 
@@ -286,8 +306,8 @@ void Game::GetInfo(Player* plr, const Request& req, int all)
 	}
 	else if(all == reqMarket)
 	{
-		std::unique_ptr<char> msg(new char[strlen(g_MarketCondMsg) + 13]);
-    	sprintf(msg.get(), g_MarketCondMsg, 
+		std::unique_ptr<char> msg(new char[strlen(g_MarketCondMsg) + 14]);
+    	sprintf(msg.get(), g_MarketCondMsg, m_Month,
 							m_BankerRaw[0], m_BankerRaw[1],
 							m_BankerProd[0], m_BankerProd[1]);
     	plr->Send(msg.get());

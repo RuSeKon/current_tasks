@@ -10,6 +10,25 @@
 #include "share/errproc.h"
 
 
+static const char g_QuitMsg[] {"quit"};
+static const char g_HelpMsgFlag[] {"helpMe"};
+static const char g_HelpMsg[] {	"_______________________________________________________________\n"
+								"|  market | info about current market condition				|\n"
+								"|______________________________________________________________|\n"
+								"|   info  | info about another player							|\n"
+								"|______________________________________________________________|\n"
+								"| infoLst | list of all remaining players						|\n"
+								"|______________________________________________________________|\n"
+								"|   buy   | applying for the purchase of raw materials			|\n"
+								"|______________________________________________________________|\n"
+								"|   sell  | submitting an application for the sale of products |\n"
+								"|______________________________________________________________|\n"
+								"|  build  | construction of a new factory						|\n"
+								"|______________________________________________________________|\n"
+								"|   turn  | completion confirmation							|\n"
+								"|______________________________________________________________|\n"
+								"|   help  | available commands									|\n"
+								"|______________________________________________________________|\n"};
 /* Client Object-oriented design implementation */
 
 bool IsAdress(const char* src)
