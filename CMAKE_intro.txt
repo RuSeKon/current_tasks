@@ -1,0 +1,149 @@
+#Система сборки CMake принимает на вход файл CMakeLists.txt
+
+#Команда cmake_minimum_required проверяет запущенную версию CMake: 
+#если она меньше указанного минимума, то CMake завершает свою работу фатальной ошибкой
+
+# Задать третью минимальную версию CMake:
+cmake_minimum_required(VERSION 3.0)
+
+# Задать характеристики проекта "MyProject":
+project(MyProject VERSION 1.2.3.4 LANGUAGES C CXX)
+# Если не указать параметр LANGUAGES то по умолчанию будет C CXX
+
+# Запустить скрипт `MyCMakeScript.cmake` на выполнение:
+include(MyCMakeScript.cmake)
+# Тоже самое что include C/C++ только в cMake текст интерпретируется, поэтому вставка автоматически приводит к выполнению
+
+# Скомпилировать исполняемый файл "MyExecutable" из
+# исходников "ObjectHandler.c", "TimeManager.c" и "MessageGenerator.c":
+add_executable(MyExecutable ObjectHandler.c TimeManager.c MessageGenerator.c)
+
+# Скомпилировать статическую библиотеку "MyLibrary" из
+# исходников "ObjectHandler.c", "TimeManager.c" и "MessageConsumer.c":
+add_library(MyLibrary STATIC ObjectHandler.c TimeManager.c MessageConsumer.c)
+
+
+-Статические библиотеки задаются ключевым словом STATIC вторым аргументом и представляют из себя архивы объектных файлов, связываемых с исполняемыми файлами и другими библиотеками во время компиляции;
+-Динамические библиотеки задаются ключевым словом SHARED вторым аргументом и представляют из себя двоичные библиотеки, загружаемые операционной системой во время выполнения программы;
+-Модульные библиотеки задаются ключевым словом MODULE вторым аргументом и представляют из себя двоичные библиотеки, загружаемые посредством техник выполнения самим исполняемым файлом;
+-Объектные библиотеки задаются ключевым словом OBJECT вторым аргументом и представляют из себя набор объектных файлов, связываемых с исполняемыми файлами и другими библиотеками во время компиляции.
+
+
+# Задать исполняемый файл "MyExecutable" из исходников
+# "ObjectPrinter.c" и "SystemEvaluator.c":
+add_executable(MyExecutable ObjectPrinter.c SystemEvaluator.c)
+
+# Добавить к цели "MyExecutable" исходник "MessageConsumer.c":
+target_sources(MyExecutable MessageConsumer.c)
+# Добавить к цели "MyExecutable" исходник "ResultHandler.c":
+target_sources(MyExecutable ResultHandler.c)
+
+
+-Переменные RUNTIME_OUTPUT_DIRECTORY и RUNTIME_OUTPUT_NAME определяют местоположение целей выполнения;
+-Переменные LIBRARY_OUTPUT_DIRECTORY и LIBRARY_OUTPUT_NAME определяют местоположение библиотек;
+-Переменные ARCHIVE_OUTPUT_DIRECTORY и ARCHIVE_OUTPUT_NAME определяют местоположение архивов.
+
+Исполняемые файлы всегда рассматриваются целями выполнения, статические библиотеки — архивными целями, а модульные библиотеки — библиотечными целями. 
+Для "не-DLL" платформ динамические библиотеки рассматриваются библиотечными целями, а для "DLL-платформ" — целями выполнения. 
+Для объектных библиотек таких переменных не предусмотрено, поскольку такой вид библиотек генерируется в недрах каталога CMakeFiles.
+
+
+# Скомпоновать исполняемый файл "MyExecutable" с
+# библиотеками "JsonParser", "SocketFactory" и "BrowserInvoker":
+target_link_libraries(MyExecutable JsonParser SocketFactory BrowserInvoker)
+
+Стоит отметить, что модульные библиотеки не подлежат компоновке с исполняемыми файлами или другими библиотеками, 
+так как они предназначены исключительно для загрузки техниками выполнения.
+
+# Присвоить переменной "VALUE" значение свойства "C_STANDARD" цели MyTarget :
+get_target_property(VALUE MyTarget C_STANDARD)
+
+# Вывести значение полученного свойства на экран:
+message("'C_STANDARD' property is equal to [${VALUE}]")
+
+# Установить свойству 'C_STANDARD' значение "11",
+# а свойству 'C_STANDARD_REQUIRED' значение "ON":
+set_target_properties(MyTarget PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
+
+# Выведет "The target was defined!" если цель "MyTarget" уже определена,
+# а иначе выведет "The target was not defined!":
+if(TARGET MyTarget)
+    message("The target was defined!")
+else()
+    message("The target was not defined!")
+endif()
+
+# Добавить каталог "subLibrary" в сборку основного проекта,
+# а генерируемые файлы расположить в каталоге "subLibrary/build":
+add_subdirectory(subLibrary subLibrary/build)
+
+# Загрузить настройки пакета библиотеки "GSL":
+find_package(GSL 2.5 REQUIRED)
+
+# Скомпоновать исполняемый файл с библиотекой "GSL":
+target_link_libraries(MyExecutable GSL::gsl)
+
+# Уведомить компилятор о каталоге заголовков "GSL":
+target_include_directories(MyExecutable ${GSL_INCLUDE_DIRS})
+
+# Установить цели "TimePrinter" и "DataScanner" в директорию "bin":
+install(TARGETS TimePrinter DataScanner DESTINATION bin)
+
+# Установить файлы "DataCache.txt" и "MessageLog.txt" в директорию "~/":
+install(FILES DataCache.txt MessageLog.txt DESTINATION ~/)
+
+# Установить каталоги "MessageCollection" и "CoreFiles" в директорию "~/":
+install(DIRECTORY MessageCollection CoreFiles DESTINATION ~/)
+
+После завершения обработки CMake всех Ваших файлов Вы можете выполнить установку
+ всех описанных объектов командой sudo checkinstall (если CMake генерирует Makefile),
+  или же выполнить данное действие интегрированной средой разработки, поддерживающей CMake.
+
+
+
+  EXAMPLE////////////////////////////////////////////////////////////////////////////
+
+  + MyProject
+      - CMakeLists.txt
+      - Defines.h
+      - StartProgram.c
+      + core
+            - CMakeLists.txt
+            - Core.h
+            - ProcessInvoker.c
+            - SystemManager.c
+
+# Задать минимальную версию CMake:
+cmake_minimum_required(VERSION 3.0)
+
+# Указать характеристики проекта:
+project(MyProgram VERSION 1.0.0 LANGUAGES C)
+
+# Добавить в сборку исполняемый файл "MyProgram":
+add_executable(MyProgram StartProgram.c)
+
+# Требовать обработку файла "core/CMakeFiles.txt":
+add_subdirectory(core)
+
+# Скомпоновать исполняемый файл "MyProgram" со
+# скомпилированной статической библиотекой "MyProgramCore":
+target_link_libraries(MyProgram MyProgramCore)
+
+# Установить исполняемый файл "MyProgram" в директорию "bin":
+install(TARGETS MyProgram DESTINATION bin)
+
+Файл core/CMakeLists.txt вызывается главным файлом сборки и компилирует
+ статическую библиотеку MyProgramCore, предназначенную для линковки с исполняемым файлом:
+
+# Задать минимальную версию CMake:
+cmake_minimum_required(VERSION 3.0)
+
+# Добавить в сборку статическую библиотеку "MyProgramCore":
+add_library(MyProgramCore STATIC ProcessInvoker.c SystemManager.c)
+
+
+После череды команд cmake . && make && sudo checkinstall работа системы сборки CMake
+ завершается успешно. Первая команда запускает обработку файла CMakeLists.txt в корневом
+  каталоге проекта, вторая команда окончательно компилирует необходимые двоичные файлы,
+   а третья команда устанавливает скомпонованный исполняемый файл MyProgram в систему.
+///////////////////////////////////////////////////////////////////////////////////////////////
