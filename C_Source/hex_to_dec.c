@@ -1,4 +1,4 @@
-/* This function can chnge hex digit */
+/* This function can convert hex digit to decimal*/
 
 #include <stdio.h>
 
@@ -7,8 +7,10 @@
 
 int makestr(int src[], int max)
 {
-	int i, c;
-	for(i = 0; i < max && (c = getchar()) != EOF && c != '\n'; i++) {
+	int i;
+	char c;
+	for(i = 0; i < max && (c = getchar()) != EOF && c != '\n'; i++) 
+	{
 		if(c >= 'A' && c <= 'F')
 			src[i] = c;
 		else if(c == 'x' || (c >= 'a' && c <= 'f'))
@@ -19,7 +21,7 @@ int makestr(int src[], int max)
 			return 0;
 	}
 	if(c == '\n')
-		src[i + 1] = '\0';
+		src[i] = '\0';
 	return i;
 }
 
@@ -34,7 +36,8 @@ int is_str(int src[])
 int change(int src[])
 {
 	int accum = 0;
-	for(int i = 2; src[i] != '\0'; i++) {
+	for(int i = 2; src[i] != '\0'; i++) 
+	{
 		if(src[i] >= '0' && src[i] <= '9')
 			accum = (accum*16) + src[i] - 48;
 		else if(src[i] >= 'A' && src[i] <= 'F')
@@ -49,15 +52,17 @@ int change(int src[])
 int main()
 {
 	int integer, len; int array[MAXCHAR + 1];
-	if(!(len = makestr(array, MAXCHAR))) {
+	if(!(len = makestr(array, MAXCHAR))) 
+	{
 		printf("Invalid input\n");
 		return 1;
 	}
-	if(is_str(array)) {
-		printf("Not a hex digits\n");
+	if(is_str(array)) 
+	{
+		printf("Not a hex digits (example: 0x234A)\n");
 		return 1;
 	}
 
-	printf("Integer %d\n", integer = change(array));
+	printf("Number %d\n", integer = change(array));
 	return 0;
 }

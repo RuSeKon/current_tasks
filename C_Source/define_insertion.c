@@ -1,3 +1,5 @@
+/* this program can replace #define WORDS to its value, like simple  C preprocessor */ 
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -42,19 +44,27 @@ main(int argc, char **argv)
 		outp_f = fopen("processed.c", "w");
 
 	while((res = getchr(outp_f, inp_f, name, defn, MAXNAME, MAXDEFN)) != EOF)
-    	    if(res == DEF) {
-	        if(install(name, defn) == NULL) {
-		    printf("Error of install definition on table\n");
-		    return 1;
-		}
-	    } else { 		//getchar returned name
-		if((np = lookup(name, 0)) == NULL) { //if name is not in hashtable 
-			fputs(name, outp_f);
-			fputc(res, outp_f);	//put name to outfile without cast
-			continue;
-		}
-	   fputs(np->defn, outp_f);	//if name is in table put define val
-	   fputc(res, outp_f);
+    	if(res == DEF) 
+		{
+	    	if(install(name, defn) == NULL) 
+			{
+		    	printf("Error of install definition on table\n");
+		    	return 1;
+			}
+	    } 
+		else  		//getchar returned name
+		{	
+			if((np = lookup(name, 0)) == NULL)  //if name is not in hashtable 
+			{	
+				fputs(name, outp_f);
+				fputc((char)res, outp_f);	//put name to outfile without cast
+				continue;
+			}
+			else
+			{
+	   		fputs(np->defn, outp_f);	//if name is in table put define val
+	   		fputc((char)res, outp_f);
+			}
 	   }
 	fclose(inp_f);
 	fclose(outp_f);
@@ -77,8 +87,10 @@ int del_node(char *);
 struct nlist *lookup(char *s, int del)
 {
 	struct nlist *np;
-	for(np = hashtab[hash(s)]; np != NULL; np = np->next) {
-		if(strcmp(s, np->name) == 0) {
+	for(np = hashtab[hash(s)]; np != NULL; np = np->next) 
+	{
+		if(!strcmp(s, np->name)) 
+		{
 			if(del)
 				del_node(s); //lookup may not check del_node
 			else		     //return value (look impl of del_node)
@@ -94,7 +106,8 @@ struct nlist *install(char *name, char *defn)
 	struct nlist *np;
 	unsigned hashval;
 
-	if((np = lookup(name, 0)) == NULL) {
+	if((np = lookup(name, 0)) == NULL) 
+	{
 		np = (struct nlist *)malloc(sizeof(*np));
 		if(np == NULL || (np->name = strdup(name)) == NULL)
 			return NULL;
@@ -110,22 +123,24 @@ struct nlist *install(char *name, char *defn)
 
 int del_node(char *nm)		
 {
-    struct nlist *np, *tmp;
+    struct nlist **np, *tmp;
 
     /* search node with field.name = nm in hashtable */
-    for(np = hashtab[hash(nm)]; np != NULL; np = np->next) { 
-	if(np->next == NULL && 
-			(strcmp(np->name, nm) == 0)){ //if np is ones or last 
-	    free((void*)np);			      //in list, and .name = nm
-	    return 0;
-	} else if(strcmp(np->next->name, nm) == 0) { //if .name = nm,
-	    tmp = np->next;			     //and np not last or ones
-	    np->next = tmp->next ? tmp->next : NULL;
-	    return 0;
-	} else 
-	    return 1;	//nm is missing in hashtable	
+    for(np = &hashtab[hash(nm)]; *np; np = &((*np)->next)) 
+	{
+		if(!strcmp((*np)->name, nm))
+		{
+			tmp = *np;
+			*np = tmp->next;
+			/*
+			free(tmp->name);
+			free(tmp->defn);
+			*/
+			free(tmp);
+			return 0;
+		}
 	}
-    return -1;
+    return 1;
 }
 			
 int getchr(FILE *out, FILE *in,  char *nm, char *dfn, int max_nm, int max_dfn)
@@ -133,33 +148,35 @@ int getchr(FILE *out, FILE *in,  char *nm, char *dfn, int max_nm, int max_dfn)
     int i;
     char c;
     while((c = fgetc(in)) != EOF) {
-	if(c == '#') {
-	     fputc(c, out);
-	     while((c = fgetc(in)) != SPACE)
-		fputc(c, out);
-	     fputc(c, out);
-	     for(i = 0; i < max_nm && (c=fgetc(in)) != SPACE; i++) {
-		     fputc(c, out);
-		     nm[i] = c;
-	     }
-	     fputc(c, out);
-	     nm[i] = '\0';
-	     for(i = 0; i < max_dfn && 
-			     (c=fgetc(in)) != SPACE && c != '\n'; i++) {
-		     fputc(c, out);
-		     dfn[i] = c;
-	     }
-	     fputc(c, out);
-	     dfn[i] = '\0';
-	     return DEF;
-	} else if(isalpha(c)) {
-	     nm[0] = c;
-	     for(i = 1; i < max_nm && (isalpha(c=fgetc(in)) || c == '_'); i++)
-		nm[i] = c;
-	     nm[i] = '\0';
-	     return c;
-	} else
-	     fputc(c, out);
+		if(c == '#') 
+		{
+	     	fputc(c, out);
+	     	while((c = fgetc(in)) != SPACE)
+		 		fputc(c, out);
+	     	for(i = 0; i < max_nm && (c=fgetc(in)) != SPACE; i++)
+			{
+		    	fputc(c, out);
+		    	nm[i] = c;
+	     	}
+	     	fputc(c, out);
+	     	nm[i] = '\0';
+	     	for(i = 0; i < max_dfn && 
+			    	(c=fgetc(in)) != SPACE && c != '\n'; i++) 
+			{
+		    	fputc(c, out);
+		    	dfn[i] = c;
+	     	}
+	     	fputc(c, out);
+	     	dfn[i] = '\0';
+	     	return DEF;
+		} else if(isalpha(c)) {
+	     	nm[0] = c;
+	     	for(i = 1; i < max_nm && (isalpha(c=fgetc(in)) || c == '_'); i++)
+				nm[i] = c;
+	     	nm[i] = '\0';
+	     	return c;
+		} else
+	     	fputc(c, out);
     }
     return EOF;
 }

@@ -1,5 +1,5 @@
-/*this programm can compare two files about strings 
- * and print first stranger string*/
+/*this programm can compare two files strings 
+ * and print first different string*/
 
 #include <stdio.h>
 #include <string.h>

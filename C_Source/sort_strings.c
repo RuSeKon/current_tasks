@@ -1,5 +1,4 @@
-/* this programm can sort input massive of
- * \n separated strings */
+/* this programm can sort input massive of separated strings */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,7 +67,7 @@ int main(int argc, char **argv)
 	}
 
 	opt[s] = '\0';
-	if((nlines = input(matrix, MAXLNS)) > 0) {
+	if((nlines = input(matrix, MAXLNS)) >= 0) {
 		qsrt((void**) matrix, 0, nlines - 1, opt,
 				(int (*)(void *, void*, char *))
 				(numeric ? numcmp : strcmpr));	//Sorry for this
@@ -76,11 +75,13 @@ int main(int argc, char **argv)
 		output(matrix);
 		return 0;
 	}
-	else {
-		printf("Input is empty\n");
+	else
+	{
+		printf("Input is empty!\n");
 		return 1;
 	}
 }
+
 
 char line[MAXCHR];
 char *ptr = line;
@@ -97,7 +98,7 @@ int input(char *lineptr[], int maxlines)
 	nlines = 0;
 	while((len = getln(line, MAXLEN)) > 0)
 		if(nlines >= maxlines || (p = alloc(len)) == NULL)
-			return -1;
+			break;
 		else {
 			strcpy(p, line);
 			lineptr[nlines++] = p;
@@ -115,7 +116,7 @@ int getln(char *src, int max)
 		src[i] = '\0';
 	if(c == EOF)
 		return c;
-	return i;
+	return i+1;
 }
 
 void swap(void *[], int l, int r);
@@ -234,5 +235,8 @@ void ungetchr(char c)
 char *alloc(int cnt)
 {
 	char *p;
-	return p = malloc(cnt);
+	p = malloc(cnt);
+	if(p == NULL)
+		exit(EXIT_FAILURE);
+	return p;
 }

@@ -1,4 +1,4 @@
-/*this progarm can count deaclarator word on c programm text*/
+/*this progarm can count declared word on c programm text*/
 
 #include <stdio.h>
 #include <ctype.h>
@@ -28,32 +28,34 @@ struct key{
 #define NKEYS (sizeof(keytab)/sizeof(struct key))
 
 int getword(char *, int);
-int binsearch(char *, struct key *, int);
+int binsearch(char *);
 
 main()
 {
 	int n;
 	char word[MAXWORD];
 	while(getword(word, MAXWORD) != EOF)
+	{
 		if(isalpha(word[0]))
-			if((n = binsearch(word, keytab, NKEYS)) >= 0)
+			if((n = binsearch(word)) >= 0)
 				keytab[n].count++;
+	}
 	for(n = 0; n < NKEYS; n++)
 		if((keytab[n].count))
-			printf("%d %s\n", keytab[n].count, keytab[n].word);
+			printf("%d of %s\n", keytab[n].count, keytab[n].word);
 	return 0;
 }
 
-int binsearch(char *word, struct key tab[], int n)
+int binsearch(char *word)
 {
 	int cond;
 	int low, high, mid;
-	
 	low = 0;
-	high = n - 1;
-	while(low <= high) {
+	high = NKEYS - 1;
+	while(low <= high)
+	{
 		mid = (low+high)/2;
-		if((cond = strcmp(word, tab[mid].word)) < 0)
+		if((cond = strcmp(word, keytab[mid].word)) < 0)
 			high = mid - 1;
 		else if(cond > 0)
 			low = mid + 1;
@@ -70,26 +72,31 @@ int getword(char *src, int max)	//get some trubble
 {
 	int i=0, c;
 	int state = STATEOFF;
-	while(i < max && (c = getchar()) != EOF) {
-		if(isalpha(c)) {
+	while(i < max && (c = getchar()) != EOF)
+	{
+		if(isalpha(c))
+		{
 			state = STATEON;
 			i++;
 			*src++ = c;
-		} else {
-			if(state) {
+		} 
+		else
+		{
+			if(state)
+			{
 				*src = '\0';
 				return i;
 			}
 			state = STATEOFF;
-			continue;
 		}
 	}
-	if(i >= max) {
-		printf("Error, letter larger 100 char\n");
+
+	if(i >= max) 
+	{
+		printf("Error, letter larger 100 characters\n");
 		return EOF;
 	}
 	if(c == EOF)
 		return c;
 	return -1;
 }
-
